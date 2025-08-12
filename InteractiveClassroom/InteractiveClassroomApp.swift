@@ -6,27 +6,26 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct InteractiveClassroomApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
     var body: some Scene {
+#if os(macOS)
+        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
+            MenuBarView()
+        }
+        Settings {
+            SettingsView()
+        }
+        WindowGroup(id: "ScreenOverlay") {
+            ScreenOverlayView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 800, height: 600)
+#else
         WindowGroup {
             ContentView()
         }
-        .modelContainer(sharedModelContainer)
+#endif
     }
 }
