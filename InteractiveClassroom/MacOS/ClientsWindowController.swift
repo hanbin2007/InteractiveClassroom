@@ -4,7 +4,7 @@ import SwiftUI
 import SwiftData
 
 /// Manages the window that lists all connected clients.
-final class ClientsWindowController {
+final class ClientsWindowController: NSObject, NSWindowDelegate {
     static let shared = ClientsWindowController()
     private var window: NSWindow?
 
@@ -21,10 +21,16 @@ final class ClientsWindowController {
                                defer: false)
             win.center()
             win.contentView = hosting
+            win.isReleasedWhenClosed = false
+            win.delegate = self
             window = win
         }
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        window = nil
     }
 }
 #endif
