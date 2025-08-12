@@ -1,5 +1,6 @@
 import Foundation
 import MultipeerConnectivity
+import SwiftData
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -12,6 +13,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
 
+    /// Storage context for persisting client information.
+    var modelContext: ModelContext?
+
     struct Peer: Identifiable, Hashable {
         let peerID: MCPeerID
         var id: String { peerID.displayName }
@@ -20,6 +24,13 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var availablePeers: [Peer] = []
     @Published var connectionStatus: String = "Not Connected"
     @Published var hostCode: String?
+
+    /// Payload sent during connection containing passcode and nickname.
+    private struct InvitationPayload: Codable {
+        let passcode: String
+        let nickname: String
+        let role: String
+    }
 
     override init() {
 #if os(macOS)
@@ -52,18 +63,44 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         availablePeers.removeAll()
     }
 
-    func connect(to peer: Peer, passcode: String) {
-        let context = passcode.data(using: .utf8)
+    func connect(to peer: Peer, passcode: String, nickname: String, role: UserRole) {
+        let payload = InvitationPayload(passcode: passcode, nickname: nickname, role: role.rawValue)
+        let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
+    }
+
+    /// Disconnects from a specific peer based on its display name.
+    func disconnect(peerNamed name: String) {
+        if let peer = session.connectedPeers.first(where: { $0.displayName == name }) {
+            session.cancelConnectPeer(peer)
+        }
     }
 }
 
 extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        let code = context.flatMap { String(data: $0, encoding: .utf8) }
+        let payload = context.flatMap { try? JSONDecoder().decode(InvitationPayload.self, from: $0) }
         Task { @MainActor in
-            if code == self.hostCode {
+            if payload?.passcode == self.hostCode {
                 invitationHandler(true, self.session)
+                if let context = self.modelContext {
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    if let existing = try? context.fetch(descriptor).first {
+                        existing.nickname = payload?.nickname ?? existing.nickname
+                        existing.role = payload?.role ?? existing.role
+                        existing.lastConnected = .now
+                        existing.isConnected = true
+                    } else {
+                        let info = ClientInfo(deviceName: peerID.displayName,
+                                              nickname: payload?.nickname ?? "",
+                                              role: payload?.role ?? "",
+                                              ipAddress: nil,
+                                              lastConnected: .now,
+                                              isConnected: true)
+                        context.insert(info)
+                    }
+                    try? context.save()
+                }
             } else {
                 invitationHandler(false, nil)
             }
@@ -93,10 +130,25 @@ extension PeerConnectionManager: MCSessionDelegate {
             switch state {
             case .connected:
                 self.connectionStatus = "Connected to \(peerID.displayName)"
+                if let context = self.modelContext {
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    if let existing = try? context.fetch(descriptor).first {
+                        existing.isConnected = true
+                        existing.lastConnected = .now
+                        try? context.save()
+                    }
+                }
             case .connecting:
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
                 self.connectionStatus = "Not Connected"
+                if let context = self.modelContext {
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    if let existing = try? context.fetch(descriptor).first {
+                        existing.isConnected = false
+                        try? context.save()
+                    }
+                }
             @unknown default:
                 self.connectionStatus = "Unknown State"
             }

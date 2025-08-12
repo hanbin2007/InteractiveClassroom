@@ -21,11 +21,11 @@ struct ContentView: View {
                         .padding()
                 case .teacher:
                     NavigationStack {
-                        ServerConnectView()
+                        ServerConnectView(role: role)
                     }
                 case .student:
                     NavigationStack {
-                        ServerConnectView()
+                        ServerConnectView(role: role)
                     }
                 }
             } else {

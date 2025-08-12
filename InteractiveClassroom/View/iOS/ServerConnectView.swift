@@ -3,9 +3,11 @@ import MultipeerConnectivity
 
 #if os(iOS)
 struct ServerConnectView: View {
+    let role: UserRole
     @StateObject private var connectionManager = PeerConnectionManager()
     @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var passcode: String = ""
+    @State private var nickname: String = ""
 
     var body: some View {
         VStack {
@@ -31,14 +33,20 @@ struct ServerConnectView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .multilineTextAlignment(TextAlignment.center)
                     .keyboardType(.numberPad)
+                TextField("Nickname", text: $nickname)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textInputAutocapitalization(.never)
                 Button("Connect") {
-                    connectionManager.connect(to: peer, passcode: passcode)
+                    connectionManager.connect(to: peer, passcode: passcode, nickname: nickname, role: role)
                     passcode = ""
+                    nickname = ""
                     selectedPeer = nil
                 }
+                .disabled(passcode.isEmpty || nickname.isEmpty)
                 Button("Cancel") {
                     selectedPeer = nil
                     passcode = ""
+                    nickname = ""
                 }
             }
             .padding()
@@ -55,7 +63,7 @@ struct ServerConnectView: View {
 
 #Preview {
     NavigationStack {
-        ServerConnectView()
+        ServerConnectView(role: .teacher)
     }
 }
 #endif

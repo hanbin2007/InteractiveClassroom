@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Settings used to configure how questions are presented and scored.
 struct SettingsView: View {
-    @StateObject private var connectionManager = PeerConnectionManager()
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @Environment(\.modelContext) private var modelContext
     @State private var timeLimit: Int = 60
     @State private var correctAnswer: String = ""
     @State private var anonymous: Bool = false
@@ -38,6 +39,7 @@ struct SettingsView: View {
         .padding(20)
         .frame(minWidth: 400, minHeight: 300)
         .onAppear {
+            connectionManager.modelContext = modelContext
             connectionManager.startHosting()
         }
     }
