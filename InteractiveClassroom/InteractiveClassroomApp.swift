@@ -13,13 +13,14 @@ struct InteractiveClassroomApp: App {
 #if os(macOS)
     @NSApplicationDelegateAdaptor(OverlayAppDelegate.self) var appDelegate
 #endif
-    @StateObject private var connectionManager = PeerConnectionManager()
+    @StateObject private var connectionManager: PeerConnectionManager
     private let container: ModelContainer
 
     init() {
         let schema = Schema([Item.self, ClientInfo.self])
-        container = try! ModelContainer(for: schema)
-        connectionManager.modelContext = ModelContext(container)
+        let container = try! ModelContainer(for: schema)
+        self.container = container
+        _connectionManager = StateObject(wrappedValue: PeerConnectionManager(modelContext: ModelContext(container)))
     }
 
     var body: some Scene {
