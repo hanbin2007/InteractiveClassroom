@@ -8,10 +8,12 @@ struct MenuBarView: View {
         Button("Show Screen") {
             OverlayWindowController.shared.show()
         }
-        Button("Settings") {
-            if #available(macOS 13, *) {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            } else {
+        if #available(macOS 13, *) {
+            SettingsLink {
+                Text("Settings")
+            }
+        } else {
+            Button("Settings") {
                 NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
             }
         }
