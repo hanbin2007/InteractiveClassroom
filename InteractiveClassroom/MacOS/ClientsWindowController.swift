@@ -8,7 +8,8 @@ final class ClientsWindowController {
     static let shared = ClientsWindowController()
     private var window: NSWindow?
 
-    func show(container: ModelContainer, connectionManager: PeerConnectionManager) {
+    func show(container: ModelContainer?, connectionManager: PeerConnectionManager) {
+        guard let container else { return }
         if window == nil {
             let contentView = ClientsListView()
                 .environmentObject(connectionManager)

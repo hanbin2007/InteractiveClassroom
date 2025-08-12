@@ -20,7 +20,12 @@ struct InteractiveClassroomApp: App {
         let schema = Schema([Item.self, ClientInfo.self])
         let container = try! ModelContainer(for: schema)
         self.container = container
-        _connectionManager = StateObject(wrappedValue: PeerConnectionManager(modelContext: ModelContext(container)))
+
+        let context = ModelContext(container)
+        let manager = PeerConnectionManager(modelContext: context)
+        _connectionManager = StateObject(wrappedValue: manager)
+        // Start hosting as soon as the application launches so the server is immediately available.
+        manager.startHosting()
     }
 
     var body: some Scene {
