@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// Root view used on iOS/iPadOS to select and present the desired role.
+#if os(iOS)
+/// Root view used on iOS and iPadOS to select and present the desired role.
 struct ContentView: View {
     @State private var selectedRole: UserRole? = nil
 
@@ -19,11 +20,13 @@ struct ContentView: View {
                     Text("Screen mode is available on macOS menu bar.")
                         .padding()
                 case .teacher:
-                    Text("Teacher view placeholder")
-                        .padding()
+                    NavigationStack {
+                        ServerConnectView()
+                    }
                 case .student:
-                    Text("Student view placeholder")
-                        .padding()
+                    NavigationStack {
+                        ServerConnectView()
+                    }
                 }
             } else {
                 IdentitySelectionView(selection: $selectedRole)
@@ -35,3 +38,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+#endif
