@@ -11,17 +11,17 @@ import SwiftUI
 struct InteractiveClassroomApp: App {
     var body: some Scene {
 #if os(macOS)
+        WindowGroup(id: "ScreenOverlay") {
+            ScreenOverlayView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 800, height: 600)
         MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
             MenuBarView()
         }
         Settings {
             SettingsView()
         }
-        WindowGroup(id: "ScreenOverlay") {
-            ScreenOverlayView()
-        }
-        .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 800, height: 600)
 #else
         WindowGroup {
             ContentView()
