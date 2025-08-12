@@ -6,21 +6,21 @@ struct ScreenOverlayView: View {
     @StateObject private var model = ScreenOverlayModel()
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.8)
-                .ignoresSafeArea()
-            GeometryReader { _ in
-                let padding: CGFloat = 32
+        GeometryReader { geometry in
+            let padding: CGFloat = 32
+            ZStack {
                 // Top area with question type and remaining time
                 VStack {
                     HStack {
                         Text(model.questionType.displayName)
                             .font(.system(size: 40, weight: .bold))
+                            .shadow(color: .black, radius: 2)
                             .padding(.leading, padding)
                             .padding(.top, padding)
                         Spacer()
                         Text(model.remainingTimeString)
                             .font(.system(size: 40, weight: .bold))
+                            .shadow(color: .black, radius: 2)
                             .padding(.trailing, padding)
                             .padding(.top, padding)
                     }
@@ -33,6 +33,7 @@ struct ScreenOverlayView: View {
                             ForEach(model.statsDisplay, id: .self) { stat in
                                 Text(stat)
                                     .font(.title3)
+                                    .shadow(color: .black, radius: 1)
                             }
                         }
                         .padding(.leading, padding)
@@ -46,12 +47,16 @@ struct ScreenOverlayView: View {
                         ForEach(model.submittedNames, id: .self) { name in
                             Text(name)
                                 .font(.title3)
+                                .shadow(color: .black, radius: 1)
                         }
                     }
                     .padding(.trailing, padding)
                 }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
+        .background(Color.clear)
+        .ignoresSafeArea()
         .foregroundStyle(.white)
     }
 }
