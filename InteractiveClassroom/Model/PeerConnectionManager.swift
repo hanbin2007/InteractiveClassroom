@@ -32,7 +32,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let role: String
     }
 
-    override init() {
+    init(modelContext: ModelContext? = nil) {
+        self.modelContext = modelContext
 #if os(macOS)
         myPeerID = MCPeerID(displayName: Host.current().localizedName ?? "macOS")
 #else
@@ -41,6 +42,10 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
         super.init()
         session.delegate = self
+    }
+
+    override convenience init() {
+        self.init(modelContext: nil)
     }
 
     func startHosting() {
