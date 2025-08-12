@@ -4,13 +4,13 @@ import MultipeerConnectivity
 #if os(iOS)
 struct ServerConnectView: View {
     @StateObject private var connectionManager = PeerConnectionManager()
-    @State private var selectedPeer: MCPeerID?
+    @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var passcode: String = ""
 
     var body: some View {
         VStack {
-            List(connectionManager.availablePeers, id: \.self) { peer in
-                Button(peer.displayName) {
+            List(connectionManager.availablePeers) { peer in
+                Button(peer.peerID.displayName) {
                     selectedPeer = peer
                 }
             }
@@ -26,7 +26,7 @@ struct ServerConnectView: View {
         .navigationTitle("Select Server")
         .sheet(item: $selectedPeer) { peer in
             VStack(spacing: 16) {
-                Text("Enter 6-digit key for \(peer.displayName)")
+                Text("Enter 6-digit key for \(peer.peerID.displayName)")
                 TextField("123456", text: $passcode)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .multilineTextAlignment(TextAlignment.center)

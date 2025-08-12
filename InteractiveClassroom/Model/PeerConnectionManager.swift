@@ -12,7 +12,12 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
 
-    @Published var availablePeers: [MCPeerID] = []
+    struct Peer: Identifiable, Hashable {
+        let peerID: MCPeerID
+        var id: String { peerID.displayName }
+    }
+
+    @Published var availablePeers: [Peer] = []
     @Published var connectionStatus: String = "Not Connected"
     @Published var hostCode: String?
 
@@ -47,9 +52,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         availablePeers.removeAll()
     }
 
-    func connect(to peer: MCPeerID, passcode: String) {
+    func connect(to peer: Peer, passcode: String) {
         let context = passcode.data(using: .utf8)
-        browser?.invitePeer(peer, to: session, withContext: context, timeout: 30)
+        browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
     }
 }
 
@@ -69,15 +74,15 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
 extension PeerConnectionManager: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         Task { @MainActor in
-            if !self.availablePeers.contains(peerID) {
-                self.availablePeers.append(peerID)
+            if !self.availablePeers.contains(where: { $0.peerID == peerID }) {
+                self.availablePeers.append(Peer(peerID: peerID))
             }
         }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         Task { @MainActor in
-            self.availablePeers.removeAll { $0 == peerID }
+            self.availablePeers.removeAll { $0.peerID == peerID }
         }
     }
 }
@@ -105,9 +110,5 @@ extension PeerConnectionManager: MCSessionDelegate {
     nonisolated func session(_ session: MCSession, didReceiveCertificate certificate: [Any]?, fromPeer peerID: MCPeerID, certificateHandler: @escaping (Bool) -> Void) {
         certificateHandler(true)
     }
-}
-
-extension MCPeerID: Identifiable {
-    public var id: String { displayName }
 }
 
