@@ -30,7 +30,7 @@ struct ScreenOverlayView: View {
                 HStack {
                     if !model.statsDisplay.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            ForEach(model.statsDisplay, id: .self) { stat in
+                            ForEach(model.statsDisplay, id: \.self) { stat in
                                 Text(stat)
                                     .font(.title3)
                                     .shadow(color: .black, radius: 1)
@@ -44,7 +44,7 @@ struct ScreenOverlayView: View {
                 HStack {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 8) {
-                        ForEach(model.submittedNames, id: .self) { name in
+                        ForEach(model.submittedNames, id: \.self) { name in
                             Text(name)
                                 .font(.title3)
                                 .shadow(color: .black, radius: 1)
