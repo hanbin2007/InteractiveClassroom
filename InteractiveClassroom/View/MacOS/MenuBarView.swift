@@ -4,16 +4,16 @@ import AppKit
 
 /// Content displayed in the menu bar extra for macOS builds.
 struct MenuBarView: View {
-    @Environment(\.openWindow) private var openWindow
-
     var body: some View {
         Button("Show Screen") {
-            openWindow(id: "ScreenOverlay")
+            OverlayWindowController.shared.show()
         }
-        Button("Settings") {
-            if #available(macOS 13, *) {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            } else {
+        if #available(macOS 13, *) {
+            SettingsLink {
+                Text("Settings")
+            }
+        } else {
+            Button("Settings") {
                 NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
             }
         }
