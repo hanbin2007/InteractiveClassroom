@@ -6,7 +6,7 @@
     <string>Allows the app to find nearby classroom servers</string>
     <key>NSBonjourServices</key>
     <array>
-        <string>_classroom._tcp</string>
+        <string>_iclassrm._tcp</string>
     </array>
 </dict>
 </plist>
