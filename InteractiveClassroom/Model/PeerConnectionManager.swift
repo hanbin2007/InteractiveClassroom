@@ -18,7 +18,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     override init() {
 #if os(macOS)
-        myPeerID = MCPeerID(displayName: Host.current()?.localizedName ?? "macOS")
+        myPeerID = MCPeerID(displayName: Host.current().localizedName ?? "macOS")
 #else
         myPeerID = MCPeerID(displayName: UIDevice.current.name)
 #endif
@@ -54,47 +54,57 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 }
 
 extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         let code = context.flatMap { String(data: $0, encoding: .utf8) }
-        if code == hostCode {
-            invitationHandler(true, session)
-        } else {
-            invitationHandler(false, nil)
+        Task { @MainActor in
+            if code == self.hostCode {
+                invitationHandler(true, self.session)
+            } else {
+                invitationHandler(false, nil)
+            }
         }
     }
 }
 
 extension PeerConnectionManager: MCNearbyServiceBrowserDelegate {
-    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
-        if !availablePeers.contains(peerID) {
-            availablePeers.append(peerID)
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
+        Task { @MainActor in
+            if !self.availablePeers.contains(peerID) {
+                self.availablePeers.append(peerID)
+            }
         }
     }
 
-    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        availablePeers.removeAll { $0 == peerID }
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+        Task { @MainActor in
+            self.availablePeers.removeAll { $0 == peerID }
+        }
     }
 }
 
 extension PeerConnectionManager: MCSessionDelegate {
-    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        switch state {
-        case .connected:
-            connectionStatus = "Connected to \(peerID.displayName)"
-        case .connecting:
-            connectionStatus = "Connecting to \(peerID.displayName)..."
-        case .notConnected:
-            connectionStatus = "Not Connected"
-        @unknown default:
-            connectionStatus = "Unknown State"
+    nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        Task { @MainActor in
+            switch state {
+            case .connected:
+                self.connectionStatus = "Connected to \(peerID.displayName)"
+            case .connecting:
+                self.connectionStatus = "Connecting to \(peerID.displayName)..."
+            case .notConnected:
+                self.connectionStatus = "Not Connected"
+            @unknown default:
+                self.connectionStatus = "Unknown State"
+            }
         }
     }
 
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
-    func session(_ session: MCSession, didReceiveCertificate certificate: [Any]?, fromPeer peerID: MCPeerID, certificateHandler: @escaping (Bool) -> Void) { certificateHandler(true) }
+    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {}
+    nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
+    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
+    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+    nonisolated func session(_ session: MCSession, didReceiveCertificate certificate: [Any]?, fromPeer peerID: MCPeerID, certificateHandler: @escaping (Bool) -> Void) {
+        certificateHandler(true)
+    }
 }
 
 extension MCPeerID: Identifiable {
