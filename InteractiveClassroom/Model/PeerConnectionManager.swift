@@ -84,14 +84,16 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
             if payload?.passcode == self.hostCode {
                 invitationHandler(true, self.session)
                 if let context = self.modelContext {
-                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    let name = peerID.displayName
+                    let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
                     if let existing = try? context.fetch(descriptor).first {
                         existing.nickname = payload?.nickname ?? existing.nickname
                         existing.role = payload?.role ?? existing.role
                         existing.lastConnected = .now
                         existing.isConnected = true
                     } else {
-                        let info = ClientInfo(deviceName: peerID.displayName,
+                        let info = ClientInfo(deviceName: name,
                                               nickname: payload?.nickname ?? "",
                                               role: payload?.role ?? "",
                                               ipAddress: nil,
@@ -131,7 +133,9 @@ extension PeerConnectionManager: MCSessionDelegate {
             case .connected:
                 self.connectionStatus = "Connected to \(peerID.displayName)"
                 if let context = self.modelContext {
-                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    let name = peerID.displayName
+                    let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
                     if let existing = try? context.fetch(descriptor).first {
                         existing.isConnected = true
                         existing.lastConnected = .now
@@ -143,7 +147,9 @@ extension PeerConnectionManager: MCSessionDelegate {
             case .notConnected:
                 self.connectionStatus = "Not Connected"
                 if let context = self.modelContext {
-                    let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.deviceName == peerID.displayName })
+                    let name = peerID.displayName
+                    let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
+                    let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
                     if let existing = try? context.fetch(descriptor).first {
                         existing.isConnected = false
                         try? context.save()
