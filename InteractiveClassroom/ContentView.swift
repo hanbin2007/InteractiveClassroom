@@ -19,11 +19,13 @@ struct ContentView: View {
                     Text("Screen mode is available on macOS menu bar.")
                         .padding()
                 case .teacher:
-                    Text("Teacher view placeholder")
-                        .padding()
+                    NavigationStack {
+                        ServerConnectView()
+                    }
                 case .student:
-                    Text("Student view placeholder")
-                        .padding()
+                    NavigationStack {
+                        ServerConnectView()
+                    }
                 }
             } else {
                 IdentitySelectionView(selection: $selectedRole)
