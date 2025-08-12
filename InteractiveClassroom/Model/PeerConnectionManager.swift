@@ -23,13 +23,27 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     @Published var availablePeers: [Peer] = []
     @Published var connectionStatus: String = "Not Connected"
-    @Published var hostCode: String?
+    @Published var teacherCode: String?
+    @Published var studentCode: String?
+    @Published var myRole: UserRole?
+    @Published var students: [String] = []
+    @Published var classStarted: Bool = false
+
+    /// Mapping of connected peers to their assigned roles.
+    private var rolesByPeer: [MCPeerID: UserRole] = [:]
 
     /// Payload sent during connection containing passcode and nickname.
     private struct InvitationPayload: Codable {
         let passcode: String
         let nickname: String
-        let role: String
+    }
+
+    /// Generic message exchanged after connection to coordinate state.
+    private struct Message: Codable {
+        let type: String
+        let role: String?
+        let students: [String]?
+        let target: String?
     }
 
     init(modelContext: ModelContext? = nil) {
@@ -49,7 +63,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     }
 
     func startHosting() {
-        hostCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        teacherCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        studentCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
         advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
@@ -68,8 +83,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         availablePeers.removeAll()
     }
 
-    func connect(to peer: Peer, passcode: String, nickname: String, role: UserRole) {
-        let payload = InvitationPayload(passcode: passcode, nickname: nickname, role: role.rawValue)
+    func connect(to peer: Peer, passcode: String, nickname: String) {
+        let payload = InvitationPayload(passcode: passcode, nickname: nickname)
         let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
     }
@@ -80,36 +95,76 @@ final class PeerConnectionManager: NSObject, ObservableObject {
             session.cancelConnectPeer(peer)
         }
     }
+
+    /// Sends a command to the server to disconnect a specific student.
+    func sendDisconnectCommand(for name: String) {
+        let message = Message(type: "disconnect", role: nil, students: nil, target: name)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        }
+    }
+
+    /// Broadcasts a start-class command to the server.
+    func startClass() {
+        let message = Message(type: "startClass", role: nil, students: nil, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        }
+    }
+
+    /// Updates the internal student list and notifies the teacher if connected.
+    private func updateStudents() {
+        let currentStudents = rolesByPeer.filter { $0.value == .student }.map { $0.key.displayName }
+        students = currentStudents
+        if let teacherPeer = rolesByPeer.first(where: { $0.value == .teacher })?.key {
+            let message = Message(type: "students", role: nil, students: currentStudents, target: nil)
+            if let data = try? JSONEncoder().encode(message) {
+                try? session.send(data, toPeers: [teacherPeer], with: .reliable)
+            }
+        }
+    }
 }
 
 extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         let payload = context.flatMap { try? JSONDecoder().decode(InvitationPayload.self, from: $0) }
         Task { @MainActor in
-            if payload?.passcode == self.hostCode {
-                invitationHandler(true, self.session)
-                if let context = self.modelContext {
-                    let name = peerID.displayName
-                    let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
-                    let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
-                    if let existing = try? context.fetch(descriptor).first {
-                        existing.nickname = payload?.nickname ?? existing.nickname
-                        existing.role = payload?.role ?? existing.role
-                        existing.lastConnected = .now
-                        existing.isConnected = true
-                    } else {
-                        let info = ClientInfo(deviceName: name,
-                                              nickname: payload?.nickname ?? "",
-                                              role: payload?.role ?? "",
-                                              ipAddress: nil,
-                                              lastConnected: .now,
-                                              isConnected: true)
-                        context.insert(info)
-                    }
-                    try? context.save()
+            guard let code = payload?.passcode else {
+                invitationHandler(false, nil)
+                return
+            }
+            if code == self.teacherCode {
+                if self.rolesByPeer.values.contains(.teacher) {
+                    invitationHandler(false, nil)
+                    return
                 }
+                self.rolesByPeer[peerID] = .teacher
+            } else if code == self.studentCode {
+                self.rolesByPeer[peerID] = .student
             } else {
                 invitationHandler(false, nil)
+                return
+            }
+            invitationHandler(true, self.session)
+            if let context = self.modelContext {
+                let name = peerID.displayName
+                let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
+                let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
+                if let existing = try? context.fetch(descriptor).first {
+                    existing.nickname = payload?.nickname ?? existing.nickname
+                    existing.role = self.rolesByPeer[peerID]?.rawValue ?? existing.role
+                    existing.lastConnected = .now
+                    existing.isConnected = true
+                } else {
+                    let info = ClientInfo(deviceName: name,
+                                          nickname: payload?.nickname ?? "",
+                                          role: self.rolesByPeer[peerID]?.rawValue ?? "",
+                                          ipAddress: nil,
+                                          lastConnected: .now,
+                                          isConnected: true)
+                    context.insert(info)
+                }
+                try? context.save()
             }
         }
     }
@@ -137,6 +192,13 @@ extension PeerConnectionManager: MCSessionDelegate {
             switch state {
             case .connected:
                 self.connectionStatus = "Connected to \(peerID.displayName)"
+                if let role = self.rolesByPeer[peerID] {
+                    let message = Message(type: "role", role: role.rawValue, students: nil, target: nil)
+                    if let data = try? JSONEncoder().encode(message) {
+                        try? session.send(data, toPeers: [peerID], with: .reliable)
+                    }
+                }
+                self.updateStudents()
                 if let context = self.modelContext {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
@@ -151,6 +213,8 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
                 self.connectionStatus = "Not Connected"
+                self.rolesByPeer.removeValue(forKey: peerID)
+                self.updateStudents()
                 if let context = self.modelContext {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
@@ -166,7 +230,34 @@ extension PeerConnectionManager: MCSessionDelegate {
         }
     }
 
-    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {}
+    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        Task { @MainActor in
+            guard let message = try? JSONDecoder().decode(Message.self, from: data) else { return }
+            switch message.type {
+            case "role":
+                if let r = message.role, let role = UserRole(rawValue: r) {
+                    self.myRole = role
+                }
+            case "students":
+                self.students = message.students ?? []
+            case "startClass":
+                self.classStarted = true
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+                    }
+                }
+            case "disconnect":
+                if let target = message.target {
+                    if self.advertiser != nil {
+                        self.disconnect(peerNamed: target)
+                    }
+                }
+            default:
+                break
+            }
+        }
+    }
     nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
     nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
     nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}

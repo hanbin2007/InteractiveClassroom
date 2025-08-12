@@ -8,28 +8,23 @@
 import SwiftUI
 
 #if os(iOS)
-/// Root view used on iOS and iPadOS to select and present the desired role.
+/// Root view for iOS and iPadOS clients.
 struct ContentView: View {
-    @State private var selectedRole: UserRole? = nil
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
 
     var body: some View {
         Group {
-            if let role = selectedRole {
+            if let role = connectionManager.myRole {
                 switch role {
-                case .screen:
-                    Text("Screen mode is available on macOS menu bar.")
-                        .padding()
                 case .teacher:
-                    NavigationStack {
-                        ServerConnectView(role: role)
-                    }
+                    NavigationStack { TeacherDashboardView() }
                 case .student:
-                    NavigationStack {
-                        ServerConnectView(role: role)
-                    }
+                    NavigationStack { StudentWaitingView() }
+                default:
+                    Text("Unsupported role")
                 }
             } else {
-                IdentitySelectionView(selection: $selectedRole)
+                NavigationStack { ServerConnectView() }
             }
         }
     }
@@ -37,5 +32,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(PeerConnectionManager())
 }
 #endif

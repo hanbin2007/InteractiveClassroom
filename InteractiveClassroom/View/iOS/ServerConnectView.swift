@@ -3,11 +3,12 @@ import MultipeerConnectivity
 
 #if os(iOS)
 struct ServerConnectView: View {
-    let role: UserRole
-    @StateObject private var connectionManager = PeerConnectionManager()
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
     @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var passcode: String = ""
     @State private var nickname: String = ""
+    @State private var showError: Bool = false
+    @State private var awaitingConnection: Bool = false
 
     var body: some View {
         VStack {
@@ -37,7 +38,8 @@ struct ServerConnectView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .textInputAutocapitalization(.never)
                 Button("Connect") {
-                    connectionManager.connect(to: peer, passcode: passcode, nickname: nickname, role: role)
+                    awaitingConnection = true
+                    connectionManager.connect(to: peer, passcode: passcode, nickname: nickname)
                     passcode = ""
                     nickname = ""
                     selectedPeer = nil
@@ -52,18 +54,30 @@ struct ServerConnectView: View {
             .padding()
             .presentationDetents([.medium])
         }
-        .onAppear {
-            connectionManager.startBrowsing()
+        .onAppear { connectionManager.startBrowsing() }
+        .onDisappear { connectionManager.stopBrowsing() }
+        .onChange(of: connectionManager.connectionStatus) { newValue in
+            if awaitingConnection {
+                if newValue == "Not Connected" {
+                    showError = true
+                    awaitingConnection = false
+                } else if newValue.contains("Connected") {
+                    awaitingConnection = false
+                }
+            }
         }
-        .onDisappear {
-            connectionManager.stopBrowsing()
+        .alert("Connection Failed", isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Invalid key code or teacher already connected.")
         }
     }
 }
 
 #Preview {
     NavigationStack {
-        ServerConnectView(role: .teacher)
+        ServerConnectView()
+            .environmentObject(PeerConnectionManager())
     }
 }
 #endif

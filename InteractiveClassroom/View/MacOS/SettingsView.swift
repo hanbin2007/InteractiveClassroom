@@ -15,8 +15,9 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Connection") {
-                if let code = connectionManager.hostCode {
-                    Text("Key: \(code)")
+                if let t = connectionManager.teacherCode, let s = connectionManager.studentCode {
+                    Text("Teacher Key: \(t)")
+                    Text("Student Key: \(s)")
                 }
                 Text(connectionManager.connectionStatus)
             }
