@@ -7,9 +7,9 @@ final class Course {
     /// Name of the course.
     var name: String
     /// Short introduction or description for the course.
-    var intro: String
+    var intro: String = ""
     /// Scheduled date and time for the course.
-    var scheduledAt: Date
+    var scheduledAt: Date = .now
     /// Lessons under this course.
     @Relationship(deleteRule: .cascade, inverse: \Lesson.course)
     var lessons: [Lesson] = []

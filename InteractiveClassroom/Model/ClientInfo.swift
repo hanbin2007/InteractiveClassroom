@@ -5,17 +5,17 @@ import SwiftData
 @Model
 final class ClientInfo {
     /// Device name reported by `MCPeerID`.
-    var deviceName: String
+    var deviceName: String = ""
     /// User provided nickname.
-    var nickname: String
+    var nickname: String = ""
     /// Chosen role (teacher or student).
-    var role: String
+    var role: String = ""
     /// IP address if available.
     var ipAddress: String?
     /// Last time the connection succeeded.
-    var lastConnected: Date
+    var lastConnected: Date = .now
     /// Indicates whether the client is currently connected.
-    var isConnected: Bool
+    var isConnected: Bool = true
     /// Course this client belongs to.
     var course: Course?
 

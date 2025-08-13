@@ -5,13 +5,13 @@ import SwiftData
 @Model
 final class Lesson {
     /// Title or topic of the lesson.
-    var title: String
+    var title: String = ""
     /// Sequence number within the course.
-    var number: Int
+    var number: Int = 0
     /// Detailed description of the lesson.
-    var intro: String
+    var intro: String = ""
     /// Date and time when the lesson occurs.
-    var scheduledAt: Date
+    var scheduledAt: Date = .now
     /// Raw data for answer statistics collected in this lesson.
     var answerData: Data?
     /// Raw data for student information collected in this lesson.

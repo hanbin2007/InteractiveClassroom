@@ -22,10 +22,21 @@ struct InteractiveClassroomApp: App {
         do {
             container = try ModelContainer(for: schema)
         } catch {
-            container = try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
             #if DEBUG
-            print("Failed to load persistent container: \(error). Using in-memory store.")
+            print("Unresolved error loading container \(error)")
             #endif
+            let storeURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("default.store")
+            if let url = storeURL {
+                try? FileManager.default.removeItem(at: url)
+            }
+            do {
+                container = try ModelContainer(for: schema)
+            } catch {
+                container = try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+                #if DEBUG
+                print("Failed to load persistent container: \(error). Using in-memory store.")
+                #endif
+            }
         }
         self.container = container
 
