@@ -17,15 +17,17 @@ struct InteractiveClassroomApp: App {
     private let container: ModelContainer
 
     init() {
-        let schema = Schema([Item.self, ClientInfo.self])
+        let schema = Schema([Item.self, ClientInfo.self, Course.self, Lesson.self])
         let container = try! ModelContainer(for: schema)
         self.container = container
 
         let context = ModelContext(container)
         let manager = PeerConnectionManager(modelContext: context)
         _connectionManager = StateObject(wrappedValue: manager)
-        // Start hosting as soon as the application launches so the server is immediately available.
-        manager.startHosting()
+#if os(macOS)
+        // Show selection window; hosting will start after course and lesson are chosen.
+        CourseSelectionWindowController.shared.show(container: container, connectionManager: manager)
+#endif
     }
 
     var body: some Scene {
