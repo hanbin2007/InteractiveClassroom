@@ -80,6 +80,17 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectionStatus = "Awaiting connection..."
     }
 
+    func stopHosting() {
+        advertiser?.stopAdvertisingPeer()
+        advertiser = nil
+        session.disconnect()
+        connectionStatus = "Not Connected"
+        teacherCode = nil
+        studentCode = nil
+        rolesByPeer.removeAll()
+        classStarted = false
+    }
+
     func startBrowsing() {
         browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
         browser?.delegate = self

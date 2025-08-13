@@ -17,7 +17,11 @@ struct ClientsListView: View {
             Text("Connected Clients")
                 .font(.title2)
 
-            if clients.isEmpty {
+            if connectionManager.currentCourse == nil {
+                Text("Please select a course")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .padding()
+            } else if clients.isEmpty {
                 Text("No clients connected")
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .padding()
