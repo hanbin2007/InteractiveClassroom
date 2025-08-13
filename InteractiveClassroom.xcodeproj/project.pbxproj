@@ -18,6 +18,12 @@
 			);
 			target = FDF4DBFE2E4B399A0023C996 /* InteractiveClassroom */;
 		};
+		2D8F6BED3F64493991C94176 /* Exceptions for "Controller" folder in "InteractiveClassroom" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+			);
+			target = FDF4DBFE2E4B399A0023C996 /* InteractiveClassroom */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -27,6 +33,14 @@
 				FDF4DCA72E4B566F0023C996 /* Exceptions for "InteractiveClassroom" folder in "InteractiveClassroom" target */,
 			);
 			path = InteractiveClassroom;
+			sourceTree = "<group>";
+		};
+		3D3B21363CD64DF3BF5DB955 /* Controller */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2D8F6BED3F64493991C94176 /* Exceptions for "Controller" folder in "InteractiveClassroom" target */,
+			);
+			path = Controller;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -45,6 +59,7 @@
 		FDF4DBF62E4B399A0023C996 = {
 			isa = PBXGroup;
 			children = (
+				3D3B21363CD64DF3BF5DB955 /* Controller */,
 				FDF4DC012E4B399A0023C996 /* InteractiveClassroom */,
 				FDF4DC002E4B399A0023C996 /* Products */,
 			);
@@ -74,6 +89,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				3D3B21363CD64DF3BF5DB955 /* Controller */,
 				FDF4DC012E4B399A0023C996 /* InteractiveClassroom */,
 			);
 			name = InteractiveClassroom;
