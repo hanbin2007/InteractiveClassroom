@@ -6,12 +6,20 @@ import SwiftData
 final class Course {
     /// Name of the course.
     var name: String
+    /// Short introduction or description for the course.
+    var intro: String = ""
+    /// Scheduled date and time for the course.
+    var scheduledAt: Date = Date()
     /// Lessons under this course.
-    @Relationship(deleteRule: .cascade) var lessons: [Lesson] = []
+    @Relationship(deleteRule: .cascade, inverse: \Lesson.course)
+    var lessons: [Lesson] = []
     /// Clients that joined this course.
-    @Relationship(deleteRule: .cascade) var clients: [ClientInfo] = []
+    @Relationship(deleteRule: .nullify, inverse: \ClientInfo.course)
+    var clients: [ClientInfo] = []
 
-    init(name: String) {
+    init(name: String, intro: String = "", scheduledAt: Date = Date()) {
         self.name = name
+        self.intro = intro
+        self.scheduledAt = scheduledAt
     }
 }
