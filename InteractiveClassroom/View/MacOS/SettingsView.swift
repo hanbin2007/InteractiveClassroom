@@ -39,9 +39,9 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(minWidth: 400, minHeight: 300)
+        // Ensure the connection manager uses the same model context as the settings view
         .onAppear {
             connectionManager.modelContext = modelContext
-            connectionManager.startHosting()
         }
     }
 }

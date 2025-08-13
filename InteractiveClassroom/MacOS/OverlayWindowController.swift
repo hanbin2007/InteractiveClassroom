@@ -40,10 +40,10 @@ final class TransparentOverlayWindow: NSPanel {
     }
 }
 
-/// Application delegate responsible for displaying the overlay on launch.
+/// Application delegate that defers overlay presentation until explicitly requested.
 final class OverlayAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        OverlayWindowController.shared.show()
+        // The overlay is shown only after the teacher starts the class.
     }
 }
 #endif
