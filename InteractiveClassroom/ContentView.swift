@@ -11,6 +11,7 @@ import SwiftUI
 /// Root view for iOS and iPadOS clients.
 struct ContentView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -25,6 +26,16 @@ struct ContentView: View {
                 }
             } else {
                 NavigationStack { ServerConnectView() }
+            }
+        }
+        .alert("Disconnected", isPresented: $connectionManager.serverDisconnected) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Connection to server lost.")
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .background, connectionManager.myRole != nil {
+                connectionManager.disconnectFromServer()
             }
         }
     }

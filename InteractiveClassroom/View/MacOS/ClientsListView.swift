@@ -8,6 +8,8 @@ struct ClientsListView: View {
     @Environment(\.modelContext) private var modelContext
     // Fetch clients ordered by most recent connection and animate updates for timely refreshes.
     @Query(sort: \ClientInfo.lastConnected, order: .reverse, animation: .default) private var allClients: [ClientInfo]
+    /// Timer used to periodically refresh connection status.
+    @State private var refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
     private var clients: [ClientInfo] {
         allClients.filter { $0.course?.persistentModelID == connectionManager.currentCourse?.persistentModelID }
     }
@@ -62,6 +64,16 @@ struct ClientsListView: View {
         }
         .padding()
         .frame(minWidth: 600, minHeight: 400)
+        // Refresh connected client state every five seconds.
+        .onReceive(refreshTimer) { _ in
+            connectionManager.refreshConnectedClients()
+        }
+        .onAppear {
+            connectionManager.refreshConnectedClients()
+        }
+        .onDisappear {
+            refreshTimer.upstream.connect().cancel()
+        }
     }
 }
 #endif

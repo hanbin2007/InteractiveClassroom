@@ -31,6 +31,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
+    /// Indicates that the client lost connection to the server.
+    @Published var serverDisconnected: Bool = false
     /// Currently selected course.
     @Published var currentCourse: Course?
     /// Currently selected lesson.
@@ -38,6 +40,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
+
+    /// Tracks whether the client initiated a disconnect to avoid user-facing alerts.
+    private var userInitiatedDisconnect = false
 
     /// Payload sent during connection containing passcode and nickname.
     private struct InvitationPayload: Codable {
@@ -78,6 +83,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
         connectionStatus = "Awaiting connection..."
+        refreshConnectedClients()
     }
 
     func stopHosting() {
@@ -107,6 +113,14 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let payload = InvitationPayload(passcode: passcode, nickname: nickname)
         let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
+    }
+
+    /// Gracefully disconnects from the current server and resets state.
+    func disconnectFromServer() {
+        guard advertiser == nil else { return }
+        userInitiatedDisconnect = true
+        session.disconnect()
+        connectionStatus = "Not Connected"
     }
 
     /// Disconnects from a specific peer based on its display name.
@@ -147,6 +161,20 @@ final class PeerConnectionManager: NSObject, ObservableObject {
             if let data = try? JSONEncoder().encode(message) {
                 try? session.send(data, toPeers: [teacherPeer], with: .reliable)
             }
+        }
+    }
+
+    /// Clears stale connection flags for clients.
+    /// Called on server start and periodically by the client list view.
+    func refreshConnectedClients() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
+        if let clients = try? context.fetch(descriptor) {
+            let activeNames = Set(session.connectedPeers.map { $0.displayName })
+            for client in clients where !activeNames.contains(client.deviceName) {
+                client.isConnected = false
+            }
+            try? context.save()
         }
     }
 }
@@ -243,9 +271,19 @@ extension PeerConnectionManager: MCSessionDelegate {
             case .connecting:
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
+                let actingAsClient = self.advertiser == nil
                 self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
+                if actingAsClient {
+                    if self.userInitiatedDisconnect {
+                        self.userInitiatedDisconnect = false
+                    } else {
+                        // Lost connection to the server; notify UI.
+                        self.serverDisconnected = true
+                    }
+                    self.myRole = nil
+                }
                 if let context = self.modelContext {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
