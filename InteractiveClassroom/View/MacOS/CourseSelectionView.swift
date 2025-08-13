@@ -11,7 +11,7 @@ struct CourseSelectionView: View {
     @State private var selectedLesson: Lesson?
 
     var lessons: [Lesson] {
-        selectedCourse?.lessons.sorted { $0.date < $1.date } ?? []
+        selectedCourse?.lessons.sorted { $0.scheduledAt < $1.scheduledAt } ?? []
     }
 
     var body: some View {

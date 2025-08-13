@@ -14,7 +14,7 @@ struct LessonManagerView: View {
                     .font(.title2)
                 Spacer()
                 Button("Add") {
-                    let lesson = Lesson(title: "New Lesson", course: course)
+                    let lesson = Lesson(title: "New Lesson", number: course.lessons.count + 1, course: course)
                     course.lessons.append(lesson)
                     try? modelContext.save()
                 }
@@ -25,17 +25,29 @@ struct LessonManagerView: View {
                     .padding()
             } else {
                 Table(course.lessons) {
-                    TableColumn("Title") { lesson in
-                        Text(lesson.title)
+                    TableColumn("No.") { lesson in
+                        Text("\(lesson.number)")
                     }
-                    TableColumn("Date") { lesson in
-                        Text(lesson.date, format: Date.FormatStyle(date: .numeric, time: .shortened))
+                    TableColumn("Title") { lesson in
+                        TextField("Lesson Title", text: Binding(
+                            get: { lesson.title },
+                            set: { lesson.title = $0 }
+                        ))
+                        .onSubmit { try? modelContext.save() }
+                    }
+                    TableColumn("Details") { lesson in
+                        Button("Edit") {
+                            LessonDetailWindowController.shared.show(lesson: lesson, container: modelContext.container)
+                        }
                     }
                     TableColumn("") { lesson in
                         Button(role: .destructive) {
                             if let index = course.lessons.firstIndex(of: lesson) {
                                 course.lessons.remove(at: index)
                                 modelContext.delete(lesson)
+                                for (idx, remain) in course.lessons.enumerated() {
+                                    remain.number = idx + 1
+                                }
                                 try? modelContext.save()
                             }
                         } label: {

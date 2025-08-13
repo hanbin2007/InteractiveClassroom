@@ -26,11 +26,20 @@ struct CourseManagerView: View {
             } else {
                 Table(courses) {
                     TableColumn("Name") { course in
-                        Text(course.name)
+                        TextField("Course Name", text: Binding(
+                            get: { course.name },
+                            set: { course.name = $0 }
+                        ))
+                        .onSubmit { try? modelContext.save() }
                     }
                     TableColumn("Lessons") { course in
                         Button("Manage") {
                             LessonManagerWindowController.shared.show(for: course, container: modelContext.container)
+                        }
+                    }
+                    TableColumn("Details") { course in
+                        Button("Edit") {
+                            CourseDetailWindowController.shared.show(course: course, container: modelContext.container)
                         }
                     }
                     TableColumn("") { course in
