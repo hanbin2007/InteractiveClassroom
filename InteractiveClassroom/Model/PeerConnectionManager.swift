@@ -31,6 +31,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
+    /// Indicates that the client lost connection to the server.
+    @Published var serverDisconnected: Bool = false
     /// Currently selected course.
     @Published var currentCourse: Course?
     /// Currently selected lesson.
@@ -243,9 +245,15 @@ extension PeerConnectionManager: MCSessionDelegate {
             case .connecting:
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
+                let actingAsClient = self.advertiser == nil
                 self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
+                if actingAsClient && self.myRole != nil {
+                    // Lost connection to the server; notify UI and reset role.
+                    self.serverDisconnected = true
+                    self.myRole = nil
+                }
                 if let context = self.modelContext {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }

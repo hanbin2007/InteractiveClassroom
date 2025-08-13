@@ -27,6 +27,11 @@ struct ContentView: View {
                 NavigationStack { ServerConnectView() }
             }
         }
+        .alert("Disconnected", isPresented: $connectionManager.serverDisconnected) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Connection to server lost.")
+        }
     }
 }
 
