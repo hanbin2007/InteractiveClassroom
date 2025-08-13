@@ -80,6 +80,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
         connectionStatus = "Awaiting connection..."
+        refreshConnectedClients()
     }
 
     func stopHosting() {
@@ -149,6 +150,19 @@ final class PeerConnectionManager: NSObject, ObservableObject {
             if let data = try? JSONEncoder().encode(message) {
                 try? session.send(data, toPeers: [teacherPeer], with: .reliable)
             }
+        }
+    }
+
+    /// Clears stale connection flags for clients when the server restarts.
+    private func refreshConnectedClients() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
+        if let clients = try? context.fetch(descriptor) {
+            let activeNames = Set(session.connectedPeers.map { $0.displayName })
+            for client in clients where !activeNames.contains(client.deviceName) {
+                client.isConnected = false
+            }
+            try? context.save()
         }
     }
 }
@@ -249,7 +263,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
-                if actingAsClient && self.myRole != nil {
+                if actingAsClient {
                     // Lost connection to the server; notify UI and reset role.
                     self.serverDisconnected = true
                     self.myRole = nil
