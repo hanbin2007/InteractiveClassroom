@@ -164,8 +164,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         }
     }
 
-    /// Clears stale connection flags for clients when the server restarts.
-    private func refreshConnectedClients() {
+    /// Clears stale connection flags for clients.
+    /// Called on server start and periodically by the client list view.
+    func refreshConnectedClients() {
         guard let context = modelContext else { return }
         let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
         if let clients = try? context.fetch(descriptor) {
