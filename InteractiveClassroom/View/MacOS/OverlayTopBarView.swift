@@ -5,22 +5,23 @@ import SwiftUI
 struct OverlayTopBarView: View {
     let questionType: String
     let remainingTime: String
-    private let padding: CGFloat = 32
+    @ScaledMetric private var horizontalPadding: CGFloat = 32
+    @ScaledMetric private var verticalPadding: CGFloat = 32
 
     var body: some View {
         VStack {
             HStack {
                 Text(questionType)
-                    .font(.system(size: 40, weight: .bold))
+                    .font(.largeTitle.weight(.bold))
                     .shadow(color: .black, radius: 2)
-                    .padding(.leading, padding)
-                    .padding(.top, padding)
+                    .padding(.leading, horizontalPadding)
+                    .padding(.top, verticalPadding)
                 Spacer()
                 Text(remainingTime)
-                    .font(.system(size: 40, weight: .bold))
+                    .font(.largeTitle.weight(.bold))
                     .shadow(color: .black, radius: 2)
-                    .padding(.trailing, padding)
-                    .padding(.top, padding)
+                    .padding(.trailing, horizontalPadding)
+                    .padding(.top, verticalPadding)
             }
             Spacer()
         }

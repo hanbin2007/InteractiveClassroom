@@ -4,7 +4,7 @@ import SwiftUI
 /// Right side list of students who submitted answers.
 struct OverlayNamesView: View {
     let names: [String]
-    private let padding: CGFloat = 32
+    @ScaledMetric private var trailingPadding: CGFloat = 32
 
     var body: some View {
         HStack {
@@ -16,7 +16,7 @@ struct OverlayNamesView: View {
                         .shadow(color: .black, radius: 1)
                 }
             }
-            .padding(.trailing, padding)
+            .padding(.trailing, trailingPadding)
         }
     }
 }

@@ -4,7 +4,7 @@ import SwiftUI
 /// Left side statistics for quiz results.
 struct OverlayStatsView: View {
     let stats: [String]
-    private let padding: CGFloat = 32
+    @ScaledMetric private var leadingPadding: CGFloat = 32
 
     var body: some View {
         HStack {
@@ -16,7 +16,7 @@ struct OverlayStatsView: View {
                             .shadow(color: .black, radius: 1)
                     }
                 }
-                .padding(.leading, padding)
+                .padding(.leading, leadingPadding)
             }
             Spacer()
         }
