@@ -18,7 +18,15 @@ struct InteractiveClassroomApp: App {
 
     init() {
         let schema = Schema([ClientInfo.self, Course.self, Lesson.self])
-        let container = try! ModelContainer(for: schema)
+        let container: ModelContainer
+        do {
+            container = try ModelContainer(for: schema)
+        } catch {
+            container = try! ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            #if DEBUG
+            print("Failed to load persistent container: \(error). Using in-memory store.")
+            #endif
+        }
         self.container = container
 
         let context = ModelContext(container)
