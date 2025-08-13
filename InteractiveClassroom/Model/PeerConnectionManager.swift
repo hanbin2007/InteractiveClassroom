@@ -34,9 +34,13 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
     /// Currently selected course.
-    @Published var currentCourse: Course?
+    @Published var currentCourse: Course? {
+        didSet { broadcastCurrentState() }
+    }
     /// Currently selected lesson.
-    @Published var currentLesson: Lesson?
+    @Published var currentLesson: Lesson? {
+        didSet { broadcastCurrentState() }
+    }
 
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
@@ -56,6 +60,36 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let role: String?
         let students: [String]?
         let target: String?
+        let course: CoursePayload?
+        let lesson: LessonPayload?
+
+        init(type: String,
+             role: String? = nil,
+             students: [String]? = nil,
+             target: String? = nil,
+             course: CoursePayload? = nil,
+             lesson: LessonPayload? = nil) {
+            self.type = type
+            self.role = role
+            self.students = students
+            self.target = target
+            self.course = course
+            self.lesson = lesson
+        }
+    }
+
+    /// Light-weight representation of a course for network transfer.
+    private struct CoursePayload: Codable {
+        let name: String
+        let intro: String
+        let scheduledAt: Date
+    }
+
+    /// Light-weight representation of a lesson for network transfer.
+    private struct LessonPayload: Codable {
+        let title: String
+        let intro: String
+        let scheduledAt: Date
     }
 
     init(modelContext: ModelContext? = nil, currentCourse: Course? = nil, currentLesson: Lesson? = nil) {
@@ -116,6 +150,20 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let payload = InvitationPayload(passcode: passcode, nickname: nickname)
         let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
+    }
+
+    /// Sends current course and lesson details to connected peers.
+    private func broadcastCurrentState(to peers: [MCPeerID]? = nil) {
+        guard advertiser != nil else { return }
+        let coursePayload = currentCourse.map { CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt) }
+        let lessonPayload = currentLesson.map { LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt) }
+        let message = Message(type: "state", course: coursePayload, lesson: lessonPayload)
+        if let data = try? JSONEncoder().encode(message) {
+            let targets = peers ?? session.connectedPeers
+            if !targets.isEmpty {
+                try? session.send(data, toPeers: targets, with: .reliable)
+            }
+        }
     }
 
     /// Gracefully disconnects from the current server and resets state.
@@ -260,6 +308,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                         try? session.send(data, toPeers: [peerID], with: .reliable)
                     }
                 }
+                self.broadcastCurrentState(to: [peerID])
                 self.updateStudents()
                 if let context = self.modelContext {
                     let name = peerID.displayName
@@ -329,6 +378,17 @@ extension PeerConnectionManager: MCSessionDelegate {
                     if self.advertiser != nil {
                         self.disconnect(peerNamed: target)
                     }
+                }
+            case "state":
+                if let course = message.course {
+                    self.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)
+                } else {
+                    self.currentCourse = nil
+                }
+                if let lesson = message.lesson {
+                    self.currentLesson = Lesson(title: lesson.title, number: 0, scheduledAt: lesson.scheduledAt, intro: lesson.intro)
+                } else {
+                    self.currentLesson = nil
                 }
             default:
                 break
