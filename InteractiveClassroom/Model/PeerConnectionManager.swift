@@ -95,6 +95,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         studentCode = nil
         rolesByPeer.removeAll()
         classStarted = false
+        #if os(macOS)
+        OverlayWindowController.shared.hide()
+        #endif
     }
 
     func startBrowsing() {

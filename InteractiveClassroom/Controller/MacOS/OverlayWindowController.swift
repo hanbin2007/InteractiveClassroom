@@ -15,6 +15,11 @@ final class OverlayWindowController {
         window?.orderFront(nil)
     }
 
+    /// Hides the overlay window if it is currently visible.
+    func hide() {
+        window?.orderOut(nil)
+    }
+
     private func createWindow() {
         let frame = NSScreen.main?.frame ?? .zero
         let panel = TransparentOverlayWindow(contentRect: frame)
