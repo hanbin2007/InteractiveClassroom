@@ -5,7 +5,7 @@ import SwiftData
 /// Lists lessons for a specific course and allows CRUD operations.
 struct LessonManagerView: View {
     @Environment(\.modelContext) private var modelContext
-    @ObservedObject var course: Course
+    @Bindable var course: Course
 
     var body: some View {
         VStack(alignment: .leading) {

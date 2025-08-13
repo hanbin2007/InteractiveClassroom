@@ -7,9 +7,9 @@ final class Course {
     /// Name of the course.
     var name: String
     /// Lessons under this course.
-    @Relationship(deleteRule: .cascade, inverse: \Lesson.course) var lessons: [Lesson] = []
+    @Relationship(deleteRule: .cascade) var lessons: [Lesson] = []
     /// Clients that joined this course.
-    @Relationship(deleteRule: .cascade, inverse: \ClientInfo.course) var clients: [ClientInfo] = []
+    @Relationship(deleteRule: .cascade) var clients: [ClientInfo] = []
 
     init(name: String) {
         self.name = name
