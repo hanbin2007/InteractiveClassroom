@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var shuffleOptions: Bool = false
     @State private var allowModification: Bool = true
     @State private var score: Int = 1
+    @AppStorage("overlayFontScale") private var overlayFontScale: Double = 1.0
 
     var body: some View {
         Form {
@@ -35,6 +36,14 @@ struct SettingsView: View {
             }
             Section("Export") {
                 Button("Export Results") {}
+            }
+            Section("Overlay") {
+                HStack {
+                    Text("Font Scale")
+                    Slider(value: $overlayFontScale, in: 0.5...2.0, step: 0.1)
+                    Text("\(overlayFontScale, specifier: "%.1f")x")
+                        .frame(width: 40, alignment: .trailing)
+                }
             }
         }
         .padding(20)
