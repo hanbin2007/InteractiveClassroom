@@ -41,8 +41,4 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    ContentView()
-        .environmentObject(PeerConnectionManager())
-}
 #endif
