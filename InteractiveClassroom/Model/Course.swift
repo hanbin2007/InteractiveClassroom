@@ -11,9 +11,9 @@ final class Course {
     /// Scheduled date and time for the course.
     var scheduledAt: Date
     /// Lessons under this course.
-    @Relationship(deleteRule: .cascade) var lessons: [Lesson] = []
+    @Relationship(deleteRule: .cascade, inverse: \Lesson.course) var lessons: [Lesson] = []
     /// Clients that joined this course.
-    @Relationship(deleteRule: .cascade) var clients: [ClientInfo] = []
+    @Relationship(deleteRule: .cascade, inverse: \ClientInfo.course) var clients: [ClientInfo] = []
 
     init(name: String, intro: String = "", scheduledAt: Date = .now) {
         self.name = name

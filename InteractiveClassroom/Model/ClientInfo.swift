@@ -17,7 +17,7 @@ final class ClientInfo {
     /// Indicates whether the client is currently connected.
     var isConnected: Bool
     /// Course this client belongs to.
-    @Relationship var course: Course?
+    @Relationship(inverse: \Course.clients) var course: Course?
 
     init(deviceName: String,
          nickname: String,
