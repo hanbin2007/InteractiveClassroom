@@ -17,7 +17,7 @@ final class Lesson {
     /// Raw data for student information collected in this lesson.
     var studentData: Data?
     /// Associated course.
-    @Relationship(inverse: \Course.lessons) var course: Course?
+    var course: Course?
 
     init(title: String, number: Int, scheduledAt: Date = .now, intro: String = "", course: Course? = nil, answerData: Data? = nil, studentData: Data? = nil) {
         self.title = title
