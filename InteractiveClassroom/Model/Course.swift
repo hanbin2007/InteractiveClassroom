@@ -9,7 +9,7 @@ final class Course {
     /// Short introduction or description for the course.
     var intro: String = ""
     /// Scheduled date and time for the course.
-    var scheduledAt: Date = .now
+    var scheduledAt: Date = Date()
     /// Lessons under this course.
     @Relationship(deleteRule: .cascade, inverse: \Lesson.course)
     var lessons: [Lesson] = []
@@ -17,7 +17,7 @@ final class Course {
     @Relationship(deleteRule: .nullify, inverse: \ClientInfo.course)
     var clients: [ClientInfo] = []
 
-    init(name: String, intro: String = "", scheduledAt: Date = .now) {
+    init(name: String, intro: String = "", scheduledAt: Date = Date()) {
         self.name = name
         self.intro = intro
         self.scheduledAt = scheduledAt

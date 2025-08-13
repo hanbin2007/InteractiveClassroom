@@ -13,7 +13,7 @@ final class ClientInfo {
     /// IP address if available.
     var ipAddress: String?
     /// Last time the connection succeeded.
-    var lastConnected: Date = .now
+    var lastConnected: Date = Date()
     /// Indicates whether the client is currently connected.
     var isConnected: Bool = true
     /// Course this client belongs to.
@@ -23,7 +23,7 @@ final class ClientInfo {
          nickname: String,
          role: String,
          ipAddress: String? = nil,
-         lastConnected: Date = .now,
+         lastConnected: Date = Date(),
          isConnected: Bool = true,
          course: Course? = nil) {
         self.deviceName = deviceName
