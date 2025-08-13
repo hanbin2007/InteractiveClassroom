@@ -15,6 +15,14 @@ struct MenuBarView: View {
         Button("Clients") {
             ClientsWindowController.shared.show(container: modelContext.container, connectionManager: connectionManager)
         }
+        Button("Courses") {
+            CourseManagerWindowController.shared.show(container: modelContext.container)
+        }
+        Button("Lessons") {
+            if let course = connectionManager.currentCourse {
+                LessonManagerWindowController.shared.show(for: course, container: modelContext.container)
+            }
+        }
         if #available(macOS 13, *) {
             SettingsLink {
                 Text("Settings")

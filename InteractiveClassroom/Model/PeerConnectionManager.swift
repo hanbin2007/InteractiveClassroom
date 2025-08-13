@@ -31,6 +31,10 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
+    /// Currently selected course.
+    @Published var currentCourse: Course?
+    /// Currently selected lesson.
+    @Published var currentLesson: Lesson?
 
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
@@ -49,8 +53,10 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let target: String?
     }
 
-    init(modelContext: ModelContext? = nil) {
+    init(modelContext: ModelContext? = nil, currentCourse: Course? = nil, currentLesson: Lesson? = nil) {
         self.modelContext = modelContext
+        self.currentCourse = currentCourse
+        self.currentLesson = currentLesson
 #if os(macOS)
         myPeerID = MCPeerID(displayName: Host.current().localizedName ?? "macOS")
 #else
@@ -157,20 +163,25 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
             invitationHandler(true, self.session)
             if let context = self.modelContext {
                 let name = peerID.displayName
+                // Fetch all clients with the same device name and update the one matching the current course.
                 let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
                 let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
-                if let existing = try? context.fetch(descriptor).first {
+                let results = (try? context.fetch(descriptor)) ?? []
+                let existing = results.first { $0.course?.persistentModelID == self.currentCourse?.persistentModelID }
+                if let existing {
                     existing.nickname = payload?.nickname ?? existing.nickname
                     existing.role = self.rolesByPeer[peerID]?.rawValue ?? existing.role
                     existing.lastConnected = .now
                     existing.isConnected = true
+                    existing.course = self.currentCourse
                 } else {
                     let info = ClientInfo(deviceName: name,
                                           nickname: payload?.nickname ?? "",
                                           role: self.rolesByPeer[peerID]?.rawValue ?? "",
                                           ipAddress: nil,
                                           lastConnected: .now,
-                                          isConnected: true)
+                                          isConnected: true,
+                                          course: self.currentCourse)
                     context.insert(info)
                 }
                 try? context.save()

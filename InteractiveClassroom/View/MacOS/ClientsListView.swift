@@ -7,7 +7,10 @@ struct ClientsListView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @Environment(\.modelContext) private var modelContext
     // Fetch clients ordered by most recent connection and animate updates for timely refreshes.
-    @Query(sort: \ClientInfo.lastConnected, order: .reverse, animation: .default) private var clients: [ClientInfo]
+    @Query(sort: \ClientInfo.lastConnected, order: .reverse, animation: .default) private var allClients: [ClientInfo]
+    private var clients: [ClientInfo] {
+        allClients.filter { $0.course?.persistentModelID == connectionManager.currentCourse?.persistentModelID }
+    }
 
     var body: some View {
         VStack(alignment: .leading) {

@@ -16,18 +16,22 @@ final class ClientInfo {
     var lastConnected: Date
     /// Indicates whether the client is currently connected.
     var isConnected: Bool
+    /// Course this client belongs to.
+    @Relationship(inverse: \Course.clients) var course: Course?
 
     init(deviceName: String,
          nickname: String,
          role: String,
          ipAddress: String? = nil,
          lastConnected: Date = .now,
-         isConnected: Bool = true) {
+         isConnected: Bool = true,
+         course: Course? = nil) {
         self.deviceName = deviceName
         self.nickname = nickname
         self.role = role
         self.ipAddress = ipAddress
         self.lastConnected = lastConnected
         self.isConnected = isConnected
+        self.course = course
     }
 }
