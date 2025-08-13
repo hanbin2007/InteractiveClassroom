@@ -73,12 +73,5 @@ struct ServerConnectView: View {
         }
     }
 }
-
-#Preview {
-    NavigationStack {
-        ServerConnectView()
-            .environmentObject(PeerConnectionManager())
-    }
-}
 #endif
 

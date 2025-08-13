@@ -17,7 +17,7 @@ struct InteractiveClassroomApp: App {
     private let container: ModelContainer
 
     init() {
-        let schema = Schema([Item.self, ClientInfo.self, Course.self, Lesson.self])
+        let schema = Schema([ClientInfo.self, Course.self, Lesson.self])
         let container = try! ModelContainer(for: schema)
         self.container = container
 
