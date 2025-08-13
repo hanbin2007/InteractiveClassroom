@@ -41,6 +41,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
 
+    /// Tracks whether the client initiated a disconnect to avoid user-facing alerts.
+    private var userInitiatedDisconnect = false
+
     /// Payload sent during connection containing passcode and nickname.
     private struct InvitationPayload: Codable {
         let passcode: String
@@ -110,6 +113,14 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let payload = InvitationPayload(passcode: passcode, nickname: nickname)
         let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
+    }
+
+    /// Gracefully disconnects from the current server and resets state.
+    func disconnectFromServer() {
+        guard advertiser == nil else { return }
+        userInitiatedDisconnect = true
+        session.disconnect()
+        connectionStatus = "Not Connected"
     }
 
     /// Disconnects from a specific peer based on its display name.
@@ -264,8 +275,12 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
                 if actingAsClient {
-                    // Lost connection to the server; notify UI and reset role.
-                    self.serverDisconnected = true
+                    if self.userInitiatedDisconnect {
+                        self.userInitiatedDisconnect = false
+                    } else {
+                        // Lost connection to the server; notify UI.
+                        self.serverDisconnected = true
+                    }
                     self.myRole = nil
                 }
                 if let context = self.modelContext {
