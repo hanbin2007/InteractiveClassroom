@@ -4,9 +4,6 @@ import SwiftData
 #if canImport(UIKit)
 import UIKit
 #endif
-#if os(macOS)
-import AppKit
-#endif
 
 @MainActor
 final class PeerConnectionManager: NSObject, ObservableObject {
@@ -137,9 +134,6 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         studentCode = nil
         rolesByPeer.removeAll()
         classStarted = false
-        #if os(macOS)
-        OverlayWindowController.shared.hide()
-        #endif
     }
 
     func startBrowsing() {
@@ -207,12 +201,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         if let data = try? JSONEncoder().encode(message) {
             try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
         }
-        #if os(macOS)
-        // If acting as the server, show the overlay when the teacher starts the class.
-        if advertiser != nil {
-            OverlayWindowController.shared.show()
-        }
-        #endif
+        // macOS overlay window presentation is now handled by SwiftUI state.
     }
 
     /// Updates the internal student list and notifies the teacher if connected.
@@ -377,11 +366,6 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.students = message.students ?? []
             case "startClass":
                 self.classStarted = true
-                #if os(macOS)
-                if self.advertiser != nil {
-                    OverlayWindowController.shared.show()
-                }
-                #endif
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
                         try? session.send(data, toPeers: session.connectedPeers, with: .reliable)

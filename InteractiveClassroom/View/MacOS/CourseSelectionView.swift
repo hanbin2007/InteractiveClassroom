@@ -6,6 +6,7 @@ import SwiftData
 struct CourseSelectionView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query(sort: \Course.name, animation: .default) private var courses: [Course]
     @State private var selectedCourse: Course?
     @State private var selectedLesson: Lesson?
@@ -38,7 +39,7 @@ struct CourseSelectionView: View {
                         connectionManager.currentCourse = course
                         connectionManager.currentLesson = lesson
                         connectionManager.startHosting()
-                        CourseSelectionWindowController.shared.close()
+                        dismiss()
                     }
                     .disabled(selectedCourse == nil || selectedLesson == nil)
                 }

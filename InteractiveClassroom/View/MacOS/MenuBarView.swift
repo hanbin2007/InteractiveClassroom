@@ -1,19 +1,16 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
-import SwiftData
 
 /// Content displayed in the menu bar extra for macOS builds.
 struct MenuBarView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         if connectionManager.currentLesson == nil {
             Button("Start Class") {
-                if let container = connectionManager.modelContext?.container {
-                    CourseSelectionWindowController.shared.show(container: container,
-                                                               connectionManager: connectionManager)
-                }
+                openWindow(id: "courseSelection")
             }
         } else {
             Button("End Class") {
@@ -23,18 +20,13 @@ struct MenuBarView: View {
             }
         }
         Button("Show Screen") {
-            OverlayWindowController.shared.show()
+            openWindow(id: "overlay")
         }
         Button("Clients") {
-            if let container = connectionManager.modelContext?.container {
-                ClientsWindowController.shared.show(container: container,
-                                                   connectionManager: connectionManager)
-            }
+            openWindow(id: "clients")
         }
         Button("Courses") {
-            if let container = connectionManager.modelContext?.container {
-                CourseManagerWindowController.shared.show(container: container)
-            }
+            openWindow(id: "courseManager")
         }
         if #available(macOS 13, *) {
             SettingsLink {
