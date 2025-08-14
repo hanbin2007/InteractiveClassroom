@@ -14,9 +14,21 @@ struct ServerConnectView: View {
     var body: some View {
         VStack {
             List(viewModel.availablePeers) { peer in
-                Button(peer.peerID.displayName) {
-                    selectedPeer = peer
+                HStack {
+                    Text(peer.peerID.displayName)
+                    Spacer()
+                    Button {
+                        connectionManager.disconnectFromServer()
+                        navigateToTeacher = false
+                        navigateToStudent = false
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Disconnect")
                 }
+                .contentShape(Rectangle())
+                .onTapGesture { selectedPeer = peer }
             }
             .overlay {
                 if viewModel.availablePeers.isEmpty {

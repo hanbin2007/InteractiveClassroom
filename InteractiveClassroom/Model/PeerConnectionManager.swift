@@ -178,6 +178,11 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         userInitiatedDisconnect = true
         session.disconnect()
         connectionStatus = "Not Connected"
+        myRole = nil
+        students.removeAll()
+        classStarted = false
+        currentCourse = nil
+        currentLesson = nil
     }
 
     /// Disconnects from a specific peer based on its display name.
