@@ -32,7 +32,7 @@ struct LessonDetailView: View {
     }
 }
 #Preview {
-    LessonDetailView(lesson: Lesson(title: "Preview Lesson", number: 1))
-        .modelContainer(for: [Lesson.self], inMemory: true)
+    LessonDetailView(lesson: PreviewSampleData.sampleLessons.first!)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

@@ -31,7 +31,7 @@ struct CourseDetailView: View {
     }
 }
 #Preview {
-    CourseDetailView(course: Course(name: "Preview Course"))
-        .modelContainer(for: [Course.self], inMemory: true)
+    CourseDetailView(course: PreviewSampleData.sampleCourse)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

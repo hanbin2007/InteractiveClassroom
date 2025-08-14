@@ -70,12 +70,8 @@ struct LessonManagerView: View {
 }
 #Preview {
     NavigationStack {
-        LessonManagerView(course: {
-            let course = Course(name: "Preview Course")
-            course.lessons.append(Lesson(title: "Lesson 1", number: 1, course: course))
-            return course
-        }())
+        LessonManagerView(course: PreviewSampleData.sampleCourse)
     }
-    .modelContainer(for: [Course.self, Lesson.self], inMemory: true)
+    .modelContainer(PreviewSampleData.container)
 }
 #endif

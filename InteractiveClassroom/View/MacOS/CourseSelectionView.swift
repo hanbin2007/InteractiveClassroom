@@ -51,7 +51,7 @@ struct CourseSelectionView: View {
 }
 #Preview {
     CourseSelectionView()
-        .environmentObject(PeerConnectionManager())
-        .modelContainer(for: [Course.self, Lesson.self, ClientInfo.self], inMemory: true)
+        .environmentObject(PreviewSampleData.connectionManager)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

@@ -57,12 +57,7 @@ struct SettingsView: View {
 }
 #Preview {
     SettingsView()
-        .environmentObject({
-            let manager = PeerConnectionManager()
-            manager.teacherCode = "123456"
-            manager.studentCode = "654321"
-            return manager
-        }())
-        .modelContainer(for: [ClientInfo.self, Course.self, Lesson.self], inMemory: true)
+        .environmentObject(PreviewSampleData.connectionManager)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

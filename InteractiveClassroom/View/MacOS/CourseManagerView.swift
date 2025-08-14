@@ -68,6 +68,6 @@ struct CourseManagerView: View {
 }
 #Preview {
     CourseManagerView()
-        .modelContainer(for: [Course.self, Lesson.self], inMemory: true)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

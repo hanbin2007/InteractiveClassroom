@@ -78,11 +78,7 @@ struct ClientsListView: View {
 }
 #Preview {
     ClientsListView()
-        .environmentObject({
-            let manager = PeerConnectionManager()
-            manager.currentCourse = Course(name: "Preview Course")
-            return manager
-        }())
-        .modelContainer(for: [ClientInfo.self, Course.self, Lesson.self], inMemory: true)
+        .environmentObject(PreviewSampleData.connectionManager)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif
