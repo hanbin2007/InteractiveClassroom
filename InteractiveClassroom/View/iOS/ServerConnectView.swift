@@ -22,7 +22,7 @@ struct ServerConnectView: View {
                         navigateToTeacher = false
                         navigateToStudent = false
                     } label: {
-                        Image(systemName: "xmark.circle")
+                        Image(systemName: "personalhotspot.slash")
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Disconnect")
