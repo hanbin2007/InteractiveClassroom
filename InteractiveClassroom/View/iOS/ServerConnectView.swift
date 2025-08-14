@@ -8,12 +8,36 @@ struct ServerConnectView: View {
     @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var passcode: String = ""
     @State private var nickname: String = ""
+    @State private var navigateToTeacher = false
+    @State private var navigateToStudent = false
+    @State private var pendingPeer: PeerConnectionManager.Peer?
+    @State private var showDisconnectAlert = false
 
     var body: some View {
         VStack {
             List(viewModel.availablePeers) { peer in
-                Button(peer.peerID.displayName) {
-                    selectedPeer = peer
+                HStack {
+                    Text(peer.peerID.displayName)
+                    Spacer()
+                    if connectionManager.isConnected(to: peer) {
+                        Image(systemName: "checkmark.circle")
+                            .foregroundColor(.green)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    handlePeerTap(peer)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if connectionManager.isConnected(to: peer) {
+                        Button(role: .destructive) {
+                            connectionManager.disconnectFromServer()
+                            navigateToTeacher = false
+                            navigateToStudent = false
+                        } label: {
+                            Label("Disconnect", systemImage: "xmark.circle")
+                        }
+                    }
                 }
             }
             .overlay {
@@ -24,6 +48,13 @@ struct ServerConnectView: View {
             }
             Text(viewModel.connectionStatus)
                 .padding()
+        }
+        // Navigation destinations for assigned roles
+        .navigationDestination(isPresented: $navigateToTeacher) {
+            TeacherDashboardView()
+        }
+        .navigationDestination(isPresented: $navigateToStudent) {
+            StudentWaitingView()
         }
         .navigationTitle("Select Server")
         .sheet(item: $selectedPeer) { peer in
@@ -62,7 +93,53 @@ struct ServerConnectView: View {
         } message: {
             Text("Invalid key code or teacher already connected.")
         }
+        .alert("Disconnect from current server?", isPresented: $showDisconnectAlert) {
+            Button("Cancel", role: .cancel) { pendingPeer = nil }
+            Button("Disconnect", role: .destructive) {
+                connectionManager.disconnectFromServer()
+                if let peer = pendingPeer {
+                    // Delay presenting passcode sheet to allow disconnect to settle
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        selectedPeer = peer
+                    }
+                }
+                pendingPeer = nil
+            }
+        } message: {
+            Text("You are currently connected. Disconnect to join another server?")
+        }
+        .onChange(of: connectionManager.myRole) { _, role in
+            if let role = role {
+                navigateToTeacher = role == .teacher
+                navigateToStudent = role == .student
+            } else {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
+        }
+        .onChange(of: connectionManager.connectedServer) { _, server in
+            if server == nil {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
+        }
     }
+
+    /// Handles taps on a server row, respecting existing connections.
+    private func handlePeerTap(_ peer: PeerConnectionManager.Peer) {
+        if connectionManager.isConnected(to: peer) {
+            if let role = connectionManager.myRole {
+                navigateToTeacher = role == .teacher
+                navigateToStudent = role == .student
+            }
+        } else if connectionManager.connectedServer != nil {
+            pendingPeer = peer
+            showDisconnectAlert = true
+        } else {
+            selectedPeer = peer
+        }
+    }
+
 }
 #Preview {
     NavigationStack {

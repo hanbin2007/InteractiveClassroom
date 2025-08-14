@@ -53,10 +53,15 @@ struct LessonManagerView: View {
         .frame(minWidth: 600, minHeight: 400)
         .navigationTitle("Lessons for \(course.name)")
         .toolbar {
-            Button("Add") {
-                let lesson = Lesson(title: "New Lesson", number: course.lessons.count + 1, course: course)
-                course.lessons.append(lesson)
-                try? modelContext.save()
+            ToolbarItem {
+                Button {
+                    let lesson = Lesson(title: "New Lesson", number: course.lessons.count + 1, course: course)
+                    course.lessons.append(lesson)
+                    try? modelContext.save()
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel("Add Lesson")
             }
         }
         .sheet(item: $editingLesson) { lesson in

@@ -30,6 +30,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var classStarted: Bool = false
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
+    /// Currently connected server when acting as a client.
+    @Published private(set) var connectedServer: MCPeerID?
     /// Currently selected course.
     @Published var currentCourse: Course? {
         didSet { broadcastCurrentState() }
@@ -158,6 +160,11 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
     }
 
+    /// Indicates whether the client is already connected to the specified peer.
+    func isConnected(to peer: Peer) -> Bool {
+        connectedServer == peer.peerID
+    }
+
     /// Sends current course and lesson details to connected peers.
     private func broadcastCurrentState(to peers: [MCPeerID]? = nil) {
         guard advertiser != nil else { return }
@@ -178,6 +185,12 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         userInitiatedDisconnect = true
         session.disconnect()
         connectionStatus = "Not Connected"
+        myRole = nil
+        students.removeAll()
+        classStarted = false
+        currentCourse = nil
+        currentLesson = nil
+        connectedServer = nil
     }
 
     /// Disconnects from a specific peer based on its display name.
@@ -303,6 +316,9 @@ extension PeerConnectionManager: MCSessionDelegate {
             switch state {
             case .connected:
                 self.connectionStatus = "Connected to \(peerID.displayName)"
+                if self.advertiser == nil {
+                    self.connectedServer = peerID
+                }
                 if let role = self.rolesByPeer[peerID] {
                     let message = Message(type: "role", role: role.rawValue, students: nil, target: nil)
                     if let data = try? JSONEncoder().encode(message) {
@@ -329,6 +345,9 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
                 if actingAsClient {
+                    if self.connectedServer == peerID {
+                        self.connectedServer = nil
+                    }
                     if self.userInitiatedDisconnect {
                         self.userInitiatedDisconnect = false
                     } else if self.myRole != nil {
