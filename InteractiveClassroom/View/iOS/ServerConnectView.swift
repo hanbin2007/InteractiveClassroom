@@ -85,10 +85,7 @@ struct ServerConnectView: View {
         .onAppear {
             viewModel.bind(to: connectionManager)
             viewModel.startBrowsing()
-            if let role = connectionManager.myRole {
-                navigateToTeacher = role == .teacher
-                navigateToStudent = role == .student
-            }
+            restoreNavigationIfNeeded()
         }
         .onDisappear { viewModel.stopBrowsing() }
         .alert("Connection Failed", isPresented: $viewModel.showError) {
@@ -111,9 +108,17 @@ struct ServerConnectView: View {
         } message: {
             Text("You are currently connected. Disconnect to join another server?")
         }
-        .onChange(of: connectionManager.myRole) { role in
-            navigateToTeacher = role == .teacher
-            navigateToStudent = role == .student
+        .onChange(of: connectionManager.myRole) { _ in
+            restoreNavigationIfNeeded()
+        }
+        .onChange(of: connectionManager.connectedServer) { _ in
+            restoreNavigationIfNeeded()
+        }
+        .onChange(of: navigateToTeacher) { active in
+            if !active { restoreNavigationIfNeeded() }
+        }
+        .onChange(of: navigateToStudent) { active in
+            if !active { restoreNavigationIfNeeded() }
         }
     }
 
@@ -130,6 +135,14 @@ struct ServerConnectView: View {
         } else {
             selectedPeer = peer
         }
+    }
+
+    /// Navigates to the appropriate role view when already connected.
+    private func restoreNavigationIfNeeded() {
+        guard connectionManager.connectedServer != nil,
+              let role = connectionManager.myRole else { return }
+        navigateToTeacher = role == .teacher
+        navigateToStudent = role == .student
     }
 }
 #Preview {
