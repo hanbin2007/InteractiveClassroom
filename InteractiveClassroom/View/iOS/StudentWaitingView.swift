@@ -4,6 +4,7 @@ import SwiftUI
 /// Displays a waiting screen for students along with current course and lesson information.
 struct StudentWaitingView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @StateObject private var viewModel = StudentWaitingViewModel()
 
     var body: some View {
         ScrollView {
@@ -11,7 +12,7 @@ struct StudentWaitingView: View {
                 statusSection
 
                 GroupBox("Current Course") {
-                    if let course = connectionManager.currentCourse {
+                    if let course = viewModel.currentCourse {
                         CourseInfoView(course: course)
                     } else {
                         Text("Course information unavailable")
@@ -21,7 +22,7 @@ struct StudentWaitingView: View {
                 }
 
                 GroupBox("Current Lesson") {
-                    if let lesson = connectionManager.currentLesson {
+                    if let lesson = viewModel.currentLesson {
                         LessonInfoView(lesson: lesson)
                     } else {
                         Text("Lesson information unavailable")
@@ -33,12 +34,13 @@ struct StudentWaitingView: View {
             .padding()
         }
         .navigationTitle("Waiting")
+        .onAppear { viewModel.bind(to: connectionManager) }
     }
 
     /// Shows whether the class has started yet.
     private var statusSection: some View {
         Group {
-            if connectionManager.classStarted {
+            if viewModel.classStarted {
                 Text("Class has started.")
                     .font(.title2)
                     .frame(maxWidth: .infinity, alignment: .leading)

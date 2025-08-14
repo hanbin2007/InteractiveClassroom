@@ -10,9 +10,6 @@ import SwiftData
 
 @main
 struct InteractiveClassroomApp: App {
-#if os(macOS)
-    @NSApplicationDelegateAdaptor(OverlayAppDelegate.self) var appDelegate
-#endif
     @StateObject private var connectionManager: PeerConnectionManager
     private let container: ModelContainer
 
@@ -43,10 +40,6 @@ struct InteractiveClassroomApp: App {
         let context = ModelContext(container)
         let manager = PeerConnectionManager(modelContext: context)
         _connectionManager = StateObject(wrappedValue: manager)
-#if os(macOS)
-        // Show selection window; hosting will start after course and lesson are chosen.
-        CourseSelectionWindowController.shared.show(container: container, connectionManager: manager)
-#endif
     }
 
     var body: some Scene {
@@ -59,6 +52,23 @@ struct InteractiveClassroomApp: App {
         Settings {
             SettingsView()
                 .environmentObject(connectionManager)
+        }
+        .modelContainer(container)
+        WindowGroup(id: "courseSelection") {
+            CourseSelectionView()
+                .environmentObject(connectionManager)
+        }
+        .modelContainer(container)
+        WindowGroup(id: "overlay") {
+            ScreenOverlayView()
+        }
+        WindowGroup(id: "clients") {
+            ClientsListView()
+                .environmentObject(connectionManager)
+        }
+        .modelContainer(container)
+        WindowGroup(id: "courseManager") {
+            CourseManagerView()
         }
         .modelContainer(container)
 #else
