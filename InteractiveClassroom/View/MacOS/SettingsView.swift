@@ -1,5 +1,6 @@
 #if os(macOS)
 import SwiftUI
+import SwiftData
 
 /// Settings used to configure how questions are presented and scored.
 struct SettingsView: View {
@@ -53,5 +54,15 @@ struct SettingsView: View {
             connectionManager.modelContext = modelContext
         }
     }
+}
+#Preview {
+    let manager = PeerConnectionManager()
+    manager.teacherCode = "123456"
+    manager.studentCode = "654321"
+    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: [ClientInfo.self, Course.self, Lesson.self], configurations: configuration)
+    return SettingsView()
+        .environmentObject(manager)
+        .modelContainer(container)
 }
 #endif

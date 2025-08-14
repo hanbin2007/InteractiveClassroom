@@ -58,4 +58,12 @@ struct CourseManagerView: View {
         .frame(minWidth: 600, minHeight: 400)
     }
 }
+#Preview {
+    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: [Course.self, Lesson.self], configurations: configuration)
+    let context = container.mainContext
+    context.insert(Course(name: "Preview Course"))
+    return CourseManagerView()
+        .modelContainer(container)
+}
 #endif

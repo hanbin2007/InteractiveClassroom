@@ -23,4 +23,13 @@ struct LessonDetailView: View {
         }
     }
 }
+#Preview {
+    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: [Lesson.self], configurations: configuration)
+    let context = container.mainContext
+    let lesson = Lesson(title: "Preview Lesson", number: 1)
+    context.insert(lesson)
+    return LessonDetailView(lesson: lesson)
+        .modelContainer(container)
+}
 #endif
