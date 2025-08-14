@@ -77,15 +77,12 @@ struct ClientsListView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    manager.currentCourse = Course(name: "Preview Course")
-    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: [ClientInfo.self, Course.self, Lesson.self], configurations: configuration)
-    let context = container.mainContext
-    let client = ClientInfo(deviceName: "iPhone", nickname: "Alice", role: "student", course: manager.currentCourse)
-    context.insert(client)
     ClientsListView()
-        .environmentObject(manager)
-        .modelContainer(container)
+        .environmentObject({
+            let manager = PeerConnectionManager()
+            manager.currentCourse = Course(name: "Preview Course")
+            return manager
+        }())
+        .modelContainer(for: [ClientInfo.self, Course.self, Lesson.self], inMemory: true)
 }
 #endif

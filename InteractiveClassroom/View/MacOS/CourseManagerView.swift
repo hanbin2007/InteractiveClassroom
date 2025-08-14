@@ -67,11 +67,7 @@ struct CourseManagerView: View {
     }
 }
 #Preview {
-    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: [Course.self, Lesson.self], configurations: configuration)
-    let context = container.mainContext
-    context.insert(Course(name: "Preview Course"))
     CourseManagerView()
-        .modelContainer(container)
+        .modelContainer(for: [Course.self, Lesson.self], inMemory: true)
 }
 #endif

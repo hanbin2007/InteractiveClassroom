@@ -56,13 +56,13 @@ struct SettingsView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    manager.teacherCode = "123456"
-    manager.studentCode = "654321"
-    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: [ClientInfo.self, Course.self, Lesson.self], configurations: configuration)
     SettingsView()
-        .environmentObject(manager)
-        .modelContainer(container)
+        .environmentObject({
+            let manager = PeerConnectionManager()
+            manager.teacherCode = "123456"
+            manager.studentCode = "654321"
+            return manager
+        }())
+        .modelContainer(for: [ClientInfo.self, Course.self, Lesson.self], inMemory: true)
 }
 #endif

@@ -50,16 +50,8 @@ struct CourseSelectionView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: [Course.self, Lesson.self, ClientInfo.self], configurations: configuration)
-    let context = container.mainContext
-    let course = Course(name: "Preview Course")
-    let lesson = Lesson(title: "Lesson 1", number: 1, course: course)
-    course.lessons.append(lesson)
-    context.insert(course)
     CourseSelectionView()
-        .environmentObject(manager)
-        .modelContainer(container)
+        .environmentObject(PeerConnectionManager())
+        .modelContainer(for: [Course.self, Lesson.self, ClientInfo.self], inMemory: true)
 }
 #endif
