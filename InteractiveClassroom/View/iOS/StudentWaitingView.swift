@@ -34,6 +34,16 @@ struct StudentWaitingView: View {
             .padding()
         }
         .navigationTitle("Waiting")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    connectionManager.disconnectFromServer()
+                } label: {
+                    Image(systemName: "xmark.circle")
+                }
+                .accessibilityLabel("Disconnect")
+            }
+        }
         .onAppear { viewModel.bind(to: connectionManager) }
     }
 

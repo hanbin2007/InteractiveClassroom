@@ -11,9 +11,13 @@ struct TeacherDashboardView: View {
                 HStack {
                     Text(student)
                     Spacer()
-                    Button("Disconnect") {
+                    Button {
                         viewModel.sendDisconnect(for: student)
+                    } label: {
+                        Image(systemName: "xmark.circle")
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Disconnect Student")
                 }
             }
             Button("Start Class") {
@@ -22,6 +26,16 @@ struct TeacherDashboardView: View {
             .padding()
         }
         .navigationTitle("Teacher")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    connectionManager.disconnectFromServer()
+                } label: {
+                    Image(systemName: "xmark.circle")
+                }
+                .accessibilityLabel("Disconnect")
+            }
+        }
         .onAppear { viewModel.bind(to: connectionManager) }
     }
 }
