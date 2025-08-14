@@ -86,7 +86,6 @@ struct ServerConnectView: View {
         .onAppear {
             viewModel.bind(to: connectionManager)
             viewModel.startBrowsing()
-            restoreNavigationIfNeeded()
         }
         .onDisappear { viewModel.stopBrowsing() }
         .alert("Connection Failed", isPresented: $viewModel.showError) {
@@ -109,17 +108,20 @@ struct ServerConnectView: View {
         } message: {
             Text("You are currently connected. Disconnect to join another server?")
         }
-        .onChange(of: connectionManager.myRole) { _, _ in
-            restoreNavigationIfNeeded()
+        .onChange(of: connectionManager.myRole) { _, role in
+            if let role = role {
+                navigateToTeacher = role == .teacher
+                navigateToStudent = role == .student
+            } else {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
         }
-        .onChange(of: connectionManager.connectedServer) { _, _ in
-            restoreNavigationIfNeeded()
-        }
-        .onChange(of: navigateToTeacher) { _, active in
-            if !active { restoreNavigationIfNeeded() }
-        }
-        .onChange(of: navigateToStudent) { _, active in
-            if !active { restoreNavigationIfNeeded() }
+        .onChange(of: connectionManager.connectedServer) { _, server in
+            if server == nil {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
         }
     }
 
@@ -138,13 +140,6 @@ struct ServerConnectView: View {
         }
     }
 
-    /// Navigates to the appropriate role view when already connected.
-    private func restoreNavigationIfNeeded() {
-        guard connectionManager.connectedServer != nil,
-              let role = connectionManager.myRole else { return }
-        navigateToTeacher = role == .teacher
-        navigateToStudent = role == .student
-    }
 }
 #Preview {
     NavigationStack {
