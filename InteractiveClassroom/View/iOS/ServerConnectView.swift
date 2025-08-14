@@ -8,6 +8,8 @@ struct ServerConnectView: View {
     @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var passcode: String = ""
     @State private var nickname: String = ""
+    @State private var navigateToTeacher = false
+    @State private var navigateToStudent = false
 
     var body: some View {
         VStack {
@@ -24,6 +26,16 @@ struct ServerConnectView: View {
             }
             Text(viewModel.connectionStatus)
                 .padding()
+            NavigationLink(destination: TeacherDashboardView(), isActive: $navigateToTeacher) {
+                EmptyView()
+            }
+            .hidden()
+            .accessibilityHidden(true)
+            NavigationLink(destination: StudentWaitingView(), isActive: $navigateToStudent) {
+                EmptyView()
+            }
+            .hidden()
+            .accessibilityHidden(true)
         }
         .navigationTitle("Select Server")
         .sheet(item: $selectedPeer) { peer in
@@ -55,12 +67,20 @@ struct ServerConnectView: View {
         .onAppear {
             viewModel.bind(to: connectionManager)
             viewModel.startBrowsing()
+            if let role = connectionManager.myRole {
+                navigateToTeacher = role == .teacher
+                navigateToStudent = role == .student
+            }
         }
         .onDisappear { viewModel.stopBrowsing() }
         .alert("Connection Failed", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Invalid key code or teacher already connected.")
+        }
+        .onChange(of: connectionManager.myRole) { role in
+            navigateToTeacher = role == .teacher
+            navigateToStudent = role == .student
         }
     }
 }
