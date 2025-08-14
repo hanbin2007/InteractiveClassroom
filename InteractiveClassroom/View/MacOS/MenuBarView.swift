@@ -51,4 +51,8 @@ struct MenuBarView: View {
         }
     }
 }
+#Preview {
+    MenuBarView()
+        .environmentObject(PeerConnectionManager())
+}
 #endif

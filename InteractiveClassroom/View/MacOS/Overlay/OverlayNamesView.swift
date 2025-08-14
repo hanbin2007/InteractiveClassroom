@@ -22,4 +22,7 @@ struct OverlayNamesView: View {
         }
     }
 }
+#Preview {
+    OverlayNamesView(names: ["Alice", "Bob", "Charlie"])
+}
 #endif

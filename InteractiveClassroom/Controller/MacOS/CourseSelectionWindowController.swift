@@ -15,9 +15,12 @@ final class CourseSelectionWindowController: NSObject, NSWindowDelegate {
                 .modelContainer(container)
             let hosting = NSHostingView(rootView: contentView)
             let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 250),
-                               styleMask: [.titled, .closable],
+                               styleMask: [.titled, .closable, .resizable],
                                backing: .buffered,
                                defer: false)
+            win.titleVisibility = .visible
+            win.toolbar = NSToolbar()
+            win.toolbarStyle = .unified
             win.center()
             win.contentView = hosting
             win.isReleasedWhenClosed = false

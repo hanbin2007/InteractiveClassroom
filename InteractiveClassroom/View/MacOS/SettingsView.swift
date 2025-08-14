@@ -1,5 +1,6 @@
 #if os(macOS)
 import SwiftUI
+import SwiftData
 
 /// Settings used to configure how questions are presented and scored.
 struct SettingsView: View {
@@ -53,5 +54,10 @@ struct SettingsView: View {
             connectionManager.modelContext = modelContext
         }
     }
+}
+#Preview {
+    SettingsView()
+        .environmentObject(PreviewSampleData.connectionManager)
+        .modelContainer(PreviewSampleData.container)
 }
 #endif

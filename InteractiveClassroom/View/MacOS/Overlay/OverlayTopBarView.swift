@@ -29,4 +29,7 @@ struct OverlayTopBarView: View {
         }
     }
 }
+#Preview {
+    OverlayTopBarView(questionType: "Single Choice", remainingTime: "05:00")
+}
 #endif

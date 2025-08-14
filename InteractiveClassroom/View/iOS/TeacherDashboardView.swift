@@ -23,4 +23,12 @@ struct TeacherDashboardView: View {
         .navigationTitle("Teacher")
     }
 }
+#Preview {
+    NavigationStack { TeacherDashboardView() }
+        .environmentObject({
+            let manager = PeerConnectionManager()
+            manager.students = ["Alice", "Bob"]
+            return manager
+        }())
+}
 #endif

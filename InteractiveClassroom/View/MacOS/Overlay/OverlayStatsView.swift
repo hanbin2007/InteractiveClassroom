@@ -24,4 +24,7 @@ struct OverlayStatsView: View {
         }
     }
 }
+#Preview {
+    OverlayStatsView(stats: ["A: 50%", "B: 30%", "C: 20%"])
+}
 #endif

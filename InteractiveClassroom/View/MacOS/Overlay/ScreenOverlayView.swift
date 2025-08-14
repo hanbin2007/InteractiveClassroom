@@ -20,4 +20,7 @@ struct ScreenOverlayView: View {
         .foregroundStyle(.white)
     }
 }
+#Preview {
+    ScreenOverlayView()
+}
 #endif

@@ -17,6 +17,9 @@ final class LessonManagerWindowController: NSObject, NSWindowDelegate {
                                styleMask: [.titled, .closable, .resizable],
                                backing: .buffered,
                                defer: false)
+            win.titleVisibility = .visible
+            win.toolbar = NSToolbar()
+            win.toolbarStyle = .unified
             win.center()
             win.contentView = hosting
             win.isReleasedWhenClosed = false

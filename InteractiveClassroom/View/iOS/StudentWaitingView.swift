@@ -90,4 +90,13 @@ private struct LessonInfoView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+#Preview {
+    NavigationStack { StudentWaitingView() }
+        .environmentObject({
+            let manager = PeerConnectionManager()
+            manager.currentCourse = Course(name: "Preview Course")
+            manager.currentLesson = Lesson(title: "Preview Lesson", number: 1)
+            return manager
+        }())
+}
 #endif
