@@ -155,6 +155,10 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     }
 
     func connect(to peer: Peer, passcode: String, nickname: String) {
+        // Update status immediately so UI can react even if the invitation is rejected
+        // before a session state change is reported. This ensures client-side alerts
+        // are triggered for invalid passcodes or other errors.
+        connectionStatus = "Connecting to \(peer.peerID.displayName)..."
         let payload = InvitationPayload(passcode: passcode, nickname: nickname)
         let context = try? JSONEncoder().encode(payload)
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
