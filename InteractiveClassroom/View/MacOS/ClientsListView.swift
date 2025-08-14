@@ -84,7 +84,7 @@ struct ClientsListView: View {
     let context = container.mainContext
     let client = ClientInfo(deviceName: "iPhone", nickname: "Alice", role: "student", course: manager.currentCourse)
     context.insert(client)
-    return ClientsListView()
+    ClientsListView()
         .environmentObject(manager)
         .modelContainer(container)
 }

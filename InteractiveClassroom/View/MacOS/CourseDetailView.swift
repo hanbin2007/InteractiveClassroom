@@ -28,7 +28,7 @@ struct CourseDetailView: View {
     let context = container.mainContext
     let course = Course(name: "Preview Course")
     context.insert(course)
-    return CourseDetailView(course: course)
+    CourseDetailView(course: course)
         .modelContainer(container)
 }
 #endif

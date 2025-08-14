@@ -71,7 +71,7 @@ struct CourseManagerView: View {
     let container = try! ModelContainer(for: [Course.self, Lesson.self], configurations: configuration)
     let context = container.mainContext
     context.insert(Course(name: "Preview Course"))
-    return CourseManagerView()
+    CourseManagerView()
         .modelContainer(container)
 }
 #endif

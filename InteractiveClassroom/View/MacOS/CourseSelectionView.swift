@@ -58,7 +58,7 @@ struct CourseSelectionView: View {
     let lesson = Lesson(title: "Lesson 1", number: 1, course: course)
     course.lessons.append(lesson)
     context.insert(course)
-    return CourseSelectionView()
+    CourseSelectionView()
         .environmentObject(manager)
         .modelContainer(container)
 }

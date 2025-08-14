@@ -61,7 +61,7 @@ struct SettingsView: View {
     manager.studentCode = "654321"
     let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: [ClientInfo.self, Course.self, Lesson.self], configurations: configuration)
-    return SettingsView()
+    SettingsView()
         .environmentObject(manager)
         .modelContainer(container)
 }

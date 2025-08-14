@@ -75,7 +75,7 @@ struct LessonManagerView: View {
     let course = Course(name: "Preview Course")
     course.lessons.append(Lesson(title: "Lesson 1", number: 1, course: course))
     context.insert(course)
-    return NavigationStack {
+    NavigationStack {
         LessonManagerView(course: course)
     }
     .modelContainer(container)

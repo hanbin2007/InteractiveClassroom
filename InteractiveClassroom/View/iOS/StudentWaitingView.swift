@@ -94,7 +94,7 @@ private struct LessonInfoView: View {
     let manager = PeerConnectionManager()
     manager.currentCourse = Course(name: "Preview Course")
     manager.currentLesson = Lesson(title: "Preview Lesson", number: 1)
-    return NavigationStack { StudentWaitingView() }
+    NavigationStack { StudentWaitingView() }
         .environmentObject(manager)
 }
 #endif

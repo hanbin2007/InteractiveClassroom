@@ -29,7 +29,7 @@ struct LessonDetailView: View {
     let context = container.mainContext
     let lesson = Lesson(title: "Preview Lesson", number: 1)
     context.insert(lesson)
-    return LessonDetailView(lesson: lesson)
+    LessonDetailView(lesson: lesson)
         .modelContainer(container)
 }
 #endif
