@@ -5,6 +5,7 @@ import SwiftData
 /// Detailed editor for a single lesson.
 struct LessonDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Bindable var lesson: Lesson
 
     var body: some View {
@@ -19,7 +20,14 @@ struct LessonDetailView: View {
         .padding()
         .frame(minWidth: 400, minHeight: 300)
         .toolbar {
-            Button("Save") { try? modelContext.save() }
+            Button("Save") {
+                do {
+                    try modelContext.save()
+                    dismiss()
+                } catch {
+                    // Consider presenting the error to the user in a production app
+                }
+            }
         }
     }
 }
