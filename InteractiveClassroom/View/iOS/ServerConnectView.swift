@@ -16,28 +16,29 @@ struct ServerConnectView: View {
     var body: some View {
         VStack {
             List(viewModel.availablePeers) { peer in
-                Button {
+                HStack {
+                    Text(peer.peerID.displayName)
+                    Spacer()
+                    if connectionManager.isConnected(to: peer) {
+                        Image(systemName: "checkmark.circle")
+                            .foregroundColor(.green)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
                     handlePeerTap(peer)
-                } label: {
-                    HStack {
-                        Text(peer.peerID.displayName)
-                        Spacer()
-                        if connectionManager.isConnected(to: peer) {
-                            Image(systemName: "checkmark.circle")
-                                .foregroundColor(.green)
-                            Button {
-                                connectionManager.disconnectFromServer()
-                                navigateToTeacher = false
-                                navigateToStudent = false
-                            } label: {
-                                Image(systemName: "xmark.circle")
-                            }
-                            .buttonStyle(BorderlessButtonStyle())
-                            .accessibilityLabel("Disconnect")
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if connectionManager.isConnected(to: peer) {
+                        Button(role: .destructive) {
+                            connectionManager.disconnectFromServer()
+                            navigateToTeacher = false
+                            navigateToStudent = false
+                        } label: {
+                            Label("Disconnect", systemImage: "xmark.circle")
                         }
                     }
                 }
-                .buttonStyle(.plain)
             }
             .overlay {
                 if viewModel.availablePeers.isEmpty {
