@@ -6,19 +6,10 @@ import SwiftData
 struct LessonManagerView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var course: Course
+    @State private var editingLesson: Lesson?
 
     var body: some View {
         VStack(alignment: .leading) {
-            HStack {
-                Text("Lessons for \(course.name)")
-                    .font(.title2)
-                Spacer()
-                Button("Add") {
-                    let lesson = Lesson(title: "New Lesson", number: course.lessons.count + 1, course: course)
-                    course.lessons.append(lesson)
-                    try? modelContext.save()
-                }
-            }
             if course.lessons.isEmpty {
                 Text("No lessons")
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -37,7 +28,7 @@ struct LessonManagerView: View {
                     }
                     TableColumn("Details") { lesson in
                         Button("Edit") {
-                            LessonDetailWindowController.shared.show(lesson: lesson, container: modelContext.container)
+                            editingLesson = lesson
                         }
                     }
                     TableColumn("") { lesson in
@@ -60,6 +51,21 @@ struct LessonManagerView: View {
         }
         .padding()
         .frame(minWidth: 600, minHeight: 400)
+        .navigationTitle("Lessons for \(course.name)")
+        .toolbar {
+            Button("Add") {
+                let lesson = Lesson(title: "New Lesson", number: course.lessons.count + 1, course: course)
+                course.lessons.append(lesson)
+                try? modelContext.save()
+            }
+        }
+        .sheet(item: $editingLesson) { lesson in
+            NavigationStack {
+                LessonDetailView(lesson: lesson)
+                    .navigationTitle("Lesson Details")
+            }
+            .frame(minWidth: 400, minHeight: 300)
+        }
     }
 }
 #Preview {
@@ -69,7 +75,9 @@ struct LessonManagerView: View {
     let course = Course(name: "Preview Course")
     course.lessons.append(Lesson(title: "Lesson 1", number: 1, course: course))
     context.insert(course)
-    return LessonManagerView(course: course)
-        .modelContainer(container)
+    return NavigationStack {
+        LessonManagerView(course: course)
+    }
+    .modelContainer(container)
 }
 #endif
