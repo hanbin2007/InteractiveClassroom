@@ -50,10 +50,15 @@ struct CourseManagerView: View {
             .frame(minWidth: 600, minHeight: 400)
             .navigationTitle("Courses")
             .toolbar {
-                Button("Add") {
-                    let course = Course(name: "New Course")
-                    modelContext.insert(course)
-                    try? modelContext.save()
+                ToolbarItem {
+                    Button {
+                        let course = Course(name: "New Course")
+                        modelContext.insert(course)
+                        try? modelContext.save()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Add Course")
                 }
             }
             .sheet(item: $editingCourse) { course in

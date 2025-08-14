@@ -1,6 +1,6 @@
 import SwiftUI
 
-#if os(iOS) || os(macOS)
+#if os(iOS)
 /// Displays a waiting screen for students along with current course and lesson information.
 struct StudentWaitingView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
@@ -34,6 +34,16 @@ struct StudentWaitingView: View {
             .padding()
         }
         .navigationTitle("Waiting")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    connectionManager.disconnectFromServer()
+                } label: {
+                    Image(systemName: "personalhotspot.slash")
+                }
+                .accessibilityLabel("Disconnect")
+            }
+        }
         .onAppear { viewModel.bind(to: connectionManager) }
     }
 

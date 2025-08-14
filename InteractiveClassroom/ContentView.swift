@@ -14,19 +14,8 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        Group {
-            if let role = connectionManager.myRole {
-                switch role {
-                case .teacher:
-                    NavigationStack { TeacherDashboardView() }
-                case .student:
-                    NavigationStack { StudentWaitingView() }
-                default:
-                    Text("Unsupported role")
-                }
-            } else {
-                NavigationStack { ServerConnectView() }
-            }
+        NavigationStack {
+            ServerConnectView()
         }
         .alert("Disconnected", isPresented: $connectionManager.serverDisconnected) {
             Button("OK", role: .cancel) {}
