@@ -123,7 +123,15 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     func stopHosting() {
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
-        session.disconnect()
+        if !session.connectedPeers.isEmpty {
+            let message = Message(type: "endClass", role: nil, students: nil, target: nil, course: nil, lesson: nil)
+            if let data = try? JSONEncoder().encode(message) {
+                try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.session.disconnect()
+        }
         connectionStatus = "Not Connected"
         teacherCode = nil
         studentCode = nil
@@ -330,11 +338,13 @@ extension PeerConnectionManager: MCSessionDelegate {
                 if actingAsClient {
                     if self.userInitiatedDisconnect {
                         self.userInitiatedDisconnect = false
-                    } else {
-                        // Lost connection to the server; notify UI.
+                    } else if self.myRole != nil {
+                        // Lost connection to the server after a successful join.
                         self.serverDisconnected = true
                     }
                     self.myRole = nil
+                } else {
+                    self.userInitiatedDisconnect = false
                 }
                 if let context = self.modelContext {
                     let name = peerID.displayName
@@ -379,6 +389,11 @@ extension PeerConnectionManager: MCSessionDelegate {
                         self.disconnect(peerNamed: target)
                     }
                 }
+            case "endClass":
+                self.serverDisconnected = true
+                self.userInitiatedDisconnect = true
+                self.session.disconnect()
+                self.myRole = nil
             case "state":
                 if let course = message.course {
                     self.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)
