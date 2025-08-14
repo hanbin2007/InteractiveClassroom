@@ -22,7 +22,7 @@ struct ContentView: View {
         } message: {
             Text("Connection to server lost.")
         }
-        .onChange(of: scenePhase) { phase in
+        .onChange(of: scenePhase) { _, phase in
             if phase == .background, connectionManager.myRole != nil {
                 connectionManager.disconnectFromServer()
             }

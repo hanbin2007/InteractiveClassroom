@@ -16,25 +16,28 @@ struct ServerConnectView: View {
     var body: some View {
         VStack {
             List(viewModel.availablePeers) { peer in
-                HStack {
-                    Text(peer.peerID.displayName)
-                    Spacer()
-                    if connectionManager.isConnected(to: peer) {
-                        Image(systemName: "checkmark.circle")
-                            .foregroundColor(.green)
-                        Button {
-                            connectionManager.disconnectFromServer()
-                            navigateToTeacher = false
-                            navigateToStudent = false
-                        } label: {
-                            Image(systemName: "xmark.circle")
+                Button {
+                    handlePeerTap(peer)
+                } label: {
+                    HStack {
+                        Text(peer.peerID.displayName)
+                        Spacer()
+                        if connectionManager.isConnected(to: peer) {
+                            Image(systemName: "checkmark.circle")
+                                .foregroundColor(.green)
+                            Button {
+                                connectionManager.disconnectFromServer()
+                                navigateToTeacher = false
+                                navigateToStudent = false
+                            } label: {
+                                Image(systemName: "xmark.circle")
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                            .accessibilityLabel("Disconnect")
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Disconnect")
                     }
                 }
-                .contentShape(Rectangle())
-                .onTapGesture { handlePeerTap(peer) }
+                .buttonStyle(.plain)
             }
             .overlay {
                 if viewModel.availablePeers.isEmpty {
@@ -44,16 +47,13 @@ struct ServerConnectView: View {
             }
             Text(viewModel.connectionStatus)
                 .padding()
-            NavigationLink(destination: TeacherDashboardView(), isActive: $navigateToTeacher) {
-                EmptyView()
-            }
-            .hidden()
-            .accessibilityHidden(true)
-            NavigationLink(destination: StudentWaitingView(), isActive: $navigateToStudent) {
-                EmptyView()
-            }
-            .hidden()
-            .accessibilityHidden(true)
+        }
+        // Navigation destinations for assigned roles
+        .navigationDestination(isPresented: $navigateToTeacher) {
+            TeacherDashboardView()
+        }
+        .navigationDestination(isPresented: $navigateToStudent) {
+            StudentWaitingView()
         }
         .navigationTitle("Select Server")
         .sheet(item: $selectedPeer) { peer in
@@ -108,16 +108,16 @@ struct ServerConnectView: View {
         } message: {
             Text("You are currently connected. Disconnect to join another server?")
         }
-        .onChange(of: connectionManager.myRole) { _ in
+        .onChange(of: connectionManager.myRole) { _, _ in
             restoreNavigationIfNeeded()
         }
-        .onChange(of: connectionManager.connectedServer) { _ in
+        .onChange(of: connectionManager.connectedServer) { _, _ in
             restoreNavigationIfNeeded()
         }
-        .onChange(of: navigateToTeacher) { active in
+        .onChange(of: navigateToTeacher) { _, active in
             if !active { restoreNavigationIfNeeded() }
         }
-        .onChange(of: navigateToStudent) { active in
+        .onChange(of: navigateToStudent) { _, active in
             if !active { restoreNavigationIfNeeded() }
         }
     }
