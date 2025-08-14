@@ -18,7 +18,7 @@ enum PreviewSampleData {
     /// In-memory container seeded with preview data.
     static let container: ModelContainer = {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: [Course.self, Lesson.self, ClientInfo.self], configurations: config)
+        let container = try! ModelContainer(for: Course.self, Lesson.self, ClientInfo.self, configurations: config)
         let context = container.mainContext
         sampleCourse.lessons = sampleLessons
         sampleCourse.clients = sampleClients
