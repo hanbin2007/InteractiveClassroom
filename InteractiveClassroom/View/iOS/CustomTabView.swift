@@ -1,70 +1,60 @@
-//
-//  CustomTabView.swift
-//  InteractiveClassroom
-//
-//  Created by zhb on 2025/8/15.
-//
-
+#if os(iOS)
 import SwiftUI
 
 struct CustomTabView: View {
-    @State private var selectedTab = 0
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // 页面内容
-            TabView(selection: $selectedTab) {
-                Color.red.tag(0)
-                Color.green.tag(1)
-                Color.blue.tag(2)
-            }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            
-            
-            // 自定义底部栏
-            ScrollView(.horizontal) {
-                HStack(spacing: 30) {
-                    TabButton(icon: "house", title: "Home", index: 0, selectedTab: $selectedTab)
-                    TabButton(icon: "gear", title: "Settings", index: 1, selectedTab: $selectedTab)
-                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
-                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
-                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
-                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
-                }
-            }
-            
-            .padding()
-            .frame(maxWidth: .infinity)
-//            .background(.ultraThinMaterial) // 毛玻璃效果
-        }
-    }
-}
+    let tabs: [TabItem]
+    @Binding var selection: Int
 
-struct TabButton: View {
-    var icon: String
-    var title: String
-    var index: Int
-    @Binding var selectedTab: Int
-    
+    private var itemSize: CGFloat {
+        // Slightly smaller buttons for a lighter visual footprint
+        90
+    }
+
     var body: some View {
-        Button {
-            selectedTab = index
-        } label: {
-                VStack {
-                    Image(systemName: icon)
-                        .resizable()
-                    Text(title)
-                        .bold()
+        let size = itemSize * 0.8
+        ScrollView(.horizontal, showsIndicators: false) {
+            // Wider gaps so tab items feel less cramped
+            HStack(spacing: size * 0.6) {
+                ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
+                    Button(action: { selection = index }) {
+                        VStack(spacing: size * 0.1) {
+                            RoundedRectangle(cornerRadius: size * 0.25)
+                                .fill(selection == index ? Color.accentColor : Color.gray)
+                                .overlay(
+                                    Image(systemName: tab.icon)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundColor(.white)
+                                        // Extra padding reduces the rendered SF Symbol size
+                                        .padding(size * 0.25)
+                                )
+                                .frame(width: size, height: size)
+                            Text(tab.title)
+                                .font(.system(size: size * 0.3))
+                                .foregroundColor(selection == index ? .primary : .secondary)
+                                .bold()
+                        }
+                        .frame(width: size * 1.3)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(width: 80, height: 80)
-//                .frame(maxWidth: 80, maxHeight: 80)
-                .foregroundColor(selectedTab == index ? .blue : .gray)
+            }
+            .padding(.horizontal, size * 0.5)
+            .padding(.vertical, size * 0.4)
         }
+//        .background(.ultraThinMaterial)
     }
 }
 
 #Preview {
-    CustomTabView()
-//    @Previewable @State var selectedTab = 0
-//    TabButton(icon: "house", title: "Home", index: 0, selectedTab: $selectedTab)
+    @Previewable @State var selection = 0
+    let demoTabs = [
+        TabItem(icon: "person.3.fill", title: "Students"),
+        TabItem(icon: "book.closed.fill", title: "Lessons"),
+        TabItem(icon: "gearshape.fill", title: "Settings"),
+        TabItem(icon: "chart.bar.xaxis", title: "Reports"),
+        TabItem(icon: "questionmark.circle", title: "Help")
+    ]
+    return CustomTabView(tabs: demoTabs, selection: $selection)
 }
+#endif

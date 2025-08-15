@@ -1,6 +1,6 @@
+#if os(iOS)
 import SwiftUI
 
-#if os(iOS)
 /// Displays a waiting screen for students along with current course and lesson information.
 struct StudentWaitingView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
