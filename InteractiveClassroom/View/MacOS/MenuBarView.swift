@@ -26,8 +26,10 @@ struct MenuBarView: View {
                     closeOverlayWindows()
                 }
             }
-            Button("Show Screen") {
-                openWindow(id: "overlay")
+            if connectionManager.classStarted {
+                Button("Show Screen") {
+                    openWindow(id: "overlay")
+                }
             }
             Button("Clients") {
                 openWindow(id: "clients")

@@ -398,6 +398,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                     }
                 }
             case "endClass":
+                self.classStarted = false
                 self.serverDisconnected = true
                 self.userInitiatedDisconnect = true
                 self.session.disconnect()
