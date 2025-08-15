@@ -45,6 +45,14 @@ final class ServerConnectViewModel: ObservableObject {
         connectionManager?.stopBrowsing()
     }
 
+    func pauseBrowsing() {
+        connectionManager?.pauseBrowsing()
+    }
+
+    func resumeBrowsing() {
+        connectionManager?.resumeBrowsing()
+    }
+
     func connect(to peer: PeerConnectionManager.Peer, passcode: String, nickname: String) {
         awaitingConnection = true
         connectionManager?.connect(to: peer, passcode: passcode, nickname: nickname)

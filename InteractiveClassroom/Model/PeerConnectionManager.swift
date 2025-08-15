@@ -144,6 +144,20 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         browser?.startBrowsingForPeers()
     }
 
+    /// Temporarily pauses peer browsing without releasing the browser instance.
+    func pauseBrowsing() {
+        browser?.stopBrowsingForPeers()
+    }
+
+    /// Resumes peer browsing after a pause.
+    func resumeBrowsing() {
+        if let browser {
+            browser.startBrowsingForPeers()
+        } else {
+            startBrowsing()
+        }
+    }
+
     func stopBrowsing() {
         browser?.stopBrowsingForPeers()
         browser = nil
@@ -203,6 +217,14 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Sends a command to the server to disconnect a specific student.
     func sendDisconnectCommand(for name: String) {
         let message = Message(type: "disconnect", role: nil, students: nil, target: name)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        }
+    }
+
+    /// Requests the current student list from the server.
+    func requestStudentsList() {
+        let message = Message(type: "requestStudents", role: nil, students: nil, target: nil)
         if let data = try? JSONEncoder().encode(message) {
             try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
         }
@@ -384,6 +406,10 @@ extension PeerConnectionManager: MCSessionDelegate {
                 }
             case "students":
                 self.students = message.students ?? []
+            case "requestStudents":
+                if self.advertiser != nil {
+                    self.updateStudents()
+                }
             case "startClass":
                 self.classStarted = true
                 if self.advertiser != nil {
