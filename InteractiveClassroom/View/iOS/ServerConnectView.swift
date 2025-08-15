@@ -82,6 +82,12 @@ struct ServerConnectView: View {
             }
             .padding()
             .presentationDetents([.medium])
+            .onAppear { viewModel.stopBrowsing() }
+            .onDisappear {
+                passcode = ""
+                nickname = ""
+                viewModel.startBrowsing()
+            }
         }
         .onAppear {
             viewModel.bind(to: connectionManager)
