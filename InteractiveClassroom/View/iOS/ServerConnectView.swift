@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 import MultipeerConnectivity
 
@@ -146,4 +147,4 @@ struct ServerConnectView: View {
             .environmentObject(PeerConnectionManager())
     }
 }
-
+#endif

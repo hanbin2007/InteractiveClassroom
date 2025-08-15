@@ -1,4 +1,4 @@
-
+#if os(iOS)
 import SwiftUI
 
 struct CustomTabView: View {
@@ -7,14 +7,14 @@ struct CustomTabView: View {
 
     private var itemSize: CGFloat {
         // Slightly smaller buttons for a lighter visual footprint
-        min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 0.10
+        90
     }
 
     var body: some View {
-        let size = itemSize
+        let size = itemSize * 0.8
         ScrollView(.horizontal, showsIndicators: false) {
             // Wider gaps so tab items feel less cramped
-            HStack(spacing: size * 0.5) {
+            HStack(spacing: size * 0.6) {
                 ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                     Button(action: { selection = index }) {
                         VStack(spacing: size * 0.1) {
@@ -30,23 +30,24 @@ struct CustomTabView: View {
                                 )
                                 .frame(width: size, height: size)
                             Text(tab.title)
-                                .font(.system(size: size * 0.25))
+                                .font(.system(size: size * 0.3))
                                 .foregroundColor(selection == index ? .primary : .secondary)
+                                .bold()
                         }
-                        .frame(width: size)
+                        .frame(width: size * 1.3)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, size * 0.2)
+            .padding(.horizontal, size * 0.5)
+            .padding(.vertical, size * 0.4)
         }
-        .background(.ultraThinMaterial)
+//        .background(.ultraThinMaterial)
     }
 }
 
 #Preview {
-    @State var selection = 0
+    @Previewable @State var selection = 0
     let demoTabs = [
         TabItem(icon: "person.3.fill", title: "Students"),
         TabItem(icon: "book.closed.fill", title: "Lessons"),
@@ -56,3 +57,4 @@ struct CustomTabView: View {
     ]
     return CustomTabView(tabs: demoTabs, selection: $selection)
 }
+#endif

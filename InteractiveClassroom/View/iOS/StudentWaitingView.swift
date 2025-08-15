@@ -1,3 +1,4 @@
+#if os(iOS)
 import SwiftUI
 
 /// Displays a waiting screen for students along with current course and lesson information.
@@ -110,3 +111,4 @@ private struct LessonInfoView: View {
             return manager
         }())
 }
+#endif

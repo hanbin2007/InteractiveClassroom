@@ -1,4 +1,4 @@
-
+#if os(iOS)
 import SwiftUI
 
 struct TeacherDashboardView: View {
@@ -30,9 +30,15 @@ struct TeacherDashboardView: View {
         .navigationTitle("Teacher")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button("Start Class") {
+                Button {
                     viewModel.startClass()
+                } label: {
+                    Image(systemName: "play.fill")
+                    Text("Start Class").bold()
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                
                 Button {
                     connectionManager.disconnectFromServer()
                 } label: {
@@ -72,3 +78,5 @@ struct TeacherDashboardView: View {
             return manager
         }())
 }
+
+#endif
