@@ -214,6 +214,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         if let data = try? JSONEncoder().encode(message) {
             try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
         }
+        classStarted = true
         // macOS overlay window presentation is now handled by SwiftUI state.
     }
 
