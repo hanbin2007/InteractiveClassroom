@@ -6,13 +6,15 @@ struct CustomTabView: View {
     @Binding var selection: Int
 
     private var itemSize: CGFloat {
-        min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 0.12
+        // Slightly smaller buttons for a lighter visual footprint
+        min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 0.10
     }
 
     var body: some View {
         let size = itemSize
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: size * 0.3) {
+            // Wider gaps so tab items feel less cramped
+            HStack(spacing: size * 0.5) {
                 ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                     Button(action: { selection = index }) {
                         VStack(spacing: size * 0.1) {
@@ -23,7 +25,8 @@ struct CustomTabView: View {
                                         .resizable()
                                         .scaledToFit()
                                         .foregroundColor(.white)
-                                        .padding(size * 0.2)
+                                        // Extra padding reduces the rendered SF Symbol size
+                                        .padding(size * 0.25)
                                 )
                                 .frame(width: size, height: size)
                             Text(tab.title)
