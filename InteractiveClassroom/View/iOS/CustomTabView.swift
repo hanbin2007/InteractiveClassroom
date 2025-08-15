@@ -6,13 +6,7 @@ struct CustomTabView: View {
     @Binding var selection: Int
 
     private var itemSize: CGFloat {
-        #if canImport(UIKit)
-        return min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 0.12
-        #elseif canImport(AppKit)
-        return min(NSScreen.main?.frame.width ?? 800, NSScreen.main?.frame.height ?? 600) * 0.12
-        #else
-        return 60
-        #endif
+        min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) * 0.12
     }
 
     var body: some View {

@@ -1,7 +1,6 @@
 
 import SwiftUI
 
-#if os(iOS) || os(macOS)
 struct TeacherDashboardView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @StateObject private var viewModel = TeacherDashboardViewModel()
@@ -30,7 +29,6 @@ struct TeacherDashboardView: View {
         }
         .navigationTitle("Teacher")
         .toolbar {
-            #if os(iOS)
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button("Start Class") {
                     viewModel.startClass()
@@ -42,19 +40,6 @@ struct TeacherDashboardView: View {
                 }
                 .accessibilityLabel("Disconnect")
             }
-            #else
-            ToolbarItemGroup(placement: .automatic) {
-                Button("Start Class") {
-                    viewModel.startClass()
-                }
-                Button {
-                    connectionManager.disconnectFromServer()
-                } label: {
-                    Image(systemName: "xmark.circle")
-                }
-                .accessibilityLabel("Disconnect")
-            }
-            #endif
         }
         .onAppear { viewModel.bind(to: connectionManager) }
     }
@@ -87,4 +72,3 @@ struct TeacherDashboardView: View {
             return manager
         }())
 }
-#endif
