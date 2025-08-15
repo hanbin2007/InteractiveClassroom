@@ -88,6 +88,13 @@ struct ServerConnectView: View {
             viewModel.startBrowsing()
         }
         .onDisappear { viewModel.stopBrowsing() }
+        .onChange(of: selectedPeer) { _, newValue in
+            if newValue == nil {
+                viewModel.startBrowsing()
+            } else {
+                viewModel.stopBrowsing()
+            }
+        }
         .alert("Connection Failed", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -119,6 +126,12 @@ struct ServerConnectView: View {
         }
         .onChange(of: connectionManager.connectedServer) { _, server in
             if server == nil {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
+        }
+        .onChange(of: connectionManager.serverDisconnected) { _, disconnected in
+            if disconnected {
                 navigateToTeacher = false
                 navigateToStudent = false
             }
