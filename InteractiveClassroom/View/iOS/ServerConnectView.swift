@@ -90,9 +90,9 @@ struct ServerConnectView: View {
         .onDisappear { viewModel.stopBrowsing() }
         .onChange(of: selectedPeer) { _, newValue in
             if newValue == nil {
-                viewModel.startBrowsing()
+                viewModel.resumeBrowsing()
             } else {
-                viewModel.stopBrowsing()
+                viewModel.pauseBrowsing()
             }
         }
         .alert("Connection Failed", isPresented: $viewModel.showError) {

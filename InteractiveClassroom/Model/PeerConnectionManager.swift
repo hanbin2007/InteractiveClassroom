@@ -144,6 +144,20 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         browser?.startBrowsingForPeers()
     }
 
+    /// Temporarily pauses peer browsing without releasing the browser instance.
+    func pauseBrowsing() {
+        browser?.stopBrowsingForPeers()
+    }
+
+    /// Resumes peer browsing after a pause.
+    func resumeBrowsing() {
+        if let browser {
+            browser.startBrowsingForPeers()
+        } else {
+            startBrowsing()
+        }
+    }
+
     func stopBrowsing() {
         browser?.stopBrowsingForPeers()
         browser = nil
