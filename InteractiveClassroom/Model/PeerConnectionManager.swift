@@ -351,20 +351,20 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
                 let actingAsClient = self.advertiser == nil
-                self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
                 if actingAsClient {
                     if self.connectedServer == peerID {
+                        self.connectionStatus = "Not Connected"
                         self.connectedServer = nil
+                        if self.userInitiatedDisconnect {
+                            self.userInitiatedDisconnect = false
+                        } else if self.myRole != nil {
+                            // Lost connection to the server after a successful join.
+                            self.serverDisconnected = true
+                        }
+                        self.myRole = nil
                     }
-                    if self.userInitiatedDisconnect {
-                        self.userInitiatedDisconnect = false
-                    } else if self.myRole != nil {
-                        // Lost connection to the server after a successful join.
-                        self.serverDisconnected = true
-                    }
-                    self.myRole = nil
                 } else {
                     self.userInitiatedDisconnect = false
                 }
