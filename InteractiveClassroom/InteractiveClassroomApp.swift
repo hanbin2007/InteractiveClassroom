@@ -59,9 +59,6 @@ struct InteractiveClassroomApp: App {
                 .environmentObject(connectionManager)
         }
         .modelContainer(container)
-        WindowGroup(id: "overlay") {
-            ScreenOverlayView()
-        }
         WindowGroup(id: "clients") {
             ClientsListView()
                 .environmentObject(connectionManager)
