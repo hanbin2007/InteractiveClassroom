@@ -59,10 +59,9 @@ struct InteractiveClassroomApp: App {
                 .environmentObject(connectionManager)
         }
         .modelContainer(container)
-        WindowGroup(id: "overlay") {
+        Window("Overlay", id: "overlay") {
             ScreenOverlayView()
         }
-        .defaultVisibility(.hidden)
         WindowGroup(id: "clients") {
             ClientsListView()
                 .environmentObject(connectionManager)
