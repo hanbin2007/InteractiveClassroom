@@ -208,6 +208,15 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         }
     }
 
+    /// Requests the server to provide the current list of students.
+    func requestStudentList() {
+        guard advertiser == nil else { return }
+        let message = Message(type: "requestStudents", role: nil, students: nil, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        }
+    }
+
     /// Broadcasts a start-class command to the server.
     func startClass() {
         let message = Message(type: "startClass", role: nil, students: nil, target: nil)
@@ -396,6 +405,10 @@ extension PeerConnectionManager: MCSessionDelegate {
                     if self.advertiser != nil {
                         self.disconnect(peerNamed: target)
                     }
+                }
+            case "requestStudents":
+                if self.advertiser != nil {
+                    self.updateStudents()
                 }
             case "endClass":
                 self.classStarted = false
