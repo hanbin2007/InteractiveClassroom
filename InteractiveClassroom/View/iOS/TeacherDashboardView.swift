@@ -42,7 +42,7 @@ struct TeacherDashboardView: View {
                 Button {
                     connectionManager.disconnectFromServer()
                 } label: {
-                    Image(systemName: "xmark.circle")
+                    Image(systemName: "personalhotspot.slash")
                 }
                 .accessibilityLabel("Disconnect")
             }
@@ -58,7 +58,7 @@ struct TeacherDashboardView: View {
                 Button {
                     viewModel.sendDisconnect(for: student)
                 } label: {
-                    Image(systemName: "xmark.circle")
+                    Image(systemName: "personalhotspot.slash")
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Disconnect Student")

@@ -7,7 +7,7 @@ struct CustomTabView: View {
 
     private var itemSize: CGFloat {
         // Slightly smaller buttons for a lighter visual footprint
-        90
+        70
     }
 
     var body: some View {
