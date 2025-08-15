@@ -59,8 +59,11 @@ struct InteractiveClassroomApp: App {
                 .environmentObject(connectionManager)
         }
         .modelContainer(container)
-        WindowGroup(id: "overlay") {
-            ScreenOverlayView()
+        if connectionManager.classStarted {
+            Window("Overlay", id: "overlay") {
+                ScreenOverlayView()
+            }
+            .modelContainer(container)
         }
         WindowGroup(id: "clients") {
             ClientsListView()
