@@ -1,3 +1,12 @@
+//
+//  CustomTabView.swift
+//  InteractiveClassroom
+//
+//  Created by zhb on 2025/8/15.
+//
+
+import SwiftUI
+
 struct CustomTabView: View {
     @State private var selectedTab = 0
     
@@ -11,14 +20,22 @@ struct CustomTabView: View {
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             
+            
             // 自定义底部栏
-            HStack {
-                TabButton(icon: "house", title: "Home", index: 0, selectedTab: $selectedTab)
-                TabButton(icon: "gear", title: "Settings", index: 1, selectedTab: $selectedTab)
-                TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
+            ScrollView(.horizontal) {
+                HStack(spacing: 30) {
+                    TabButton(icon: "house", title: "Home", index: 0, selectedTab: $selectedTab)
+                    TabButton(icon: "gear", title: "Settings", index: 1, selectedTab: $selectedTab)
+                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
+                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
+                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
+                    TabButton(icon: "person", title: "Profile", index: 2, selectedTab: $selectedTab)
+                }
             }
+            
             .padding()
-            .background(.ultraThinMaterial) // 毛玻璃效果
+            .frame(maxWidth: .infinity)
+//            .background(.ultraThinMaterial) // 毛玻璃效果
         }
     }
 }
@@ -33,12 +50,21 @@ struct TabButton: View {
         Button {
             selectedTab = index
         } label: {
-            VStack {
-                Image(systemName: icon)
-                Text(title)
-                    .font(.caption)
-            }
-            .foregroundColor(selectedTab == index ? .blue : .gray)
+                VStack {
+                    Image(systemName: icon)
+                        .resizable()
+                    Text(title)
+                        .bold()
+                }
+                .frame(width: 80, height: 80)
+//                .frame(maxWidth: 80, maxHeight: 80)
+                .foregroundColor(selectedTab == index ? .blue : .gray)
         }
     }
+}
+
+#Preview {
+    CustomTabView()
+//    @Previewable @State var selectedTab = 0
+//    TabButton(icon: "house", title: "Home", index: 0, selectedTab: $selectedTab)
 }
