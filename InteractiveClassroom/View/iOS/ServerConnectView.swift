@@ -83,6 +83,13 @@ struct ServerConnectView: View {
             .padding()
             .presentationDetents([.medium])
         }
+        .onChange(of: selectedPeer) { _, peer in
+            if peer != nil {
+                viewModel.stopBrowsing()
+            } else {
+                viewModel.startBrowsing()
+            }
+        }
         .onAppear {
             viewModel.bind(to: connectionManager)
             viewModel.startBrowsing()
@@ -121,6 +128,16 @@ struct ServerConnectView: View {
             if server == nil {
                 navigateToTeacher = false
                 navigateToStudent = false
+            }
+        }
+        .onChange(of: connectionManager.serverDisconnected) { _, disconnected in
+            if disconnected {
+                navigateToTeacher = false
+                navigateToStudent = false
+                selectedPeer = nil
+                passcode = ""
+                nickname = ""
+                viewModel.startBrowsing()
             }
         }
     }
