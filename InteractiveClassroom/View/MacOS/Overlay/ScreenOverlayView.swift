@@ -27,32 +27,25 @@ struct ScreenOverlayView: View {
 /// Helper view to configure the hosting window for a full-screen floating overlay.
 private struct WindowConfigurator: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
-        let nsView = NSView()
-        DispatchQueue.main.async {
-            if let window = nsView.window {
-                configure(window)
-            }
-        }
-        return nsView
+        ConfigurableView()
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            if let window = nsView.window {
-                configure(window)
-            }
-        }
-    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 
-    private func configure(_ window: NSWindow) {
-        window.level = .screenSaver
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        if let screenFrame = NSScreen.main?.frame {
-            window.setFrame(screenFrame, display: true)
+    private final class ConfigurableView: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window = window else { return }
+            window.identifier = NSUserInterfaceItemIdentifier("overlay")
+            window.level = .screenSaver
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            if let screenFrame = NSScreen.main?.frame {
+                window.setFrame(screenFrame, display: true)
+            }
+            window.styleMask = [.borderless]
+            window.isOpaque = false
+            window.backgroundColor = .clear
         }
-        window.styleMask = [.borderless]
-        window.isOpaque = false
-        window.backgroundColor = .clear
     }
 }
 

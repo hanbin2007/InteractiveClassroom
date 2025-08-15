@@ -7,6 +7,11 @@ struct MenuBarView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @Environment(\.openWindow) private var openWindow
 
+    /// Closes any existing overlay windows.
+    private func closeOverlayWindows() {
+        NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
+    }
+
     var body: some View {
         Group {
             if connectionManager.currentLesson == nil {
@@ -18,6 +23,7 @@ struct MenuBarView: View {
                     connectionManager.stopHosting()
                     connectionManager.currentCourse = nil
                     connectionManager.currentLesson = nil
+                    closeOverlayWindows()
                 }
             }
             Button("Show Screen") {
@@ -46,6 +52,8 @@ struct MenuBarView: View {
         .onChange(of: connectionManager.classStarted) { started in
             if started {
                 openWindow(id: "overlay")
+            } else {
+                closeOverlayWindows()
             }
         }
     }
