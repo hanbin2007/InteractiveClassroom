@@ -35,7 +35,7 @@ struct ServerConnectView: View {
                             navigateToTeacher = false
                             navigateToStudent = false
                         } label: {
-                            Label("Disconnect", systemImage: "xmark.circle")
+                            Label("Disconnect", systemImage: "personalhotspot.slash")
                         }
                     }
                 }
