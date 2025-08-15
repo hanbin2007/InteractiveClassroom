@@ -24,7 +24,7 @@ struct TeacherDashboardView: View {
                 placeholder("Reports").tag(3)
                 placeholder("Help").tag(4)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
             CustomTabView(tabs: tabs, selection: $selectedTab)
         }
