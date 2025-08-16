@@ -62,13 +62,6 @@ struct ServerConnectView: View {
                 selectedPeer = nil
             }
         }
-        .onChange(of: selectedPeer) { _, peer in
-            if peer != nil {
-                viewModel.stopBrowsing()
-            } else {
-                viewModel.startBrowsing()
-            }
-        }
         .onAppear {
             viewModel.bind(to: connectionManager)
             viewModel.startBrowsing()

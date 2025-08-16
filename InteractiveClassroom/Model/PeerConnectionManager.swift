@@ -172,8 +172,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// relationships are assigned using context-bound instances.
     private func resolvedCurrentCourse(in context: ModelContext) -> Course? {
         guard let course = currentCourse else { return nil }
-        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.persistentModelID == course.persistentModelID })
-        return try? context.fetch(descriptor).first
+        return context.model(for: course.persistentModelID) as? Course
     }
 
     /// Indicates whether the client is already connected to the specified peer.

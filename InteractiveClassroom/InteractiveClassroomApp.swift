@@ -37,8 +37,7 @@ struct InteractiveClassroomApp: App {
         }
         self.container = container
 
-        let context = ModelContext(container)
-        let manager = PeerConnectionManager(modelContext: context)
+        let manager = PeerConnectionManager(modelContext: container.mainContext)
         _connectionManager = StateObject(wrappedValue: manager)
     }
 
