@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import SwiftData
+import AppKit
 
 /// Initial window prompting user to select a course and lesson before starting service.
 struct CourseSelectionView: View {
@@ -47,6 +48,9 @@ struct CourseSelectionView: View {
             .padding()
             .frame(minWidth: 350, minHeight: 200)
             .navigationTitle("Select Course and Lesson")
+            .onAppear {
+                NSApp.keyWindow?.identifier = NSUserInterfaceItemIdentifier("courseSelection")
+            }
         }
     }
 }
