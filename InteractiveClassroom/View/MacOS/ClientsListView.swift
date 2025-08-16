@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import SwiftData
+import AppKit
 
 /// Displays a table of connected clients and allows disconnection.
 struct ClientsListView: View {
@@ -70,6 +71,7 @@ struct ClientsListView: View {
         }
         .onAppear {
             connectionManager.refreshConnectedClients()
+            NSApp.keyWindow?.identifier = NSUserInterfaceItemIdentifier("clients")
         }
         .onDisappear {
             refreshTimer.upstream.connect().cancel()

@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import SwiftData
+import AppKit
 
 /// Lists all courses and allows CRUD operations.
 struct CourseManagerView: View {
@@ -49,6 +50,9 @@ struct CourseManagerView: View {
             .padding()
             .frame(minWidth: 600, minHeight: 400)
             .navigationTitle("Courses")
+            .onAppear {
+                NSApp.keyWindow?.identifier = NSUserInterfaceItemIdentifier("courseManager")
+            }
             .toolbar {
                 ToolbarItem {
                     Button {

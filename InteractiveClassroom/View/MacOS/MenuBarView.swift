@@ -25,6 +25,16 @@ struct MenuBarView: View {
         NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
     }
 
+    /// Opens a window identified by `id` if one isn't already visible.
+    /// If the window exists, it is brought to the front instead of creating a duplicate.
+    private func openWindowIfNeeded(id: String) {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            openWindow(id: id)
+        }
+    }
+
     var body: some View {
         Group {
             if let t = connectionManager.teacherCode,
@@ -36,7 +46,7 @@ struct MenuBarView: View {
             Divider()
             if connectionManager.currentLesson == nil {
                 Button("Start Class") {
-                    openWindow(id: "courseSelection")
+                    openWindowIfNeeded(id: "courseSelection")
                 }
             } else {
                 Button("End Class") {
@@ -52,10 +62,10 @@ struct MenuBarView: View {
                 }
             }
             Button("Clients") {
-                openWindow(id: "clients")
+                openWindowIfNeeded(id: "clients")
             }
             Button("Courses") {
-                openWindow(id: "courseManager")
+                openWindowIfNeeded(id: "courseManager")
             }
             if #available(macOS 13, *) {
                 SettingsLink {

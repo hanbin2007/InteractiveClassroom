@@ -51,17 +51,25 @@ struct TeacherDashboardView: View {
     }
 
     private var studentsView: some View {
-        List(viewModel.students, id: \.self) { student in
-            HStack {
-                Text(student)
-                Spacer()
-                Button {
-                    viewModel.sendDisconnect(for: student)
-                } label: {
-                    Image(systemName: "personalhotspot.slash")
+        List {
+            ForEach(viewModel.students, id: \.self) { student in
+                HStack {
+                    Text(student)
+                    Spacer()
+                    Button {
+                        viewModel.sendDisconnect(for: student)
+                    } label: {
+                        Image(systemName: "personalhotspot.slash")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Disconnect Student")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Disconnect Student")
+            }
+        }
+        .overlay {
+            if viewModel.students.isEmpty {
+                Text("No students connected")
+                    .foregroundStyle(.secondary)
             }
         }
     }
