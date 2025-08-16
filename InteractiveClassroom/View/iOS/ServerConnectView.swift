@@ -123,6 +123,12 @@ struct ServerConnectView: View {
                 navigateToStudent = false
             }
         }
+        .onChange(of: connectionManager.serverDisconnected) { _, disconnected in
+            if disconnected {
+                navigateToTeacher = false
+                navigateToStudent = false
+            }
+        }
     }
 
     /// Handles taps on a server row, respecting existing connections.

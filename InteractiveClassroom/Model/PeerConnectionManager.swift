@@ -10,6 +10,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     private let serviceType = "iclassrm"
     private let myPeerID: MCPeerID
     private var session: MCSession
+    /// Active sessions when hosting, keyed by the connected peer.
+    private var sessions: [MCPeerID: MCSession] = [:]
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
 
@@ -116,20 +118,26 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
         connectionStatus = "Awaiting connection..."
+        sessions.removeAll()
         refreshConnectedClients()
     }
 
     func stopHosting() {
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
-        if !session.connectedPeers.isEmpty {
+        if !sessions.isEmpty {
             let message = Message(type: "endClass", role: nil, students: nil, target: nil, course: nil, lesson: nil)
             if let data = try? JSONEncoder().encode(message) {
-                try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.session.disconnect()
+            for sess in self.sessions.values {
+                sess.disconnect()
+            }
+            self.sessions.removeAll()
         }
         connectionStatus = "Not Connected"
         teacherCode = nil
@@ -172,9 +180,16 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let lessonPayload = currentLesson.map { LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt) }
         let message = Message(type: "state", course: coursePayload, lesson: lessonPayload)
         if let data = try? JSONEncoder().encode(message) {
-            let targets = peers ?? session.connectedPeers
-            if !targets.isEmpty {
-                try? session.send(data, toPeers: targets, with: .reliable)
+            if let peers = peers {
+                for peerID in peers {
+                    if let sess = sessions[peerID], !sess.connectedPeers.isEmpty {
+                        try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                    }
+                }
+            } else {
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
             }
         }
     }
@@ -195,16 +210,33 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Disconnects from a specific peer based on its display name.
     func disconnect(peerNamed name: String) {
-        if let peer = session.connectedPeers.first(where: { $0.displayName == name }) {
-            session.cancelConnectPeer(peer)
+        if advertiser != nil {
+            if let (peerID, sess) = sessions.first(where: { $0.key.displayName == name }) {
+                sess.disconnect()
+                sessions.removeValue(forKey: peerID)
+            }
+        } else {
+            if let peer = session.connectedPeers.first(where: { $0.displayName == name }) {
+                session.cancelConnectPeer(peer)
+            }
         }
     }
 
     /// Sends a command to the server to disconnect a specific student.
     func sendDisconnectCommand(for name: String) {
+        guard advertiser == nil, let server = connectedServer else { return }
         let message = Message(type: "disconnect", role: nil, students: nil, target: name)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            try? session.send(data, toPeers: [server], with: .reliable)
+        }
+    }
+
+    /// Requests the server to provide the current list of students.
+    func requestStudentList() {
+        guard advertiser == nil, let server = connectedServer else { return }
+        let message = Message(type: "requestStudents", role: nil, students: nil, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: [server], with: .reliable)
         }
     }
 
@@ -212,9 +244,15 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     func startClass() {
         let message = Message(type: "startClass", role: nil, students: nil, target: nil)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            if advertiser != nil {
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+                classStarted = true
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+            }
         }
-        classStarted = true
         // macOS overlay window presentation is now handled by SwiftUI state.
     }
 
@@ -222,10 +260,14 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     private func updateStudents() {
         let currentStudents = rolesByPeer.filter { $0.value == .student }.map { $0.key.displayName }
         students = currentStudents
-        if let teacherPeer = rolesByPeer.first(where: { $0.value == .teacher })?.key {
-            let message = Message(type: "students", role: nil, students: currentStudents, target: nil)
-            if let data = try? JSONEncoder().encode(message) {
-                try? session.send(data, toPeers: [teacherPeer], with: .reliable)
+        guard advertiser != nil else { return }
+        let teacherPeers = rolesByPeer.filter { $0.value == .teacher }.map { $0.key }
+        let message = Message(type: "students", role: nil, students: currentStudents, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            for teacher in teacherPeers {
+                if let sess = sessions[teacher], !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
             }
         }
     }
@@ -236,7 +278,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         guard let context = modelContext else { return }
         let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
         if let clients = try? context.fetch(descriptor) {
-            let activeNames = Set(session.connectedPeers.map { $0.displayName })
+            let activeNames = advertiser != nil ?
+                Set(sessions.keys.map { $0.displayName }) :
+                Set(session.connectedPeers.map { $0.displayName })
             for client in clients where !activeNames.contains(client.deviceName) {
                 client.isConnected = false
             }
@@ -265,7 +309,10 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
                 invitationHandler(false, nil)
                 return
             }
-            invitationHandler(true, self.session)
+            let newSession = MCSession(peer: self.myPeerID, securityIdentity: nil, encryptionPreference: .required)
+            newSession.delegate = self
+            self.sessions[peerID] = newSession
+            invitationHandler(true, newSession)
             if let context = self.modelContext {
                 let name = peerID.displayName
                 // Fetch all clients with the same device name and update the one matching the current course.
@@ -316,14 +363,14 @@ extension PeerConnectionManager: MCSessionDelegate {
         Task { @MainActor in
             switch state {
             case .connected:
-                self.connectionStatus = "Connected to \(peerID.displayName)"
                 if self.advertiser == nil {
+                    self.connectionStatus = "Connected to \(peerID.displayName)"
                     self.connectedServer = peerID
                 }
                 if let role = self.rolesByPeer[peerID] {
                     let message = Message(type: "role", role: role.rawValue, students: nil, target: nil)
                     if let data = try? JSONEncoder().encode(message) {
-                        try? session.send(data, toPeers: [peerID], with: .reliable)
+                        try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
                     }
                 }
                 self.broadcastCurrentState(to: [peerID])
@@ -339,25 +386,28 @@ extension PeerConnectionManager: MCSessionDelegate {
                     }
                 }
             case .connecting:
-                self.connectionStatus = "Connecting to \(peerID.displayName)..."
+                if self.advertiser == nil {
+                    self.connectionStatus = "Connecting to \(peerID.displayName)..."
+                }
             case .notConnected:
                 let actingAsClient = self.advertiser == nil
-                self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
                 if actingAsClient {
                     if self.connectedServer == peerID {
+                        self.connectionStatus = "Not Connected"
                         self.connectedServer = nil
+                        if self.userInitiatedDisconnect {
+                            self.userInitiatedDisconnect = false
+                        } else if self.myRole != nil {
+                            // Lost connection to the server after a successful join.
+                            self.serverDisconnected = true
+                        }
+                        self.myRole = nil
                     }
-                    if self.userInitiatedDisconnect {
-                        self.userInitiatedDisconnect = false
-                    } else if self.myRole != nil {
-                        // Lost connection to the server after a successful join.
-                        self.serverDisconnected = true
-                    }
-                    self.myRole = nil
                 } else {
                     self.userInitiatedDisconnect = false
+                    self.sessions.removeValue(forKey: peerID)
                 }
                 if let context = self.modelContext {
                     let name = peerID.displayName
@@ -388,7 +438,9 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.classStarted = true
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
-                        try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
                     }
                 }
             case "disconnect":
@@ -397,11 +449,15 @@ extension PeerConnectionManager: MCSessionDelegate {
                         self.disconnect(peerNamed: target)
                     }
                 }
+            case "requestStudents":
+                if self.advertiser != nil {
+                    self.updateStudents()
+                }
             case "endClass":
                 self.classStarted = false
                 self.serverDisconnected = true
                 self.userInitiatedDisconnect = true
-                self.session.disconnect()
+                session.disconnect()
                 self.myRole = nil
             case "state":
                 if let course = message.course {

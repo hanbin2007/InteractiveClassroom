@@ -16,6 +16,8 @@ final class TeacherDashboardViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .assign(to: \.students, on: self)
             .store(in: &cancellables)
+
+        manager.requestStudentList()
     }
 
     func sendDisconnect(for student: String) {
