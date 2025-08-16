@@ -168,6 +168,13 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
     }
 
+    /// Resolves the current course within the specified model context to ensure
+    /// relationships are assigned using context-bound instances.
+    private func resolvedCurrentCourse(in context: ModelContext) -> Course? {
+        guard let course = currentCourse else { return nil }
+        return context.model(for: course.persistentModelID) as? Course
+    }
+
     /// Indicates whether the client is already connected to the specified peer.
     func isConnected(to peer: Peer) -> Bool {
         connectedServer == peer.peerID
@@ -315,12 +322,13 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
                 let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
                 let results = (try? context.fetch(descriptor)) ?? []
                 let existing = results.first { $0.course?.persistentModelID == self.currentCourse?.persistentModelID }
+                let courseRef = self.resolvedCurrentCourse(in: context)
                 if let existing {
                     existing.nickname = payload?.nickname ?? existing.nickname
                     existing.role = self.rolesByPeer[peerID]?.rawValue ?? existing.role
                     existing.lastConnected = .now
                     existing.isConnected = true
-                    existing.course = self.currentCourse
+                    existing.course = courseRef
                 } else {
                     let info = ClientInfo(deviceName: name,
                                           nickname: payload?.nickname ?? "",
@@ -328,7 +336,7 @@ extension PeerConnectionManager: MCNearbyServiceAdvertiserDelegate {
                                           ipAddress: nil,
                                           lastConnected: .now,
                                           isConnected: true,
-                                          course: self.currentCourse)
+                                          course: courseRef)
                     context.insert(info)
                 }
                 try? context.save()
