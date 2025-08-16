@@ -56,8 +56,17 @@ struct ServerConnectView: View {
         }
         .navigationTitle("Select Server")
         .sheet(item: $selectedPeer) { peer in
-            PasscodeEntrySheet(peer: peer, viewModel: viewModel) {
+            PasscodeEntrySheet(peer: peer) { passcode, nickname in
+                viewModel.connect(to: peer, passcode: passcode, nickname: nickname)
+            } onDismiss: {
                 selectedPeer = nil
+            }
+        }
+        .onChange(of: selectedPeer) { _, peer in
+            if peer != nil {
+                viewModel.stopBrowsing()
+            } else {
+                viewModel.startBrowsing()
             }
         }
         .onAppear {
@@ -128,7 +137,7 @@ struct ServerConnectView: View {
 /// Sheet presented for entering a passcode and nickname when connecting to a server.
 private struct PasscodeEntrySheet: View {
     let peer: PeerConnectionManager.Peer
-    @ObservedObject var viewModel: ServerConnectViewModel
+    var connectAction: (String, String) -> Void
     var onDismiss: () -> Void
 
     @State private var passcode = ""
@@ -147,7 +156,7 @@ private struct PasscodeEntrySheet: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .textInputAutocapitalization(.never)
             Button("Connect") {
-                viewModel.connect(to: peer, passcode: passcode, nickname: nickname)
+                connectAction(passcode, nickname)
                 passcode = ""
                 nickname = ""
                 onDismiss()
