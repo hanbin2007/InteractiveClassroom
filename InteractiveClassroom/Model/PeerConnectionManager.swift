@@ -208,6 +208,15 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         }
     }
 
+    /// Requests the server to provide the current list of students.
+    func requestStudentList() {
+        guard advertiser == nil else { return }
+        let message = Message(type: "requestStudents", role: nil, students: nil, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        }
+    }
+
     /// Broadcasts a start-class command to the server.
     func startClass() {
         let message = Message(type: "startClass", role: nil, students: nil, target: nil)
@@ -342,20 +351,20 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.connectionStatus = "Connecting to \(peerID.displayName)..."
             case .notConnected:
                 let actingAsClient = self.advertiser == nil
-                self.connectionStatus = "Not Connected"
                 self.rolesByPeer.removeValue(forKey: peerID)
                 self.updateStudents()
                 if actingAsClient {
                     if self.connectedServer == peerID {
+                        self.connectionStatus = "Not Connected"
                         self.connectedServer = nil
+                        if self.userInitiatedDisconnect {
+                            self.userInitiatedDisconnect = false
+                        } else if self.myRole != nil {
+                            // Lost connection to the server after a successful join.
+                            self.serverDisconnected = true
+                        }
+                        self.myRole = nil
                     }
-                    if self.userInitiatedDisconnect {
-                        self.userInitiatedDisconnect = false
-                    } else if self.myRole != nil {
-                        // Lost connection to the server after a successful join.
-                        self.serverDisconnected = true
-                    }
-                    self.myRole = nil
                 } else {
                     self.userInitiatedDisconnect = false
                 }
@@ -396,6 +405,10 @@ extension PeerConnectionManager: MCSessionDelegate {
                     if self.advertiser != nil {
                         self.disconnect(peerNamed: target)
                     }
+                }
+            case "requestStudents":
+                if self.advertiser != nil {
+                    self.updateStudents()
                 }
             case "endClass":
                 self.classStarted = false
