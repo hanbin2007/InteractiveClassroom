@@ -208,17 +208,12 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectedServer = nil
     }
 
-    /// Disconnects from a specific peer based on its display name.
+    /// Disconnects a specific peer. Server only.
     func disconnect(peerNamed name: String) {
-        if advertiser != nil {
-            if let (peerID, sess) = sessions.first(where: { $0.key.displayName == name }) {
-                sess.disconnect()
-                sessions.removeValue(forKey: peerID)
-            }
-        } else {
-            if let peer = session.connectedPeers.first(where: { $0.displayName == name }) {
-                session.cancelConnectPeer(peer)
-            }
+        guard advertiser != nil else { return }
+        if let (peerID, sess) = sessions.first(where: { $0.key.displayName == name }) {
+            sess.disconnect()
+            sessions.removeValue(forKey: peerID)
         }
     }
 
@@ -379,7 +374,8 @@ extension PeerConnectionManager: MCSessionDelegate {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
                     let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
-                    if let existing = try? context.fetch(descriptor).first {
+                    let results = (try? context.fetch(descriptor)) ?? []
+                    if let existing = results.first(where: { $0.course?.persistentModelID == self.currentCourse?.persistentModelID }) {
                         existing.isConnected = true
                         existing.lastConnected = .now
                         try? context.save()
@@ -413,7 +409,8 @@ extension PeerConnectionManager: MCSessionDelegate {
                     let name = peerID.displayName
                     let predicate = #Predicate<ClientInfo> { $0.deviceName == name }
                     let descriptor = FetchDescriptor<ClientInfo>(predicate: predicate)
-                    if let existing = try? context.fetch(descriptor).first {
+                    let results = (try? context.fetch(descriptor)) ?? []
+                    if let existing = results.first(where: { $0.course?.persistentModelID == self.currentCourse?.persistentModelID }) {
                         existing.isConnected = false
                         try? context.save()
                     }
