@@ -5,15 +5,21 @@ import AppKit
 
 /// Overlay shown on the big screen during a quiz session.
 struct ScreenOverlayView: View {
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
     @StateObject private var model = ScreenOverlayModel()
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                OverlayTopBarView(questionType: model.questionType.displayName,
-                                  remainingTime: model.remainingTimeString)
-                OverlayStatsView(stats: model.statsDisplay)
-                OverlayNamesView(names: model.submittedNames)
+                if connectionManager.showClassSummary {
+                    ClassSummaryOverlayView(students: connectionManager.students)
+                        .transition(.opacity)
+                } else {
+                    OverlayTopBarView(questionType: model.questionType.displayName,
+                                      remainingTime: model.remainingTimeString)
+                    OverlayStatsView(stats: model.statsDisplay)
+                    OverlayNamesView(names: model.submittedNames)
+                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
@@ -21,6 +27,7 @@ struct ScreenOverlayView: View {
         .ignoresSafeArea()
         .foregroundStyle(.white)
         .background(WindowConfigurator())
+        .animation(.easeInOut, value: connectionManager.showClassSummary)
     }
 }
 

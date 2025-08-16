@@ -30,15 +30,26 @@ struct TeacherDashboardView: View {
         .navigationTitle("Teacher")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button {
-                    viewModel.startClass()
-                } label: {
-                    Image(systemName: "play.fill")
-                    Text("Start Class").bold()
+                if connectionManager.classStarted {
+                    Button {
+                        viewModel.summarizeClass()
+                    } label: {
+                        Image(systemName: "doc.text")
+                        Text("Class Summarize").bold()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.yellow)
+                } else {
+                    Button {
+                        viewModel.startClass()
+                    } label: {
+                        Image(systemName: "play.fill")
+                        Text("Start Class").bold()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
-                
+
                 Button {
                     connectionManager.disconnectFromServer()
                 } label: {
