@@ -27,6 +27,13 @@ struct MenuBarView: View {
 
     var body: some View {
         Group {
+            if let t = connectionManager.teacherCode,
+               let s = connectionManager.studentCode {
+                Text("Teacher Key: \(t)")
+                Text("Student Key: \(s)")
+            }
+            Text(connectionManager.connectionStatus)
+            Divider()
             if connectionManager.currentLesson == nil {
                 Button("Start Class") {
                     openWindow(id: "courseSelection")
