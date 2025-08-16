@@ -202,28 +202,35 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Sends a command to the server to disconnect a specific student.
     func sendDisconnectCommand(for name: String) {
+        guard let server = connectedServer else { return }
         let message = Message(type: "disconnect", role: nil, students: nil, target: name)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            try? session.send(data, toPeers: [server], with: .reliable)
         }
     }
 
     /// Requests the server to provide the current list of students.
     func requestStudentList() {
-        guard advertiser == nil else { return }
+        guard advertiser == nil, let server = connectedServer else { return }
         let message = Message(type: "requestStudents", role: nil, students: nil, target: nil)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            try? session.send(data, toPeers: [server], with: .reliable)
         }
     }
 
-    /// Broadcasts a start-class command to the server.
+    /// Starts a class by informing the server or broadcasting to students if hosting.
     func startClass() {
         let message = Message(type: "startClass", role: nil, students: nil, target: nil)
-        if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        if advertiser != nil {
+            // Server broadcasts the start of class to all connected clients.
+            if let data = try? JSONEncoder().encode(message) {
+                try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            }
+            classStarted = true
+        } else if let server = connectedServer, let data = try? JSONEncoder().encode(message) {
+            // Clients send a request to the server; state updates on server response.
+            try? session.send(data, toPeers: [server], with: .reliable)
         }
-        classStarted = true
         // macOS overlay window presentation is now handled by SwiftUI state.
     }
 
