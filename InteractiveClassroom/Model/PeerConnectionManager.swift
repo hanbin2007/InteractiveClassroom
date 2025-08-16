@@ -30,6 +30,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
+    /// Indicates whether the class summary overlay should be shown.
+    @Published var showClassSummary: Bool = false
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
     /// Currently connected server when acting as a client.
@@ -210,6 +212,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         myRole = nil
         students.removeAll()
         classStarted = false
+        showClassSummary = false
         currentCourse = nil
         currentLesson = nil
         connectedServer = nil
@@ -251,11 +254,27 @@ final class PeerConnectionManager: NSObject, ObservableObject {
                     try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
                 }
                 classStarted = true
+                showClassSummary = false
             } else if let server = connectedServer {
                 try? session.send(data, toPeers: [server], with: .reliable)
             }
         }
         // macOS overlay window presentation is now handled by SwiftUI state.
+    }
+
+    /// Requests the server to display the class summary overlay.
+    func summarizeClass() {
+        let message = Message(type: "classSummary", role: nil, students: nil, target: nil)
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+                showClassSummary = true
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+            }
+        }
     }
 
     /// Updates the internal student list and notifies the teacher if connected.
@@ -441,6 +460,15 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.students = message.students ?? []
             case "startClass":
                 self.classStarted = true
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
+                    }
+                }
+            case "classSummary":
+                self.showClassSummary = true
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
                         for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
