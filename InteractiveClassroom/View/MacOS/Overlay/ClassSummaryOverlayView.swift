@@ -3,36 +3,57 @@ import SwiftUI
 
 /// Overlay displaying the list of currently online students during class summary.
 struct ClassSummaryOverlayView: View {
-    let students: [String]
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
-                .overlay(.ultraThinMaterial)
-            VStack(spacing: 24) {
-                Text("Class Summary")
-                    .font(.largeTitle)
-                    .bold()
-                if students.isEmpty {
-                    Text("No students connected")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                        .transition(.opacity)
-                } else {
-                    VStack(spacing: 16) {
-                        ForEach(students, id: \.self) { name in
-                            Text(name)
-                                .font(.title2)
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
+            if connectionManager.showClassSummary {
+                LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .ignoresSafeArea()
+                    .overlay(.ultraThinMaterial)
+                VStack(spacing: 24) {
+                    Text("Class Summary")
+                        .font(.largeTitle)
+                        .bold()
+                    let list = connectionManager.students
+                    if list.isEmpty {
+                        Text("No students connected")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                            .transition(.opacity)
+                    } else {
+                        VStack(spacing: 16) {
+                            ForEach(list, id: \.self) { name in
+                                Text(name)
+                                    .font(.title2)
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                            }
                         }
+                        .animation(.easeInOut, value: list)
                     }
-                    .animation(.easeInOut, value: students)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .foregroundColor(.white)
+            }
+
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button {
+                        withAnimation { connectionManager.toggleSummaryVisibility() }
+                    } label: {
+                        Image(systemName: connectionManager.showClassSummary ? "eye.slash" : "eye")
+                            .padding(12)
+                            .background(Color.black.opacity(0.4))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding()
+                    .accessibilityLabel(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary")
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .foregroundColor(.white)
         }
     }
 }

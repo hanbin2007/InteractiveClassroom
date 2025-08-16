@@ -30,7 +30,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
-    /// Indicates whether the class summary overlay should be shown.
+    /// Indicates whether the class summary mode is active.
+    @Published var classSummaryActive: Bool = false
+    /// Indicates whether the class summary overlay should be visible.
     @Published var showClassSummary: Bool = false
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
@@ -65,19 +67,22 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let target: String?
         let course: CoursePayload?
         let lesson: LessonPayload?
+        let visible: Bool?
 
         init(type: String,
              role: String? = nil,
              students: [String]? = nil,
              target: String? = nil,
              course: CoursePayload? = nil,
-             lesson: LessonPayload? = nil) {
+             lesson: LessonPayload? = nil,
+             visible: Bool? = nil) {
             self.type = type
             self.role = role
             self.students = students
             self.target = target
             self.course = course
             self.lesson = lesson
+            self.visible = visible
         }
     }
 
@@ -122,6 +127,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectionStatus = "Awaiting connection..."
         sessions.removeAll()
         refreshConnectedClients()
+        classStarted = false
+        classSummaryActive = false
+        showClassSummary = false
     }
 
     func stopHosting() {
@@ -146,6 +154,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         studentCode = nil
         rolesByPeer.removeAll()
         classStarted = false
+        classSummaryActive = false
+        showClassSummary = false
     }
 
     func startBrowsing() {
@@ -254,6 +264,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
                     try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
                 }
                 classStarted = true
+                classSummaryActive = false
                 showClassSummary = false
             } else if let server = connectedServer {
                 try? session.send(data, toPeers: [server], with: .reliable)
@@ -264,13 +275,49 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Requests the server to display the class summary overlay.
     func summarizeClass() {
-        let message = Message(type: "classSummary", role: nil, students: nil, target: nil)
+        let message = Message(type: "classSummary")
         if let data = try? JSONEncoder().encode(message) {
             if advertiser != nil {
                 for sess in sessions.values where !sess.connectedPeers.isEmpty {
                     try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
                 }
+                classSummaryActive = true
                 showClassSummary = true
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+                classSummaryActive = true
+                showClassSummary = true
+            }
+        }
+    }
+
+    /// Toggles the visibility of the class summary overlay.
+    func toggleSummaryVisibility() {
+        setSummaryVisible(!showClassSummary)
+    }
+
+    /// Sets the visibility of the class summary overlay and notifies peers.
+    func setSummaryVisible(_ visible: Bool) {
+        let message = Message(type: "summaryVisibility", visible: visible)
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                showClassSummary = visible
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+                showClassSummary = visible
+            }
+        }
+    }
+
+    /// Ends the current class session.
+    func endClass() {
+        let message = Message(type: "endClass")
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                stopHosting()
             } else if let server = connectedServer {
                 try? session.send(data, toPeers: [server], with: .reliable)
             }
@@ -460,6 +507,8 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.students = message.students ?? []
             case "startClass":
                 self.classStarted = true
+                self.classSummaryActive = false
+                self.showClassSummary = false
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
                         for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
@@ -468,7 +517,18 @@ extension PeerConnectionManager: MCSessionDelegate {
                     }
                 }
             case "classSummary":
+                self.classSummaryActive = true
                 self.showClassSummary = true
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
+                    }
+                }
+            case "summaryVisibility":
+                let visible = message.visible ?? false
+                self.showClassSummary = visible
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
                         for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
@@ -487,11 +547,17 @@ extension PeerConnectionManager: MCSessionDelegate {
                     self.updateStudents()
                 }
             case "endClass":
-                self.classStarted = false
-                self.serverDisconnected = true
-                self.userInitiatedDisconnect = true
-                session.disconnect()
-                self.myRole = nil
+                if self.advertiser != nil {
+                    self.stopHosting()
+                } else {
+                    self.classStarted = false
+                    self.classSummaryActive = false
+                    self.showClassSummary = false
+                    self.serverDisconnected = true
+                    self.userInitiatedDisconnect = true
+                    session.disconnect()
+                    self.myRole = nil
+                }
             case "state":
                 if let course = message.course {
                     self.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)

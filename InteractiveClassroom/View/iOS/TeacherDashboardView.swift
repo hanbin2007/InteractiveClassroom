@@ -31,14 +31,38 @@ struct TeacherDashboardView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 if connectionManager.classStarted {
-                    Button {
-                        viewModel.summarizeClass()
-                    } label: {
-                        Image(systemName: "doc.text")
-                        Text("Class Summarize").bold()
+                    if connectionManager.classSummaryActive {
+                        HStack(spacing: 8) {
+                            Button {
+                                withAnimation { viewModel.toggleSummaryVisibility() }
+                            } label: {
+                                Image(systemName: connectionManager.showClassSummary ? "eye.slash" : "eye")
+                                Text(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary").bold()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.yellow)
+
+                            Button {
+                                viewModel.endClass()
+                            } label: {
+                                Image(systemName: "stop.fill")
+                                Text("End Class").bold()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else {
+                        Button {
+                            viewModel.summarizeClass()
+                        } label: {
+                            Image(systemName: "doc.text")
+                            Text("Class Summarize").bold()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.yellow)
+                        .transition(.opacity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.yellow)
                 } else {
                     Button {
                         viewModel.startClass()
@@ -59,6 +83,7 @@ struct TeacherDashboardView: View {
             }
         }
         .onAppear { viewModel.bind(to: connectionManager) }
+        .animation(.default, value: connectionManager.classSummaryActive)
     }
 
     private var studentsView: some View {

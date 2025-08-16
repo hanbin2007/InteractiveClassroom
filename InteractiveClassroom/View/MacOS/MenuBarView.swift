@@ -57,10 +57,18 @@ struct MenuBarView: View {
                 }
             }
             if connectionManager.classStarted {
-                Button(action: { connectionManager.summarizeClass() }) {
-                    Label("Class Summarize", systemImage: "doc.text")
+                if connectionManager.classSummaryActive {
+                    Button(action: { connectionManager.toggleSummaryVisibility() }) {
+                        Label(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary",
+                              systemImage: connectionManager.showClassSummary ? "eye.slash" : "eye")
+                    }
+                    .foregroundColor(.yellow)
+                } else {
+                    Button(action: { connectionManager.summarizeClass() }) {
+                        Label("Class Summarize", systemImage: "doc.text")
+                    }
+                    .foregroundColor(.yellow)
                 }
-                .foregroundColor(.yellow)
                 Button("Show Screen") {
                     openOverlay()
                 }

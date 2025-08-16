@@ -11,8 +11,8 @@ struct ScreenOverlayView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if connectionManager.showClassSummary {
-                    ClassSummaryOverlayView(students: connectionManager.students)
+                if connectionManager.classSummaryActive {
+                    ClassSummaryOverlayView()
                         .transition(.opacity)
                 } else {
                     OverlayTopBarView(questionType: model.questionType.displayName,
@@ -27,7 +27,19 @@ struct ScreenOverlayView: View {
         .ignoresSafeArea()
         .foregroundStyle(.white)
         .background(WindowConfigurator())
-        .animation(.easeInOut, value: connectionManager.showClassSummary)
+        .animation(.easeInOut, value: connectionManager.classSummaryActive)
+        .onAppear {
+            if connectionManager.showClassSummary {
+                NSApp.presentationOptions.insert(.hideMenuBar)
+            }
+        }
+        .onChange(of: connectionManager.showClassSummary) { show in
+            if show {
+                NSApp.presentationOptions.insert(.hideMenuBar)
+            } else {
+                NSApp.presentationOptions.remove(.hideMenuBar)
+            }
+        }
     }
 }
 
