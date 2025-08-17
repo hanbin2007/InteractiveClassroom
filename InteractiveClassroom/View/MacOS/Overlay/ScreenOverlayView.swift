@@ -59,7 +59,7 @@ private struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window = window else { return }
             window.identifier = NSUserInterfaceItemIdentifier("overlay")
-            window.level = NSWindow.Level(CGShieldingWindowLevel())
+            window.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
