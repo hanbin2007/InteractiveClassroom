@@ -2,6 +2,7 @@
 import SwiftUI
 #if os(macOS)
 import AppKit
+import CoreGraphics
 #endif
 
 /// Full-screen overlay container responsible for presenting interactive content.
@@ -58,7 +59,7 @@ private struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window = window else { return }
             window.identifier = NSUserInterfaceItemIdentifier("overlay")
-            window.level = .screenSaver
+            window.level = NSWindow.Level(CGShieldingWindowLevel())
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
@@ -66,6 +67,7 @@ private struct WindowConfigurator: NSViewRepresentable {
             window.styleMask = [.borderless]
             window.isOpaque = false
             window.backgroundColor = .clear
+            window.orderFrontRegardless()
         }
     }
 }

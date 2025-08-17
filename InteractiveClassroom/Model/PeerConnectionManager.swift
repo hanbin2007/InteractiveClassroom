@@ -45,6 +45,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Content currently presented on the screen overlay.
     @Published var overlayContent: OverlayContent?
+    /// Indicates whether the overlay currently hosts any content.
+    var overlayHasContent: Bool { overlayContent != nil }
     /// Controls visibility of the overlay's content while keeping the overlay itself visible.
     @Published var isOverlayContentVisible: Bool = false
     /// Currently running interaction, if any.
@@ -145,7 +147,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         self.init(modelContext: nil)
     }
 
-    func startHosting() {
+    /// Opens the classroom service and begins advertising for connections.
+    func openClassroom() {
         teacherCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
         studentCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
         advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
@@ -154,9 +157,12 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectionStatus = "Awaiting connection..."
         sessions.removeAll()
         refreshConnectedClients()
+        overlayContent = nil
+        isOverlayContentVisible = false
     }
 
-    func stopHosting() {
+    /// Ends the classroom session and disconnects all clients.
+    func endClass() {
         endInteraction()
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
