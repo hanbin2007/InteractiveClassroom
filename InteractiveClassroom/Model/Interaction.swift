@@ -84,7 +84,9 @@ struct InteractionRequest: Codable {
     var content: Content
 
     /// Builds an overlay container based on the request.
-    func makeOverlay() -> OverlayContent {
+    /// - Parameter countdownService: Optional service used for countdown interactions
+    ///   to maintain timer state even when the overlay view is removed.
+    func makeOverlay(countdownService: CountdownService? = nil) -> OverlayContent {
         let overlayTemplate: OverlayTemplate
         switch template {
         case .fullScreen:
@@ -100,7 +102,11 @@ struct InteractionRequest: Codable {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding()
             case .countdown:
-                CountdownOverlayView(seconds: lifecycle.secondsValue ?? 0)
+                if let service = countdownService {
+                    CountdownOverlayView(service: service)
+                } else {
+                    CountdownOverlayView(service: CountdownService(seconds: lifecycle.secondsValue ?? 0))
+                }
             }
         }
     }

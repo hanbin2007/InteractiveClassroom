@@ -1,21 +1,15 @@
 #if os(macOS) || os(iOS)
 import SwiftUI
-import Combine
 
 /// A countdown view showing minutes and seconds with animations.
 struct CountdownOverlayView: View {
-    @State private var remaining: Int
+    @ObservedObject var service: CountdownService
     @State private var isVisible = false
     @State private var tick = false
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    init(seconds: Int) {
-        _remaining = State(initialValue: max(seconds, 0))
-    }
 
     private var formattedTime: String {
-        let minutes = remaining / 60
-        let seconds = remaining % 60
+        let minutes = service.remainingSeconds / 60
+        let seconds = service.remainingSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 
@@ -40,9 +34,7 @@ struct CountdownOverlayView: View {
                 isVisible = true
             }
         }
-        .onReceive(timer) { _ in
-            guard remaining > 0 else { return }
-            remaining -= 1
+        .onChange(of: service.remainingSeconds) { _ in
             tick.toggle()
         }
     }
