@@ -229,8 +229,6 @@ struct FullScreenOverlay<Content: View>: View {
                 .ignoresSafeArea()
                 .transition(.opacity)
             content()
-                .transition(.scale(scale: OverlayConstants.contentScale, anchor: .center)
-                    .combined(with: .opacity))
         }
     }
 }
