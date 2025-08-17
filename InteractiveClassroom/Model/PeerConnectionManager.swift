@@ -53,6 +53,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published private(set) var activeInteraction: Interaction?
     /// Timer task for finite interactions.
     private var interactionTask: Task<Void, Never>?
+    /// Service managing countdown interactions.
+    @Published var countdownService: CountdownService?
 
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
@@ -209,16 +211,26 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         guard activeInteraction == nil else { return }
         let interaction = Interaction(request: request)
         activeInteraction = interaction
-        presentOverlay(content: request.makeOverlay())
+        if case .countdown = request.content,
+           let seconds = request.lifecycle.secondsValue {
+            let service = CountdownService(seconds: seconds)
+            countdownService = service
+            presentOverlay(content: request.makeOverlay(countdownService: service))
+            service.start { [weak self] in
+                self?.endInteraction()
+            }
+        } else {
+            presentOverlay(content: request.makeOverlay())
+            if case let .finite(seconds) = request.lifecycle {
+                interactionTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
+                    self?.endInteraction()
+                }
+            }
+        }
         if broadcast {
             let message = Message(type: "startInteraction", interaction: request)
             sendMessageToServer(message)
-        }
-        if case let .finite(seconds) = request.lifecycle {
-            interactionTask = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
-                await self?.endInteraction()
-            }
         }
     }
 
@@ -230,6 +242,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         activeInteraction = nil
         interactionTask?.cancel()
         interactionTask = nil
+        countdownService?.stop()
+        countdownService = nil
         if broadcast {
             let message = Message(type: "stopInteraction", interaction: nil)
             sendMessageToServer(message)
@@ -314,8 +328,13 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     }
 
     /// Broadcasts a start-class command to the server.
-    func startClass() {
-        let request = InteractionRequest(template: .fullScreen, lifecycle: .infinite, text: "")
+    func startClass(at startDate: Date) {
+        let seconds = max(0, Int(startDate.timeIntervalSinceNow))
+        let request = InteractionRequest(
+            template: .fullScreen,
+            lifecycle: .finite(seconds: seconds),
+            content: .countdown
+        )
         startInteraction(request, broadcast: false)
         let message = Message(type: "startClass", interaction: request)
         sendMessageToServer(message)

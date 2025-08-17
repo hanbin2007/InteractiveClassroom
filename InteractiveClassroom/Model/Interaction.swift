@@ -31,6 +31,11 @@ enum InteractionLifecycle: Codable, Equatable {
             try container.encode(seconds, forKey: .seconds)
         }
     }
+
+    /// Returns the associated seconds if the lifecycle is finite.
+    var secondsValue: Int? {
+        if case let .finite(seconds) = self { return seconds } else { return nil }
+    }
 }
 
 /// Request payload used to initiate an interaction from the teacher client.
@@ -43,11 +48,46 @@ struct InteractionRequest: Codable {
 
     var template: Template
     var lifecycle: InteractionLifecycle
-    /// Placeholder text representing the interactive content.
-    var text: String
+
+    /// Content type for the interaction.
+    enum Content: Codable, Equatable {
+        case text(String)
+        case countdown
+
+        private enum CodingKeys: String, CodingKey { case type, text }
+        private enum Kind: String, Codable { case text, countdown }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let kind = try container.decode(Kind.self, forKey: .type)
+            switch kind {
+            case .text:
+                let value = try container.decode(String.self, forKey: .text)
+                self = .text(value)
+            case .countdown:
+                self = .countdown
+            }
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            switch self {
+            case .text(let value):
+                try container.encode(Kind.text, forKey: .type)
+                try container.encode(value, forKey: .text)
+            case .countdown:
+                try container.encode(Kind.countdown, forKey: .type)
+            }
+        }
+    }
+
+    var content: Content
 
     /// Builds an overlay container based on the request.
-    func makeOverlay() -> OverlayContent {
+    /// - Parameter countdownService: Optional service used for countdown interactions
+    ///   to maintain timer state even when the overlay view is removed.
+    @MainActor
+    func makeOverlay(countdownService: CountdownService? = nil) -> OverlayContent {
         let overlayTemplate: OverlayTemplate
         switch template {
         case .fullScreen:
@@ -56,10 +96,19 @@ struct InteractionRequest: Codable {
             overlayTemplate = .floatingCorner(position: .bottomRight)
         }
         return OverlayContent(template: overlayTemplate) {
-            Text(text)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+            switch content {
+            case .text(let text):
+                Text(text)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+            case .countdown:
+                if let service = countdownService {
+                    CountdownOverlayView(service: service)
+                } else {
+                    CountdownOverlayView(service: CountdownService(seconds: lifecycle.secondsValue ?? 0))
+                }
+            }
         }
     }
 }
