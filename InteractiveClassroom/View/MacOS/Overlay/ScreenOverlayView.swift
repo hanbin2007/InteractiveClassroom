@@ -39,9 +39,12 @@ struct ScreenOverlayView: View {
                 }
                 Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
-        .ignoresSafeArea()
+        .ignoresSafeArea(.all)
         #if os(macOS)
         .background(WindowConfigurator())
         #endif
@@ -63,6 +66,7 @@ private struct WindowConfigurator: NSViewRepresentable {
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
+                window.contentView?.frame = screenFrame
             }
             window.styleMask = [.borderless]
             window.isOpaque = false
