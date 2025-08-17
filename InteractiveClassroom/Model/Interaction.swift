@@ -86,6 +86,7 @@ struct InteractionRequest: Codable {
     /// Builds an overlay container based on the request.
     /// - Parameter countdownService: Optional service used for countdown interactions
     ///   to maintain timer state even when the overlay view is removed.
+    @MainActor
     func makeOverlay(countdownService: CountdownService? = nil) -> OverlayContent {
         let overlayTemplate: OverlayTemplate
         switch template {
