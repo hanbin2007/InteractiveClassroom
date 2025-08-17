@@ -20,10 +20,6 @@ struct CountdownOverlayView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.center)
-        .transition(
-            .scale(scale: OverlayConstants.contentScale, anchor: .center)
-                .combined(with: .opacity)
-        )
     }
 }
 #endif
