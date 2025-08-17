@@ -37,16 +37,20 @@ struct ScreenOverlayView: View {
         ZStack {
             if let content = connectionManager.overlayContent,
                connectionManager.isOverlayContentVisible {
-                switch content.template {
-                case .fullScreen(let color):
-                    FullScreenOverlay(background: color) {
-                        content.view
-                    }
-                case .floatingCorner(let position):
-                    CornerOverlay(corner: position) {
-                        content.view
+                Group {
+                    switch content.template {
+                    case .fullScreen(let color):
+                        FullScreenOverlay(background: color) {
+                            content.view
+                        }
+                    case .floatingCorner(let position):
+                        CornerOverlay(corner: position) {
+                            content.view
+                        }
                     }
                 }
+                .transition(.scale(scale: OverlayConstants.contentScale, anchor: .center)
+                    .combined(with: .opacity))
             }
             VStack {
                 Spacer()
