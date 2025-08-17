@@ -11,7 +11,8 @@ struct MenuBarView: View {
     /// Presents the full-screen overlay window.
     private func openOverlay() {
         closeOverlay()
-        NSApp.presentationOptions = [.hideDock, .hideMenuBar]
+        // Auto-hide system chrome but keep the menu bar accessible when needed.
+        NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
         let controller = NSHostingController(rootView: ScreenOverlayView()
             .environmentObject(connectionManager))
         let window = NSWindow(contentViewController: controller)
