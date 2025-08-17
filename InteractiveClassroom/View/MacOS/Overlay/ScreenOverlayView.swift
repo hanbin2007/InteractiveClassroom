@@ -5,15 +5,38 @@ import AppKit
 
 /// Overlay shown on the big screen during a quiz session.
 struct ScreenOverlayView: View {
-    @StateObject private var model = ScreenOverlayModel()
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                OverlayTopBarView(questionType: model.questionType.displayName,
-                                  remainingTime: model.remainingTimeString)
-                OverlayStatsView(stats: model.statsDisplay)
-                OverlayNamesView(names: model.submittedNames)
+                if let interaction = connectionManager.activeInteraction {
+                    if connectionManager.overlayVisible {
+                        switch interaction {
+                        case .classSummary:
+                            ClassSummaryOverlayView()
+                                .transition(.opacity)
+                        }
+                    }
+
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button {
+                                withAnimation { connectionManager.toggleInteractionVisibility() }
+                            } label: {
+                                Image(systemName: connectionManager.overlayVisible ? "eye.slash" : "eye")
+                                    .padding(12)
+                                    .background(Color.black.opacity(0.4))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .padding()
+                            .accessibilityLabel(connectionManager.overlayVisible ? "Hide Interaction" : "Show Interaction")
+                        }
+                    }
+                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
@@ -21,6 +44,17 @@ struct ScreenOverlayView: View {
         .ignoresSafeArea()
         .foregroundStyle(.white)
         .background(WindowConfigurator())
+        .animation(.easeInOut, value: connectionManager.overlayVisible)
+        .onAppear { updateMenuBar() }
+        .onChange(of: connectionManager.activeInteraction) { _ in updateMenuBar() }
+    }
+
+    private func updateMenuBar() {
+        if connectionManager.activeInteraction != nil {
+            NSApp.presentationOptions.insert(.hideMenuBar)
+        } else {
+            NSApp.presentationOptions.remove(.hideMenuBar)
+        }
     }
 }
 

@@ -5,6 +5,11 @@ import SwiftData
 import UIKit
 #endif
 
+/// Represents the type of interaction currently displayed on the overlay.
+enum OverlayInteraction: String, Codable {
+    case classSummary
+}
+
 @MainActor
 final class PeerConnectionManager: NSObject, ObservableObject {
     private let serviceType = "iclassrm"
@@ -30,6 +35,10 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var myRole: UserRole?
     @Published var students: [String] = []
     @Published var classStarted: Bool = false
+    /// Currently active overlay interaction.
+    @Published var activeInteraction: OverlayInteraction?
+    /// Whether the active interaction's content is visible.
+    @Published var overlayVisible: Bool = true
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
     /// Currently connected server when acting as a client.
@@ -63,19 +72,25 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         let target: String?
         let course: CoursePayload?
         let lesson: LessonPayload?
+        let visible: Bool?
+        let interaction: String?
 
         init(type: String,
              role: String? = nil,
              students: [String]? = nil,
              target: String? = nil,
              course: CoursePayload? = nil,
-             lesson: LessonPayload? = nil) {
+             lesson: LessonPayload? = nil,
+             visible: Bool? = nil,
+             interaction: String? = nil) {
             self.type = type
             self.role = role
             self.students = students
             self.target = target
             self.course = course
             self.lesson = lesson
+            self.visible = visible
+            self.interaction = interaction
         }
     }
 
@@ -120,6 +135,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectionStatus = "Awaiting connection..."
         sessions.removeAll()
         refreshConnectedClients()
+        classStarted = false
+        activeInteraction = nil
+        overlayVisible = true
     }
 
     func stopHosting() {
@@ -144,6 +162,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         studentCode = nil
         rolesByPeer.removeAll()
         classStarted = false
+        activeInteraction = nil
+        overlayVisible = true
     }
 
     func startBrowsing() {
@@ -210,6 +230,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         myRole = nil
         students.removeAll()
         classStarted = false
+        activeInteraction = nil
+        overlayVisible = true
         currentCourse = nil
         currentLesson = nil
         connectedServer = nil
@@ -251,11 +273,83 @@ final class PeerConnectionManager: NSObject, ObservableObject {
                     try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
                 }
                 classStarted = true
+                activeInteraction = nil
+                overlayVisible = true
             } else if let server = connectedServer {
                 try? session.send(data, toPeers: [server], with: .reliable)
             }
         }
         // macOS overlay window presentation is now handled by SwiftUI state.
+    }
+
+    /// Starts a specific overlay interaction, ending any current one.
+    func startInteraction(_ interaction: OverlayInteraction) {
+        let message = Message(type: "startInteraction", interaction: interaction.rawValue)
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+                activeInteraction = interaction
+                overlayVisible = true
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+            }
+        }
+    }
+
+    /// Requests the server to display the class summary overlay.
+    func summarizeClass() {
+        startInteraction(.classSummary)
+    }
+
+    /// Ends the currently active interaction.
+    func endInteraction() {
+        let message = Message(type: "endInteraction")
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                activeInteraction = nil
+                overlayVisible = true
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+            }
+        }
+    }
+
+    /// Toggles the visibility of the current interaction overlay.
+    func toggleInteractionVisibility() {
+        setInteractionVisible(!overlayVisible)
+    }
+
+    /// Sets the visibility of the current interaction overlay and notifies peers.
+    func setInteractionVisible(_ visible: Bool) {
+        let message = Message(type: "interactionVisibility", visible: visible)
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                overlayVisible = visible
+                for sess in sessions.values where !sess.connectedPeers.isEmpty {
+                    try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                }
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+                overlayVisible = visible
+            }
+        }
+    }
+
+    /// Ends the current class session.
+    func endClass() {
+        let message = Message(type: "endClass")
+        if let data = try? JSONEncoder().encode(message) {
+            if advertiser != nil {
+                stopHosting()
+            } else if let server = connectedServer {
+                try? session.send(data, toPeers: [server], with: .reliable)
+            }
+        }
     }
 
     /// Updates the internal student list and notifies the teacher if connected.
@@ -441,6 +535,40 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.students = message.students ?? []
             case "startClass":
                 self.classStarted = true
+                self.activeInteraction = nil
+                self.overlayVisible = true
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
+                    }
+                }
+            case "startInteraction":
+                if let inter = message.interaction, let type = OverlayInteraction(rawValue: inter) {
+                    self.activeInteraction = type
+                    self.overlayVisible = true
+                }
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
+                    }
+                }
+            case "endInteraction":
+                self.activeInteraction = nil
+                self.overlayVisible = true
+                if self.advertiser != nil {
+                    if let data = try? JSONEncoder().encode(message) {
+                        for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
+                            try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
+                        }
+                    }
+                }
+            case "interactionVisibility":
+                let visible = message.visible ?? false
+                self.overlayVisible = visible
                 if self.advertiser != nil {
                     if let data = try? JSONEncoder().encode(message) {
                         for sess in self.sessions.values where !sess.connectedPeers.isEmpty {
@@ -459,11 +587,17 @@ extension PeerConnectionManager: MCSessionDelegate {
                     self.updateStudents()
                 }
             case "endClass":
-                self.classStarted = false
-                self.serverDisconnected = true
-                self.userInitiatedDisconnect = true
-                session.disconnect()
-                self.myRole = nil
+                if self.advertiser != nil {
+                    self.stopHosting()
+                } else {
+                    self.classStarted = false
+                    self.activeInteraction = nil
+                    self.overlayVisible = true
+                    self.serverDisconnected = true
+                    self.userInitiatedDisconnect = true
+                    session.disconnect()
+                    self.myRole = nil
+                }
             case "state":
                 if let course = message.course {
                     self.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)

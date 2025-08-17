@@ -11,7 +11,7 @@ struct MenuBarView: View {
     /// Presents the full-screen overlay window.
     private func openOverlay() {
         closeOverlay()
-        let controller = NSHostingController(rootView: ScreenOverlayView())
+        let controller = NSHostingController(rootView: ScreenOverlayView().environmentObject(connectionManager))
         let window = NSWindow(contentViewController: controller)
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
@@ -57,6 +57,18 @@ struct MenuBarView: View {
                 }
             }
             if connectionManager.classStarted {
+                if connectionManager.activeInteraction != nil {
+                    Button(action: { connectionManager.toggleInteractionVisibility() }) {
+                        Label(connectionManager.overlayVisible ? "Hide Interaction" : "Show Interaction",
+                              systemImage: connectionManager.overlayVisible ? "eye.slash" : "eye")
+                    }
+                    .foregroundColor(.yellow)
+                } else {
+                    Button(action: { connectionManager.summarizeClass() }) {
+                        Label("Class Summarize", systemImage: "doc.text")
+                    }
+                    .foregroundColor(.yellow)
+                }
                 Button("Show Screen") {
                     openOverlay()
                 }

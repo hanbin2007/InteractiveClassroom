@@ -30,15 +30,48 @@ struct TeacherDashboardView: View {
         .navigationTitle("Teacher")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button {
-                    viewModel.startClass()
-                } label: {
-                    Image(systemName: "play.fill")
-                    Text("Start Class").bold()
+                if connectionManager.classStarted {
+                    if connectionManager.activeInteraction != nil {
+                        HStack(spacing: 8) {
+                            Button {
+                                viewModel.toggleInteractionVisibility()
+                            } label: {
+                                Image(systemName: connectionManager.overlayVisible ? "eye.slash" : "eye")
+                                Text(connectionManager.overlayVisible ? "Hide Interaction" : "Show Interaction").bold()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.yellow)
+
+                            Button {
+                                viewModel.endClass()
+                            } label: {
+                                Image(systemName: "stop.fill")
+                                Text("End Class").bold()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
+                    } else {
+                        Button {
+                            viewModel.summarizeClass()
+                        } label: {
+                            Image(systemName: "doc.text")
+                            Text("Class Summarize").bold()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.yellow)
+                    }
+                } else {
+                    Button {
+                        viewModel.startClass()
+                    } label: {
+                        Image(systemName: "play.fill")
+                        Text("Start Class").bold()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
-                
+
                 Button {
                     connectionManager.disconnectFromServer()
                 } label: {
