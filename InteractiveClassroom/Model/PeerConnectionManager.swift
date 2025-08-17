@@ -217,7 +217,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
             countdownService = service
             presentOverlay(content: request.makeOverlay(countdownService: service))
             service.start { [weak self] in
-                await self?.endInteraction()
+                self?.endInteraction()
             }
         } else {
             presentOverlay(content: request.makeOverlay())
