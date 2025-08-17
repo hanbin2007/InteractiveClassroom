@@ -5,6 +5,7 @@ struct TeacherDashboardView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @StateObject private var viewModel = TeacherDashboardViewModel()
     @State private var selectedTab = 0
+    @State private var showStartPopover = false
 
     private let tabs = [
         TabItem(icon: "person.3.fill", title: "Students"),
@@ -31,13 +32,18 @@ struct TeacherDashboardView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button {
-                    viewModel.startClass()
+                    showStartPopover = true
                 } label: {
                     Image(systemName: "play.fill")
                     Text("Start Class").bold()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
+                .popover(isPresented: $showStartPopover, attachmentAnchor: .point(.bottom), arrowEdge: .bottom) {
+                    StartClassPopoverView { date in
+                        viewModel.startClass(at: date)
+                    }
+                }
                 
                 Button {
                     connectionManager.disconnectFromServer()

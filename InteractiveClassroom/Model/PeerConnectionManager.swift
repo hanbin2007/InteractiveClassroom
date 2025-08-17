@@ -314,8 +314,13 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     }
 
     /// Broadcasts a start-class command to the server.
-    func startClass() {
-        let request = InteractionRequest(template: .fullScreen, lifecycle: .infinite, text: "")
+    func startClass(at startDate: Date) {
+        let seconds = max(0, Int(startDate.timeIntervalSinceNow))
+        let request = InteractionRequest(
+            template: .fullScreen,
+            lifecycle: .finite(seconds: seconds),
+            content: .countdown
+        )
         startInteraction(request, broadcast: false)
         let message = Message(type: "startClass", interaction: request)
         sendMessageToServer(message)

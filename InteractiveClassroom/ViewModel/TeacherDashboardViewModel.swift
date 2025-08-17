@@ -24,8 +24,8 @@ final class TeacherDashboardViewModel: ObservableObject {
         connectionManager?.sendDisconnectCommand(for: student)
     }
 
-    func startClass() {
-        connectionManager?.startClass()
+    func startClass(at date: Date) {
+        connectionManager?.startClass(at: date)
     }
 }
 
