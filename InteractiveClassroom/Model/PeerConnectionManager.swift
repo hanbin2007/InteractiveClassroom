@@ -222,9 +222,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         } else {
             presentOverlay(content: request.makeOverlay())
             if case let .finite(seconds) = request.lifecycle {
-                interactionTask = Task { [weak self] in
+                interactionTask = Task { @MainActor [weak self] in
                     try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
-                    await self?.endInteraction()
+                    self?.endInteraction()
                 }
             }
         }
