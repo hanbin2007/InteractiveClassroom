@@ -6,7 +6,7 @@ struct OverlayNamesView: View {
     let names: [String]
     @ScaledMetric private var trailingPadding: CGFloat = 32
     @ScaledMetric private var baseFontSize: CGFloat = 20
-    @AppStorage("overlayFontScale") private var overlayFontScale: Double = 1.0
+    @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
 
     var body: some View {
         HStack {
@@ -14,7 +14,7 @@ struct OverlayNamesView: View {
             VStack(alignment: .trailing, spacing: 8) {
                 ForEach(names, id: \.self) { name in
                     Text(name)
-                        .font(.system(size: baseFontSize * overlayFontScale))
+                        .font(.system(size: baseFontSize * overlayContentScale))
                         .shadow(color: .black, radius: 1)
                 }
             }

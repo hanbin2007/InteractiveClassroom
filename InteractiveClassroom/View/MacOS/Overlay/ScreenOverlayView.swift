@@ -35,16 +35,23 @@ struct ScreenOverlayView: View {
 
     var body: some View {
         ZStack {
-            if let content = connectionManager.overlayContent,
-               connectionManager.isOverlayContentVisible {
-                switch content.template {
-                case .fullScreen(let color):
-                    FullScreenOverlay(background: color) {
-                        content.view
-                    }
-                case .floatingCorner(let position):
-                    CornerOverlay(corner: position) {
-                        content.view
+            if let content = connectionManager.overlayContent {
+                Group {
+                    switch content.template {
+                    case .fullScreen(let color):
+                        FullScreenOverlay(
+                            background: color,
+                            isVisible: connectionManager.isOverlayContentVisible
+                        ) {
+                            content.view
+                        }
+                    case .floatingCorner(let position):
+                        CornerOverlay(
+                            corner: position,
+                            isVisible: connectionManager.isOverlayContentVisible
+                        ) {
+                            content.view
+                        }
                     }
                 }
             }
@@ -217,15 +224,26 @@ private struct WindowConfigurator: NSViewRepresentable {
 /// Template providing a blurred color full-screen background.
 struct FullScreenOverlay<Content: View>: View {
     var background: Color
+    var isVisible: Bool
     @ViewBuilder var content: () -> Content
 
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(background.opacity(0.4))
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
-            content()
+            if isVisible {
+                Rectangle()
+                    .fill(background.opacity(0.4))
+                    .background(.ultraThinMaterial)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+
+            if isVisible {
+                content()
+                    .transition(
+                        .scale(scale: 0.9, anchor: .center)
+                            .combined(with: .opacity)
+                    )
+            }
         }
     }
 }
@@ -233,6 +251,7 @@ struct FullScreenOverlay<Content: View>: View {
 /// Template anchoring content to a screen corner without a background.
 struct CornerOverlay<Content: View>: View {
     var corner: OverlayCorner
+    var isVisible: Bool
     @ViewBuilder var content: () -> Content
 
     private var alignment: Alignment {
@@ -246,8 +265,14 @@ struct CornerOverlay<Content: View>: View {
 
     var body: some View {
         ZStack(alignment: alignment) {
-            content()
-                .padding()
+            if isVisible {
+                content()
+                    .padding()
+                    .transition(
+                        .scale(scale: 0.9, anchor: .center)
+                            .combined(with: .opacity)
+                    )
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()
