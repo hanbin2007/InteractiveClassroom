@@ -6,15 +6,15 @@ import SwiftData
 struct SettingsView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @Environment(\.modelContext) private var modelContext
-    @AppStorage("overlayFontScale") private var overlayFontScale: Double = 1.0
+    @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
 
     var body: some View {
         Form {
             Section("Overlay") {
                 HStack {
-                    Text("Font Scale")
-                    Slider(value: $overlayFontScale, in: 0.5...2.0, step: 0.1)
-                    Text("\(overlayFontScale, specifier: "%.1f")x")
+                    Text("Overlay Scale")
+                    Slider(value: $overlayContentScale, in: 0.5...2.0, step: 0.1)
+                    Text("\(overlayContentScale, specifier: "%.1f")x")
                         .frame(width: 40, alignment: .trailing)
                 }
             }

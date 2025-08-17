@@ -4,6 +4,7 @@ import SwiftUI
 /// A countdown view showing minutes and seconds with animations.
 struct CountdownOverlayView: View {
     @ObservedObject var service: CountdownService
+    @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
     
     @ViewBuilder
     private var countdownText: some View {
@@ -18,6 +19,7 @@ struct CountdownOverlayView: View {
                 .foregroundColor(.white)
             countdownText
         }
+        .scaleEffect(overlayContentScale)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.center)
     }

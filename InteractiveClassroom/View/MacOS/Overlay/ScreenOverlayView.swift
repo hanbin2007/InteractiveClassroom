@@ -240,7 +240,7 @@ struct FullScreenOverlay<Content: View>: View {
             if isVisible {
                 content()
                     .transition(
-                        .scale(scale: OverlayConstants.contentScale, anchor: .center)
+                        .scale(scale: 0.9, anchor: .center)
                             .combined(with: .opacity)
                     )
             }
@@ -269,7 +269,7 @@ struct CornerOverlay<Content: View>: View {
                 content()
                     .padding()
                     .transition(
-                        .scale(scale: OverlayConstants.contentScale, anchor: .center)
+                        .scale(scale: 0.9, anchor: .center)
                             .combined(with: .opacity)
                     )
             }
