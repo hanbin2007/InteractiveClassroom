@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		FD9D44A32E5205C800240003 /* AGENTS.md */ = {isa = PBXFileReference; explicitFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.markdown; };
 		FDF4DBFF2E4B399A0023C996 /* InteractiveClassroom.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InteractiveClassroom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -45,6 +46,7 @@
 		FDF4DBF62E4B399A0023C996 = {
 			isa = PBXGroup;
 			children = (
+				FD9D44A32E5205C800240003 /* AGENTS.md */,
 				FDF4DC012E4B399A0023C996 /* InteractiveClassroom */,
 				FDF4DC002E4B399A0023C996 /* Products */,
 			);
