@@ -503,7 +503,10 @@ extension PeerConnectionManager: MCSessionDelegate {
                     self.startInteraction(req, broadcast: false)
                 }
                 self.classStarted = true
-                self.forwardToClients(message, excluding: peerID)
+                if self.advertiser != nil {
+                    ApplicationWindowManager.closeAllWindowsAndFocus()
+                    self.forwardToClients(message, excluding: peerID)
+                }
             case "disconnect":
                 if let target = message.target {
                     if self.advertiser != nil {
