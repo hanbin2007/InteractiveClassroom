@@ -31,13 +31,13 @@ struct TeacherDashboardView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
                 if connectionManager.classStarted {
-                    if connectionManager.classSummaryActive {
+                    if connectionManager.activeInteraction != nil {
                         HStack(spacing: 8) {
                             Button {
-                                viewModel.toggleSummaryVisibility()
+                                viewModel.toggleInteractionVisibility()
                             } label: {
-                                Image(systemName: connectionManager.showClassSummary ? "eye.slash" : "eye")
-                                Text(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary").bold()
+                                Image(systemName: connectionManager.overlayVisible ? "eye.slash" : "eye")
+                                Text(connectionManager.overlayVisible ? "Hide Interaction" : "Show Interaction").bold()
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(.yellow)

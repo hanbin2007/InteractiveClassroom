@@ -57,10 +57,10 @@ struct MenuBarView: View {
                 }
             }
             if connectionManager.classStarted {
-                if connectionManager.classSummaryActive {
-                    Button(action: { connectionManager.toggleSummaryVisibility() }) {
-                        Label(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary",
-                              systemImage: connectionManager.showClassSummary ? "eye.slash" : "eye")
+                if connectionManager.activeInteraction != nil {
+                    Button(action: { connectionManager.toggleInteractionVisibility() }) {
+                        Label(connectionManager.overlayVisible ? "Hide Interaction" : "Show Interaction",
+                              systemImage: connectionManager.overlayVisible ? "eye.slash" : "eye")
                     }
                     .foregroundColor(.yellow)
                 } else {

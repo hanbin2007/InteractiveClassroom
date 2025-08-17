@@ -32,8 +32,8 @@ final class TeacherDashboardViewModel: ObservableObject {
         connectionManager?.summarizeClass()
     }
 
-    func toggleSummaryVisibility() {
-        connectionManager?.toggleSummaryVisibility()
+    func toggleInteractionVisibility() {
+        connectionManager?.toggleInteractionVisibility()
     }
 
     func endClass() {
