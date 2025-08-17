@@ -11,7 +11,8 @@ struct MenuBarView: View {
     /// Presents the full-screen overlay window.
     private func openOverlay() {
         closeOverlay()
-        let controller = NSHostingController(rootView: ScreenOverlayView())
+        let controller = NSHostingController(rootView: ScreenOverlayView()
+            .environmentObject(connectionManager))
         let window = NSWindow(contentViewController: controller)
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)

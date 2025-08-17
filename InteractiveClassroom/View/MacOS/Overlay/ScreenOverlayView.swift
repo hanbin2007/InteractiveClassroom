@@ -1,35 +1,56 @@
-// swiftlint:disable file_length
-#if os(macOS)
+#if os(macOS) || os(iOS)
 import SwiftUI
+#if os(macOS)
 import AppKit
+#endif
 
-/// Overlay shown on the big screen during a quiz session.
+/// Full-screen overlay container responsible for presenting interactive content.
 struct ScreenOverlayView: View {
-    @StateObject private var model = ScreenOverlayModel()
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                OverlayTopBarView(questionType: model.questionType.displayName,
-                                  remainingTime: model.remainingTimeString)
-                OverlayStatsView(stats: model.statsDisplay)
-                OverlayNamesView(names: model.submittedNames)
+        ZStack {
+            if let content = connectionManager.overlayContent,
+               connectionManager.isOverlayContentVisible {
+                switch content.template {
+                case .fullScreen(let color):
+                    FullScreenOverlay(background: color) {
+                        content.view
+                    }
+                case .floatingCorner(let position):
+                    CornerOverlay(corner: position) {
+                        content.view
+                    }
+                }
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        connectionManager.toggleOverlayContentVisibility()
+                    } label: {
+                        Image(systemName: connectionManager.isOverlayContentVisible ? "eye.slash" : "eye")
+                            .padding(10)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                    }
+                    .padding()
+                }
+                Spacer()
+            }
         }
         .background(Color.clear)
         .ignoresSafeArea()
-        .foregroundStyle(.white)
+        #if os(macOS)
         .background(WindowConfigurator())
+        #endif
     }
 }
 
-/// Helper view to configure the hosting window for a full-screen floating overlay.
+#if os(macOS)
+/// Helper view configuring the hosting window for a full-screen overlay.
 private struct WindowConfigurator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        ConfigurableView()
-    }
-
+    func makeNSView(context: Context) -> NSView { ConfigurableView() }
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private final class ConfigurableView: NSView {
@@ -38,7 +59,7 @@ private struct WindowConfigurator: NSViewRepresentable {
             guard let window = window else { return }
             window.identifier = NSUserInterfaceItemIdentifier("overlay")
             window.level = .screenSaver
-            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
             }
@@ -48,8 +69,46 @@ private struct WindowConfigurator: NSViewRepresentable {
         }
     }
 }
+#endif
 
-#Preview {
-    ScreenOverlayView()
+/// Template providing a blurred color full-screen background.
+struct FullScreenOverlay<Content: View>: View {
+    var background: Color
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(background.opacity(0.4))
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+            content()
+        }
+    }
 }
+
+/// Template anchoring content to a screen corner without a background.
+struct CornerOverlay<Content: View>: View {
+    var corner: OverlayCorner
+    @ViewBuilder var content: () -> Content
+
+    private var alignment: Alignment {
+        switch corner {
+        case .topLeft: return .topLeading
+        case .topRight: return .topTrailing
+        case .bottomLeft: return .bottomLeading
+        case .bottomRight: return .bottomTrailing
+        }
+    }
+
+    var body: some View {
+        ZStack(alignment: alignment) {
+            content()
+                .padding()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
+    }
+}
+
 #endif
