@@ -62,7 +62,8 @@ private struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window = window else { return }
             window.identifier = NSUserInterfaceItemIdentifier("overlay")
-            window.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
+            // Place the overlay below status bar items so the menu bar remains interactive.
+            window.level = .mainMenu
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
