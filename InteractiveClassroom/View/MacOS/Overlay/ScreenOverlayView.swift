@@ -9,6 +9,7 @@ import CoreGraphics
 struct ScreenOverlayView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
     @Environment(\.openWindow) private var openWindow
+    @State private var isToolbarFolded = false
 
     #if os(macOS)
     /// Opens or brings to front the window identified by `id`.
@@ -48,9 +49,92 @@ struct ScreenOverlayView: View {
                 }
             }
             VStack {
+                Spacer()
                 HStack {
                     Spacer()
                     HStack(spacing: 12) {
+                        if !isToolbarFolded {
+                            Group {
+                                if connectionManager.teacherCode != nil {
+                                    Button {
+                                        endCurrentClass()
+                                    } label: {
+                                        Image(systemName: "xmark.circle")
+                                            .padding(10)
+                                            .background(.ultraThinMaterial)
+                                            .clipShape(Circle())
+                                            .accessibilityLabel("End Class")
+                                    }
+                                }
+
+                                Button {
+                                    openWindowIfNeeded(id: "clients")
+                                } label: {
+                                    Image(systemName: "person.2")
+                                        .padding(10)
+                                        .background(.ultraThinMaterial)
+                                        .clipShape(Circle())
+                                        .accessibilityLabel("Clients")
+                                }
+
+                                Button {
+                                    openWindowIfNeeded(id: "courseManager")
+                                } label: {
+                                    Image(systemName: "book")
+                                        .padding(10)
+                                        .background(.ultraThinMaterial)
+                                        .clipShape(Circle())
+                                        .accessibilityLabel("Courses")
+                                }
+
+                                #if os(macOS)
+                                if #available(macOS 13, *) {
+                                    SettingsLink {
+                                        Image(systemName: "gearshape")
+                                            .padding(10)
+                                            .background(.ultraThinMaterial)
+                                            .clipShape(Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Settings")
+                                } else {
+                                    Button {
+                                        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                                    } label: {
+                                        Image(systemName: "gearshape")
+                                            .padding(10)
+                                            .background(.ultraThinMaterial)
+                                            .clipShape(Circle())
+                                    }
+                                    .accessibilityLabel("Settings")
+                                }
+
+                                Button {
+                                    NSApp.terminate(nil)
+                                } label: {
+                                    Image(systemName: "power")
+                                        .padding(10)
+                                        .background(.ultraThinMaterial)
+                                        .clipShape(Circle())
+                                        .accessibilityLabel("Quit")
+                                }
+                                #endif
+                            }
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+
+                        Button {
+                            withAnimation(.easeInOut) {
+                                isToolbarFolded.toggle()
+                            }
+                        } label: {
+                            Image(systemName: isToolbarFolded ? "chevron.left" : "chevron.right")
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .accessibilityLabel(isToolbarFolded ? "Expand Toolbar" : "Fold Toolbar")
+                        }
+
                         Button {
                             connectionManager.toggleOverlayContentVisibility()
                         } label: {
@@ -60,75 +144,10 @@ struct ScreenOverlayView: View {
                                 .clipShape(Circle())
                                 .accessibilityLabel("Toggle Overlay")
                         }
-
-                        if connectionManager.teacherCode != nil {
-                            Button {
-                                endCurrentClass()
-                            } label: {
-                                Image(systemName: "xmark.circle")
-                                    .padding(10)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Circle())
-                                    .accessibilityLabel("End Class")
-                            }
-                        }
-
-                        Button {
-                            openWindowIfNeeded(id: "clients")
-                        } label: {
-                            Image(systemName: "person.2")
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                                .accessibilityLabel("Clients")
-                        }
-
-                        Button {
-                            openWindowIfNeeded(id: "courseManager")
-                        } label: {
-                            Image(systemName: "book")
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                                .accessibilityLabel("Courses")
-                        }
-
-                        #if os(macOS)
-                        if #available(macOS 13, *) {
-                            SettingsLink {
-                                Image(systemName: "gearshape")
-                                    .padding(10)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Settings")
-                        } else {
-                            Button {
-                                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-                            } label: {
-                                Image(systemName: "gearshape")
-                                    .padding(10)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Circle())
-                            }
-                            .accessibilityLabel("Settings")
-                        }
-
-                        Button {
-                            NSApp.terminate(nil)
-                        } label: {
-                            Image(systemName: "power")
-                                .padding(10)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                                .accessibilityLabel("Quit")
-                        }
-                        #endif
                     }
                     .padding()
+                    .animation(.easeInOut, value: isToolbarFolded)
                 }
-                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
