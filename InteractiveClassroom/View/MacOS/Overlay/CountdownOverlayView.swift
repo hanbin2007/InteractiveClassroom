@@ -5,12 +5,10 @@ import SwiftUI
 struct CountdownOverlayView: View {
     @ObservedObject var service: CountdownService
     @State private var isVisible = false
-    @State private var tick = false
-
-    private var formattedTime: String {
-        let minutes = service.remainingSeconds / 60
-        let seconds = service.remainingSeconds % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+    
+    @ViewBuilder
+    private var countdownText: some View {
+        CountdownDigitsView(remainingSeconds: service.remainingSeconds)
     }
 
     var body: some View {
@@ -19,12 +17,7 @@ struct CountdownOverlayView: View {
                 .font(.title)
                 .bold()
                 .foregroundColor(.white)
-            Text(formattedTime)
-                .font(.system(size: 120, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .monospacedDigit()
-                .scaleEffect(tick ? 1.1 : 1.0)
-                .animation(.easeInOut(duration: 0.25), value: tick)
+            countdownText
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .multilineTextAlignment(.center)
@@ -34,9 +27,6 @@ struct CountdownOverlayView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 isVisible = true
             }
-        }
-        .onChange(of: service.remainingSeconds) { _ in
-            tick.toggle()
         }
     }
 }
