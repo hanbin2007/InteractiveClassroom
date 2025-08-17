@@ -5,22 +5,54 @@ import AppKit
 
 /// Overlay shown on the big screen during a quiz session.
 struct ScreenOverlayView: View {
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
     @StateObject private var model = ScreenOverlayModel()
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                OverlayTopBarView(questionType: model.questionType.displayName,
-                                  remainingTime: model.remainingTimeString)
-                OverlayStatsView(stats: model.statsDisplay)
-                OverlayNamesView(names: model.submittedNames)
+            if let interaction = connectionManager.activeInteraction {
+                ZStack(alignment: .bottomTrailing) {
+                    if connectionManager.interactionVisible {
+                        switch interaction {
+                        case .classSummary:
+                            ClassSummaryOverlayView()
+                                .transition(.opacity)
+                        case .quiz:
+                            OverlayTopBarView(questionType: model.questionType.displayName,
+                                              remainingTime: model.remainingTimeString)
+                            OverlayStatsView(stats: model.statsDisplay)
+                            OverlayNamesView(names: model.submittedNames)
+                        }
+                    }
+                    Button(action: { connectionManager.toggleInteractionVisibility() }) {
+                        Image(systemName: connectionManager.interactionVisible ? "eye.slash" : "eye")
+                            .padding(12)
+                            .background(Color.black.opacity(0.4))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding()
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
-            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .background(Color.clear)
         .ignoresSafeArea()
         .foregroundStyle(.white)
         .background(WindowConfigurator())
+        .animation(.easeInOut, value: connectionManager.interactionVisible)
+        .onAppear {
+            if connectionManager.activeInteraction != nil {
+                NSApp.presentationOptions.insert(.hideMenuBar)
+            }
+        }
+        .onChange(of: connectionManager.activeInteraction) { interaction in
+            if interaction != nil {
+                NSApp.presentationOptions.insert(.hideMenuBar)
+            } else {
+                NSApp.presentationOptions.remove(.hideMenuBar)
+            }
+        }
     }
 }
 
