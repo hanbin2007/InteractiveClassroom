@@ -65,6 +65,7 @@ struct ScreenOverlayView: View {
                                         .clipShape(Circle())
                                         .accessibilityLabel("End Class")
                                 }
+                                .buttonStyle(.plain)
                                 .frame(width: 44, height: 44)
                             }
 
@@ -78,6 +79,7 @@ struct ScreenOverlayView: View {
                                     .clipShape(Circle())
                                     .accessibilityLabel("Clients")
                             }
+                            .buttonStyle(.plain)
                             .frame(width: 44, height: 44)
 
                             Button {
@@ -90,6 +92,7 @@ struct ScreenOverlayView: View {
                                     .clipShape(Circle())
                                     .accessibilityLabel("Courses")
                             }
+                            .buttonStyle(.plain)
                             .frame(width: 44, height: 44)
 
                             #if os(macOS)
@@ -114,6 +117,7 @@ struct ScreenOverlayView: View {
                                         .background(.ultraThinMaterial)
                                         .clipShape(Circle())
                                 }
+                                .buttonStyle(.plain)
                                 .accessibilityLabel("Settings")
                                 .frame(width: 44, height: 44)
                             }
@@ -128,6 +132,7 @@ struct ScreenOverlayView: View {
                                     .clipShape(Circle())
                                     .accessibilityLabel("Quit")
                             }
+                            .buttonStyle(.plain)
                             .frame(width: 44, height: 44)
                             #endif
                         }
@@ -149,6 +154,7 @@ struct ScreenOverlayView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
+                        .buttonStyle(.plain)
                         .frame(width: 44, height: 44)
                         .accessibilityLabel(isToolbarFolded ? "Expand Toolbar" : "Fold Toolbar")
 
@@ -161,6 +167,7 @@ struct ScreenOverlayView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
+                        .buttonStyle(.plain)
                         .frame(width: 44, height: 44)
                         .accessibilityLabel("Toggle Overlay")
                     }
