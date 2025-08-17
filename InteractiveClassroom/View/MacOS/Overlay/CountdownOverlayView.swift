@@ -13,7 +13,7 @@ struct CountdownOverlayView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Class Starts In")
-                .font(.title)
+                .font(.system(size: 60, weight: .bold))
                 .bold()
                 .foregroundColor(.white)
             countdownText

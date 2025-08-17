@@ -14,7 +14,7 @@ struct CountdownDigitsView: View {
 
     var body: some View {
         let text = Text(formattedTime)
-            .font(.system(size: 120, weight: .bold, design: .rounded))
+            .font(.system(size: 200, weight: .bold, design: .rounded))
             .foregroundColor(.white)
             .monospacedDigit()
 
