@@ -29,12 +29,12 @@ struct ScreenOverlayView: View {
         .background(WindowConfigurator())
         .animation(.easeInOut, value: connectionManager.classSummaryActive)
         .onAppear {
-            if connectionManager.showClassSummary {
+            if connectionManager.classSummaryActive {
                 NSApp.presentationOptions.insert(.hideMenuBar)
             }
         }
-        .onChange(of: connectionManager.showClassSummary) { show in
-            if show {
+        .onChange(of: connectionManager.classSummaryActive) { active in
+            if active {
                 NSApp.presentationOptions.insert(.hideMenuBar)
             } else {
                 NSApp.presentationOptions.remove(.hideMenuBar)

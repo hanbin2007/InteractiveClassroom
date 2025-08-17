@@ -10,8 +10,8 @@ struct ClassSummaryOverlayView: View {
             if connectionManager.showClassSummary {
                 LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
                                startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .background(.ultraThinMaterial)
                     .ignoresSafeArea()
-                    .overlay(.ultraThinMaterial)
                 VStack(spacing: 24) {
                     Text("Class Summary")
                         .font(.largeTitle)
