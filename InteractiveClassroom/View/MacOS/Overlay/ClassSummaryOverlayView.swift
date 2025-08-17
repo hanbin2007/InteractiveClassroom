@@ -1,0 +1,42 @@
+#if os(macOS)
+import SwiftUI
+
+/// Overlay displaying the list of currently online students during class summary.
+struct ClassSummaryOverlayView: View {
+    @EnvironmentObject private var connectionManager: PeerConnectionManager
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Text("Class Summary")
+                    .font(.largeTitle)
+                    .bold()
+                let list = connectionManager.students
+                if list.isEmpty {
+                    Text("No students connected")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                        .transition(.opacity)
+                } else {
+                    VStack(spacing: 16) {
+                        ForEach(list, id: \.self) { name in
+                            Text(name)
+                                .font(.title2)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
+                    .animation(.easeInOut, value: list)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .foregroundColor(.white)
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+}
+#endif

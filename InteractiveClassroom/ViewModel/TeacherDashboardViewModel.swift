@@ -27,5 +27,17 @@ final class TeacherDashboardViewModel: ObservableObject {
     func startClass() {
         connectionManager?.startClass()
     }
+
+    func startClassSummary() {
+        connectionManager?.startInteraction(.classSummary)
+    }
+
+    func toggleInteractionVisibility() {
+        connectionManager?.toggleInteractionVisibility()
+    }
+
+    func endClass() {
+        connectionManager?.endClass()
+    }
 }
 
