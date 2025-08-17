@@ -37,14 +37,16 @@ struct ScreenOverlayView: View {
         ZStack {
             if let content = connectionManager.overlayContent,
                connectionManager.isOverlayContentVisible {
-                switch content.template {
-                case .fullScreen(let color):
-                    FullScreenOverlay(background: color) {
-                        content.view
-                    }
-                case .floatingCorner(let position):
-                    CornerOverlay(corner: position) {
-                        content.view
+                Group {
+                    switch content.template {
+                    case .fullScreen(let color):
+                        FullScreenOverlay(background: color) {
+                            content.view
+                        }
+                    case .floatingCorner(let position):
+                        CornerOverlay(corner: position) {
+                            content.view
+                        }
                     }
                 }
             }
@@ -225,7 +227,10 @@ struct FullScreenOverlay<Content: View>: View {
                 .fill(background.opacity(0.4))
                 .background(.ultraThinMaterial)
                 .ignoresSafeArea()
+                .transition(.opacity)
             content()
+                .transition(.scale(scale: OverlayConstants.contentScale, anchor: .center)
+                    .combined(with: .opacity))
         }
     }
 }
@@ -248,6 +253,8 @@ struct CornerOverlay<Content: View>: View {
         ZStack(alignment: alignment) {
             content()
                 .padding()
+                .transition(.scale(scale: OverlayConstants.contentScale, anchor: .center)
+                    .combined(with: .opacity))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()
