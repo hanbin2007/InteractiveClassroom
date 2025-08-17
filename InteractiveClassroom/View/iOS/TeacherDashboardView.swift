@@ -34,7 +34,7 @@ struct TeacherDashboardView: View {
                     if connectionManager.classSummaryActive {
                         HStack(spacing: 8) {
                             Button {
-                                withAnimation { viewModel.toggleSummaryVisibility() }
+                                viewModel.toggleSummaryVisibility()
                             } label: {
                                 Image(systemName: connectionManager.showClassSummary ? "eye.slash" : "eye")
                                 Text(connectionManager.showClassSummary ? "Hide Summary" : "Show Summary").bold()
@@ -51,7 +51,6 @@ struct TeacherDashboardView: View {
                             .buttonStyle(.borderedProminent)
                             .tint(.red)
                         }
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
                     } else {
                         Button {
                             viewModel.summarizeClass()
@@ -61,7 +60,6 @@ struct TeacherDashboardView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.yellow)
-                        .transition(.opacity)
                     }
                 } else {
                     Button {
@@ -83,7 +81,6 @@ struct TeacherDashboardView: View {
             }
         }
         .onAppear { viewModel.bind(to: connectionManager) }
-        .animation(.default, value: connectionManager.classSummaryActive)
     }
 
     private var studentsView: some View {

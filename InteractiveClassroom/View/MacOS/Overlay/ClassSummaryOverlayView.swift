@@ -7,11 +7,12 @@ struct ClassSummaryOverlayView: View {
 
     var body: some View {
         ZStack {
+            LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea()
+
             if connectionManager.showClassSummary {
-                LinearGradient(colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.6)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                    .background(.ultraThinMaterial)
-                    .ignoresSafeArea()
                 VStack(spacing: 24) {
                     Text("Class Summary")
                         .font(.largeTitle)
@@ -35,6 +36,7 @@ struct ClassSummaryOverlayView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .foregroundColor(.white)
+                .transition(.scale.combined(with: .opacity))
             }
 
             VStack {
@@ -55,6 +57,7 @@ struct ClassSummaryOverlayView: View {
                 }
             }
         }
+        .animation(.easeInOut, value: connectionManager.showClassSummary)
     }
 }
 #endif

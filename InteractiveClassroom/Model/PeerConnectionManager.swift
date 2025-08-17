@@ -32,7 +32,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     @Published var classStarted: Bool = false
     /// Indicates whether the class summary mode is active.
     @Published var classSummaryActive: Bool = false
-    /// Indicates whether the class summary overlay should be visible.
+    /// Indicates whether the class summary content should be visible.
     @Published var showClassSummary: Bool = false
     /// Indicates that the client lost connection to the server.
     @Published var serverDisconnected: Bool = false
