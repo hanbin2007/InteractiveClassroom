@@ -8,6 +8,29 @@ import CoreGraphics
 /// Full-screen overlay container responsible for presenting interactive content.
 struct ScreenOverlayView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @Environment(\.openWindow) private var openWindow
+
+    #if os(macOS)
+    /// Opens or brings to front the window identified by `id`.
+    private func openWindowIfNeeded(id: String) {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            openWindow(id: id)
+        }
+    }
+    #else
+    /// Opens a new window scene for the given identifier.
+    private func openWindowIfNeeded(id: String) {
+        openWindow(id: id)
+    }
+    #endif
+
+    private func endCurrentClass() {
+        connectionManager.endClass()
+        connectionManager.currentCourse = nil
+        connectionManager.currentLesson = nil
+    }
 
     var body: some View {
         ZStack {
@@ -27,13 +50,81 @@ struct ScreenOverlayView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button {
-                        connectionManager.toggleOverlayContentVisibility()
-                    } label: {
-                        Image(systemName: connectionManager.isOverlayContentVisible ? "eye.slash" : "eye")
-                            .padding(10)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
+                    HStack(spacing: 12) {
+                        Button {
+                            connectionManager.toggleOverlayContentVisibility()
+                        } label: {
+                            Image(systemName: connectionManager.isOverlayContentVisible ? "eye.slash" : "eye")
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .accessibilityLabel("Toggle Overlay")
+                        }
+
+                        if connectionManager.teacherCode != nil {
+                            Button {
+                                endCurrentClass()
+                            } label: {
+                                Image(systemName: "xmark.circle")
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                                    .accessibilityLabel("End Class")
+                            }
+                        }
+
+                        Button {
+                            openWindowIfNeeded(id: "clients")
+                        } label: {
+                            Image(systemName: "person.2")
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .accessibilityLabel("Clients")
+                        }
+
+                        Button {
+                            openWindowIfNeeded(id: "courseManager")
+                        } label: {
+                            Image(systemName: "book")
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .accessibilityLabel("Courses")
+                        }
+
+                        #if os(macOS)
+                        if #available(macOS 13, *) {
+                            SettingsLink {
+                                Image(systemName: "gearshape")
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Settings")
+                        } else {
+                            Button {
+                                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .accessibilityLabel("Settings")
+                        }
+
+                        Button {
+                            NSApp.terminate(nil)
+                        } label: {
+                            Image(systemName: "power")
+                                .padding(10)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .accessibilityLabel("Quit")
+                        }
+                        #endif
                     }
                     .padding()
                 }
