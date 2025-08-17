@@ -11,6 +11,7 @@ struct MenuBarView: View {
     /// Presents the full-screen overlay window.
     private func openOverlay() {
         closeOverlay()
+        NSApp.setPresentationOptions([.hideDock, .hideMenuBar])
         let controller = NSHostingController(rootView: ScreenOverlayView()
             .environmentObject(connectionManager))
         let window = NSWindow(contentViewController: controller)
@@ -19,11 +20,12 @@ struct MenuBarView: View {
         overlayWindow = window
     }
 
-    /// Closes any existing overlay windows.
+    /// Closes any existing overlay windows and restores normal presentation.
     private func closeOverlay() {
         overlayWindow?.close()
         overlayWindow = nil
         NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
+        NSApp.setPresentationOptions([])
     }
 
     /// Opens a window identified by `id` if one isn't already visible.
