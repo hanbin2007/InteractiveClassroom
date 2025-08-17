@@ -35,11 +35,11 @@ struct CourseSelectionView: View {
                 .pickerStyle(.menu)
                 HStack {
                     Spacer()
-                    Button("Start") {
+                    Button("Open Classroom") {
                         guard let course = selectedCourse, let lesson = selectedLesson else { return }
                         connectionManager.currentCourse = course
                         connectionManager.currentLesson = lesson
-                        connectionManager.startHosting()
+                        connectionManager.openClassroom()
                         dismiss()
                     }
                     .disabled(selectedCourse == nil || selectedLesson == nil)

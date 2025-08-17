@@ -2,6 +2,7 @@
 import SwiftUI
 #if os(macOS)
 import AppKit
+import CoreGraphics
 #endif
 
 /// Full-screen overlay container responsible for presenting interactive content.
@@ -38,9 +39,12 @@ struct ScreenOverlayView: View {
                 }
                 Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
-        .ignoresSafeArea()
+        .ignoresSafeArea(.all)
         #if os(macOS)
         .background(WindowConfigurator())
         #endif
@@ -58,14 +62,17 @@ private struct WindowConfigurator: NSViewRepresentable {
             super.viewDidMoveToWindow()
             guard let window = window else { return }
             window.identifier = NSUserInterfaceItemIdentifier("overlay")
-            window.level = .screenSaver
+            // Place the overlay below status bar items so the menu bar remains interactive.
+            window.level = .mainMenu
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
             if let screenFrame = NSScreen.main?.frame {
                 window.setFrame(screenFrame, display: true)
+                window.contentView?.frame = screenFrame
             }
             window.styleMask = [.borderless]
             window.isOpaque = false
             window.backgroundColor = .clear
+            window.orderFrontRegardless()
         }
     }
 }

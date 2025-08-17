@@ -19,7 +19,7 @@ struct MenuBarView: View {
         overlayWindow = window
     }
 
-    /// Closes any existing overlay windows.
+    /// Closes any existing overlay windows and restores normal presentation.
     private func closeOverlay() {
         overlayWindow?.close()
         overlayWindow = nil
@@ -45,21 +45,16 @@ struct MenuBarView: View {
             }
             Text(connectionManager.connectionStatus)
             Divider()
-            if connectionManager.currentLesson == nil {
-                Button("Start Class") {
+            if connectionManager.teacherCode == nil {
+                Button("Open Classroom") {
                     openWindowIfNeeded(id: "courseSelection")
                 }
             } else {
                 Button("End Class") {
-                    connectionManager.stopHosting()
+                    connectionManager.endClass()
                     connectionManager.currentCourse = nil
                     connectionManager.currentLesson = nil
                     closeOverlay()
-                }
-            }
-            if connectionManager.classStarted {
-                Button("Show Screen") {
-                    openOverlay()
                 }
             }
             Button("Clients") {
@@ -82,8 +77,8 @@ struct MenuBarView: View {
                 NSApp.terminate(nil)
             }
         }
-        .onChange(of: connectionManager.classStarted) { started in
-            if started {
+        .onChange(of: connectionManager.teacherCode) { code in
+            if code != nil {
                 openOverlay()
             } else {
                 closeOverlay()
