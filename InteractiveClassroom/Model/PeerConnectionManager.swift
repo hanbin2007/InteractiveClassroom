@@ -1,6 +1,7 @@
 import Foundation
 import MultipeerConnectivity
 import SwiftData
+import SwiftUI
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -203,7 +204,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Presents new overlay content and makes it visible.
     func presentOverlay(content: OverlayContent) {
         overlayContent = content
-        isOverlayContentVisible = true
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible = true
+        }
     }
 
     /// Starts a new interaction if none is active.
@@ -237,8 +240,12 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Ends the current interaction and removes its content from the overlay.
     func endInteraction(broadcast: Bool = true) {
         guard activeInteraction != nil else { return }
-        overlayContent = nil
-        isOverlayContentVisible = false
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.overlayContent = nil
+        }
         activeInteraction = nil
         interactionTask?.cancel()
         interactionTask = nil
@@ -253,7 +260,9 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     /// Toggles the visibility of the current overlay content without removing it.
     func toggleOverlayContentVisibility() {
         guard overlayContent != nil else { return }
-        isOverlayContentVisible.toggle()
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible.toggle()
+        }
     }
 
     func connect(to peer: Peer, passcode: String, nickname: String) {
