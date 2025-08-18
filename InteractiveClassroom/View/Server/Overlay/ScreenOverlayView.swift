@@ -63,6 +63,7 @@ struct ScreenOverlayView: View {
                         }
                     }
                 }
+                .allowsHitTesting(true)
                 .allowsHitTesting(interactionService.isOverlayContentVisible)
             }
             VStack {
@@ -194,6 +195,7 @@ struct ScreenOverlayView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
             .zIndex(1) // Ensure toolbar remains above overlay content
+            .allowsHitTesting(true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
@@ -201,6 +203,7 @@ struct ScreenOverlayView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
         )
+        .allowsHitTesting(false)
     }
 }
 
