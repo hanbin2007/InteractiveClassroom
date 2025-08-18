@@ -9,18 +9,18 @@ final class ServerConnectViewModel: ObservableObject {
     @Published private(set) var awaitingConnection: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
-    private var connectionManager: PeerConnectionManager?
+    private var pairingService: PairingService?
 
-    func bind(to manager: PeerConnectionManager) {
-        guard connectionManager == nil else { return }
-        connectionManager = manager
+    func bind(to service: PairingService) {
+        guard pairingService == nil else { return }
+        pairingService = service
 
-        manager.$availablePeers
+        service.$availablePeers
             .receive(on: RunLoop.main)
             .assign(to: \.availablePeers, on: self)
             .store(in: &cancellables)
 
-        manager.$connectionStatus
+        service.$connectionStatus
             .receive(on: RunLoop.main)
             .sink { [weak self] status in
                 guard let self else { return }
@@ -38,16 +38,16 @@ final class ServerConnectViewModel: ObservableObject {
     }
 
     func startBrowsing() {
-        connectionManager?.startBrowsing()
+        pairingService?.startBrowsing()
     }
 
     func stopBrowsing() {
-        connectionManager?.stopBrowsing()
+        pairingService?.stopBrowsing()
     }
 
     func connect(to peer: PeerConnectionManager.Peer, passcode: String, nickname: String) {
         awaitingConnection = true
-        connectionManager?.connect(to: peer, passcode: passcode, nickname: nickname)
+        pairingService?.connect(to: peer, passcode: passcode, nickname: nickname)
     }
 }
 

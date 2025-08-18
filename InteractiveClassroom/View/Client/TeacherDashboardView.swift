@@ -2,7 +2,8 @@
 import SwiftUI
 
 struct TeacherDashboardView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var courseSessionService: CourseSessionService
+    @EnvironmentObject private var pairingService: PairingService
     @StateObject private var viewModel = TeacherDashboardViewModel()
     @State private var selectedTab = 0
     @State private var showStartPopover = false
@@ -46,14 +47,14 @@ struct TeacherDashboardView: View {
                 }
                 
                 Button {
-                    connectionManager.disconnectFromServer()
+                    pairingService.disconnectFromServer()
                 } label: {
                     Image(systemName: "personalhotspot.slash")
                 }
                 .accessibilityLabel("Disconnect")
             }
         }
-        .onAppear { viewModel.bind(to: connectionManager) }
+        .onAppear { viewModel.bind(to: courseSessionService) }
     }
 
     private var studentsView: some View {
@@ -85,12 +86,13 @@ struct TeacherDashboardView: View {
     }
 }
 #Preview {
-    NavigationStack { TeacherDashboardView() }
-        .environmentObject({
-            let manager = PeerConnectionManager()
-            manager.students = ["Alice", "Bob"]
-            return manager
-        }())
+    let manager = PeerConnectionManager()
+    manager.students = ["Alice", "Bob"]
+    let courseService = CourseSessionService(manager: manager)
+    let pairing = PairingService(manager: manager)
+    return NavigationStack { TeacherDashboardView() }
+        .environmentObject(courseService)
+        .environmentObject(pairing)
 }
 
 #endif

@@ -11,6 +11,9 @@ import SwiftData
 @main
 struct InteractiveClassroomApp: App {
     @StateObject private var connectionManager: PeerConnectionManager
+    @StateObject private var pairingService: PairingService
+    @StateObject private var courseSessionService: CourseSessionService
+    @StateObject private var interactionService: InteractionService
     private let container: ModelContainer
 
     init() {
@@ -39,6 +42,9 @@ struct InteractiveClassroomApp: App {
 
         let manager = PeerConnectionManager(modelContext: container.mainContext)
         _connectionManager = StateObject(wrappedValue: manager)
+        _pairingService = StateObject(wrappedValue: PairingService(manager: manager))
+        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: manager))
+        _interactionService = StateObject(wrappedValue: InteractionService(manager: manager))
     }
 
     var body: some Scene {
@@ -46,31 +52,47 @@ struct InteractiveClassroomApp: App {
         MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
             MenuBarView()
                 .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
         Settings {
             SettingsView()
                 .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
         WindowGroup(id: "courseSelection") {
             CourseSelectionView()
-                .environmentObject(connectionManager)
+                .environmentObject(courseSessionService)
+                .environmentObject(pairingService)
         }
         .modelContainer(container)
         WindowGroup(id: "clients") {
             ClientsListView()
                 .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
         WindowGroup(id: "courseManager") {
             CourseManagerView()
+                .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
 #else
         WindowGroup {
             ContentView()
-                .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
 #endif

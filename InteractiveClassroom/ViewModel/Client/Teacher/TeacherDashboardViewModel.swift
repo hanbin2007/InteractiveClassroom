@@ -6,26 +6,26 @@ final class TeacherDashboardViewModel: ObservableObject {
     @Published var students: [String] = []
 
     private var cancellables = Set<AnyCancellable>()
-    private var connectionManager: PeerConnectionManager?
+    private var service: CourseSessionService?
 
-    func bind(to manager: PeerConnectionManager) {
-        guard connectionManager == nil else { return }
-        connectionManager = manager
+    func bind(to service: CourseSessionService) {
+        guard self.service == nil else { return }
+        self.service = service
 
-        manager.$students
+        service.$students
             .receive(on: RunLoop.main)
             .assign(to: \.students, on: self)
             .store(in: &cancellables)
 
-        manager.requestStudentList()
+        service.requestStudentList()
     }
 
     func sendDisconnect(for student: String) {
-        connectionManager?.sendDisconnectCommand(for: student)
+        service?.sendDisconnect(for: student)
     }
 
     func startClass(at date: Date) {
-        connectionManager?.startClass(at: date)
+        service?.startClass(at: date)
     }
 }
 
