@@ -41,10 +41,16 @@ class PeerConnectionManager: NSObject, ObservableObject {
     weak var interactionHandler: InteractionHandling?
 
     @Published var currentCourse: Course? {
-        didSet { interactionHandler?.broadcastCurrentState(to: nil) }
+        didSet {
+            guard oldValue !== currentCourse else { return }
+            interactionHandler?.broadcastCurrentState(to: nil)
+        }
     }
     @Published var currentLesson: Lesson? {
-        didSet { interactionHandler?.broadcastCurrentState(to: nil) }
+        didSet {
+            guard oldValue !== currentLesson else { return }
+            interactionHandler?.broadcastCurrentState(to: nil)
+        }
     }
 
     var rolesByPeer: [MCPeerID: UserRole] = [:]
