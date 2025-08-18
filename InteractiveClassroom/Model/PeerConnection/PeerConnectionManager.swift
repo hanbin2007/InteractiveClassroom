@@ -35,10 +35,10 @@ class PeerConnectionManager: NSObject, ObservableObject {
     weak var interactionHandler: InteractionHandling?
 
     @Published var currentCourse: Course? {
-        didSet { broadcastCurrentState() }
+        didSet { interactionHandler?.broadcastCurrentState(to: nil) }
     }
     @Published var currentLesson: Lesson? {
-        didSet { broadcastCurrentState() }
+        didSet { interactionHandler?.broadcastCurrentState(to: nil) }
     }
 
     var rolesByPeer: [MCPeerID: UserRole] = [:]
@@ -47,6 +47,18 @@ class PeerConnectionManager: NSObject, ObservableObject {
     struct InvitationPayload: Codable {
         let passcode: String
         let nickname: String
+    }
+
+    struct CoursePayload: Codable {
+        let name: String
+        let intro: String
+        let scheduledAt: Date
+    }
+
+    struct LessonPayload: Codable {
+        let title: String
+        let intro: String
+        let scheduledAt: Date
     }
 
     struct Message: Codable {
@@ -223,7 +235,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                         try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
                     }
                 }
-                self.broadcastCurrentState(to: [peerID])
+                self.interactionHandler?.broadcastCurrentState(to: [peerID])
                 self.updateStudents()
                 if let context = self.modelContext {
                     let name = peerID.displayName
@@ -294,7 +306,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                     self.updateStudents()
                 }
             default:
-                self.handleInteractionMessage(message, from: peerID, session: session)
+                self.interactionHandler?.handleInteractionMessage(message, from: peerID, session: session)
             }
         }
     }

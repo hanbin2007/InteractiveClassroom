@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import MultipeerConnectivity
 
 @MainActor
 final class InteractionService: ObservableObject {
@@ -58,7 +59,8 @@ final class InteractionService: ObservableObject {
         }
 
         if broadcast {
-            manager.broadcastStartInteraction(request)
+            let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request)
+            manager.sendMessageToServer(message)
         }
     }
 
@@ -76,10 +78,116 @@ final class InteractionService: ObservableObject {
         countdownService?.stop()
         countdownService = nil
         if broadcast {
-            manager.broadcastStopInteraction()
+            let message = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
+            manager.sendMessageToServer(message)
         }
+    }
+
+    // MARK: - Class Lifecycle
+    func startClass(at startDate: Date) {
+        let seconds = max(0, Int(startDate.timeIntervalSinceNow))
+        let request = InteractionRequest(
+            template: .fullScreen,
+            lifecycle: .finite(seconds: seconds),
+            content: .countdown
+        )
+        startInteraction(request, broadcast: false)
+        let message = PeerConnectionManager.Message(type: "startClass", interaction: request)
+        manager.sendMessageToServer(message)
+        if manager.advertiser != nil {
+            manager.classStarted = true
+        }
+    }
+
+    func endClass() {
+        endInteraction(broadcast: true)
+        manager.advertiser?.stopAdvertisingPeer()
+        manager.advertiser = nil
+        if !manager.sessions.isEmpty {
+            let message = PeerConnectionManager.Message(type: "endClass")
+            manager.sendMessageToServer(message)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak manager] in
+            guard let manager else { return }
+            for sess in manager.sessions.values {
+                sess.disconnect()
+            }
+            manager.sessions.removeAll()
+        }
+        manager.connectionStatus = "Not Connected"
+        manager.teacherCode = nil
+        manager.studentCode = nil
+        manager.rolesByPeer.removeAll()
+        manager.classStarted = false
     }
 }
 
-extension InteractionService: @preconcurrency InteractionHandling {}
+// MARK: - InteractionHandling
+extension InteractionService: @preconcurrency InteractionHandling {
+    func broadcastCurrentState(to peers: [MCPeerID]?) {
+        let coursePayload = manager.currentCourse.map {
+            PeerConnectionManager.CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt)
+        }
+        let lessonPayload = manager.currentLesson.map {
+            PeerConnectionManager.LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt)
+        }
+        let message = PeerConnectionManager.Message(type: "state", course: coursePayload, lesson: lessonPayload)
+        if manager.advertiser != nil {
+            if let specific = peers, let data = try? JSONEncoder().encode(message) {
+                for peer in specific {
+                    if let sess = manager.sessions[peer] {
+                        try? sess.send(data, toPeers: [peer], with: .reliable)
+                    }
+                }
+            } else {
+                manager.forwardToClients(message)
+            }
+        } else {
+            manager.sendMessageToServer(message)
+        }
+    }
+
+    func handleInteractionMessage(_ message: PeerConnectionManager.Message, from peerID: MCPeerID, session: MCSession) {
+        switch message.type {
+        case "startClass":
+            if let req = message.interaction {
+                startInteraction(req, broadcast: false)
+            }
+            manager.classStarted = true
+            if manager.advertiser != nil {
+                ApplicationWindowManager.closeAllWindowsAndFocus()
+                manager.forwardToClients(message, excluding: peerID)
+            }
+        case "startInteraction":
+            if let req = message.interaction {
+                startInteraction(req, broadcast: false)
+                manager.forwardToClients(message, excluding: peerID)
+            }
+        case "stopInteraction":
+            endInteraction(broadcast: false)
+            let forward = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
+            manager.forwardToClients(forward, excluding: peerID)
+        case "endClass":
+            endInteraction(broadcast: false)
+            manager.classStarted = false
+            manager.serverDisconnected = true
+            manager.userInitiatedDisconnect = true
+            session.disconnect()
+            manager.myRole = nil
+        case "state":
+            if let course = message.course {
+                manager.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)
+            } else {
+                manager.currentCourse = nil
+            }
+            if let lesson = message.lesson {
+                manager.currentLesson = Lesson(title: lesson.title, number: 0, scheduledAt: lesson.scheduledAt, intro: lesson.intro)
+            } else {
+                manager.currentLesson = nil
+            }
+        default:
+            break
+        }
+    }
+}
 

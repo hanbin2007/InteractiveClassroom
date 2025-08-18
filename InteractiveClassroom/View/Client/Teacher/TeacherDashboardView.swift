@@ -88,10 +88,12 @@ struct TeacherDashboardView: View {
 #Preview {
     let pairing = PairingService()
     pairing.students = ["Alice", "Bob"]
-    let courseService = CourseSessionService(manager: pairing)
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return NavigationStack { TeacherDashboardView() }
         .environmentObject(courseService)
         .environmentObject(pairing)
+        .environmentObject(interaction)
 }
 
 #endif

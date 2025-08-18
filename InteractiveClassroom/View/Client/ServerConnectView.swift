@@ -172,10 +172,12 @@ private struct PasscodeEntrySheet: View {
 #Preview {
     NavigationStack {
         let pairing = PairingService()
-        let courseService = CourseSessionService(manager: pairing)
+        let interaction = InteractionService(manager: pairing)
+        let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
         ServerConnectView()
             .environmentObject(pairing)
             .environmentObject(courseService)
+            .environmentObject(interaction)
     }
 }
 #endif

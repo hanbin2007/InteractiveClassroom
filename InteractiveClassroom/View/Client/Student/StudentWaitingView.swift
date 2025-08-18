@@ -107,9 +107,11 @@ private struct LessonInfoView: View {
     let pairing = PairingService()
     pairing.currentCourse = Course(name: "Preview Course")
     pairing.currentLesson = Lesson(title: "Preview Lesson", number: 1)
-    let courseService = CourseSessionService(manager: pairing)
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return NavigationStack { StudentWaitingView() }
         .environmentObject(courseService)
         .environmentObject(pairing)
+        .environmentObject(interaction)
 }
 #endif

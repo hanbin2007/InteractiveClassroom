@@ -9,10 +9,12 @@ final class CourseSessionService: ObservableObject {
     @Published private(set) var classStarted: Bool = false
 
     private let manager: PeerConnectionManager
+    private let interactionService: InteractionService
     private var cancellables: Set<AnyCancellable> = []
 
-    init(manager: PeerConnectionManager) {
+    init(manager: PeerConnectionManager, interactionService: InteractionService) {
         self.manager = manager
+        self.interactionService = interactionService
 
         manager.$currentCourse
             .receive(on: RunLoop.main)
@@ -38,9 +40,9 @@ final class CourseSessionService: ObservableObject {
     func selectLesson(_ lesson: Lesson?) { manager.currentLesson = lesson }
     func requestStudentList() { manager.requestStudentList() }
     func sendDisconnect(for name: String) { manager.sendDisconnectCommand(for: name) }
-    func startClass(at date: Date) { manager.startClass(at: date) }
+    func startClass(at date: Date) { interactionService.startClass(at: date) }
     func endClass() {
-        manager.endClass()
+        interactionService.endClass()
         manager.currentCourse = nil
         manager.currentLesson = nil
     }

@@ -43,8 +43,9 @@ struct InteractiveClassroomApp: App {
         let pairing = PairingService(modelContext: container.mainContext)
         _connectionManager = StateObject(wrappedValue: pairing)
         _pairingService = StateObject(wrappedValue: pairing)
-        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: pairing))
-        _interactionService = StateObject(wrappedValue: InteractionService(manager: pairing))
+        let interaction = InteractionService(manager: pairing)
+        _interactionService = StateObject(wrappedValue: interaction)
+        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: pairing, interactionService: interaction))
     }
 
     var body: some Scene {

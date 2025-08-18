@@ -62,7 +62,7 @@ struct MenuBarView: View {
                 }
             } else {
                 Button("End Class") {
-                    connectionManager.endClass()
+                    interactionService.endClass()
                     connectionManager.currentCourse = nil
                     connectionManager.currentLesson = nil
                     closeOverlay()
@@ -99,8 +99,8 @@ struct MenuBarView: View {
 }
 #Preview {
     let pairing = PairingService()
-    let courseService = CourseSessionService(manager: pairing)
     let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return MenuBarView()
         .environmentObject(pairing as PeerConnectionManager)
         .environmentObject(pairing)
