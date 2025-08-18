@@ -80,7 +80,7 @@ final class OverlayWindowManager: ObservableObject {
         window.styleMask = [.borderless]
         window.isOpaque = false
         window.backgroundColor = .clear
-        window.isReleasedWhenClosed = false
+        window.isReleasedWhenClosed = true
     }
 }
 #endif
