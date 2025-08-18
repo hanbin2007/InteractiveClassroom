@@ -10,33 +10,76 @@ final class InteractionService: ObservableObject {
     @Published var countdownService: CountdownService?
 
     private let manager: PeerConnectionManager
-    private var cancellables: Set<AnyCancellable> = []
+    private var interactionTask: Task<Void, Never>?
 
     init(manager: PeerConnectionManager) {
         self.manager = manager
+        self.manager.interactionHandler = self
+    }
 
-        manager.$overlayContent
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.overlayContent = $0 }
-            .store(in: &cancellables)
-        manager.$isOverlayContentVisible
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.isOverlayContentVisible = $0 }
-            .store(in: &cancellables)
-        manager.$activeInteraction
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.activeInteraction = $0 }
-            .store(in: &cancellables)
-        manager.$countdownService
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.countdownService = $0 }
-            .store(in: &cancellables)
+    var overlayHasContent: Bool { overlayContent != nil }
+
+    // MARK: - Overlay Management
+    private func presentOverlay(_ content: OverlayContent) {
+        overlayContent = content
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible = true
+        }
+    }
+
+    func toggleOverlayVisibility() {
+        guard overlayContent != nil else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible.toggle()
+        }
     }
 
     // MARK: - Interaction Controls
+    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true) {
+        guard activeInteraction == nil else { return }
+        let interaction = Interaction(request: request)
+        activeInteraction = interaction
 
-    func presentOverlay(_ content: OverlayContent) { manager.presentOverlay(content: content) }
-    func toggleOverlayVisibility() { manager.toggleOverlayContentVisibility() }
-    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true) { manager.startInteraction(request, broadcast: broadcast) }
-    func endInteraction(broadcast: Bool = true) { manager.endInteraction(broadcast: broadcast) }
+        if case .countdown = request.content,
+           let seconds = request.lifecycle.secondsValue {
+            let service = CountdownService(seconds: seconds)
+            countdownService = service
+            presentOverlay(request.makeOverlay(countdownService: service))
+            service.start { [weak self] in
+                self?.endInteraction()
+            }
+        } else {
+            presentOverlay(request.makeOverlay())
+            if case let .finite(seconds) = request.lifecycle {
+                interactionTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
+                    self?.endInteraction()
+                }
+            }
+        }
+
+        if broadcast {
+            manager.broadcastStartInteraction(request)
+        }
+    }
+
+    func endInteraction(broadcast: Bool = true) {
+        guard activeInteraction != nil else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isOverlayContentVisible = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.overlayContent = nil
+        }
+        activeInteraction = nil
+        interactionTask?.cancel()
+        interactionTask = nil
+        countdownService?.stop()
+        countdownService = nil
+        if broadcast {
+            manager.broadcastStopInteraction()
+        }
+    }
 }
+
+extension InteractionService: @preconcurrency InteractionHandling {}
