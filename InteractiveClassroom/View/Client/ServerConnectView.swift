@@ -171,12 +171,13 @@ private struct PasscodeEntrySheet: View {
 }
 #Preview {
     NavigationStack {
-        let manager = PeerConnectionManager()
-        let pairing = PairingService(manager: manager)
-        let courseService = CourseSessionService(manager: manager)
+        let pairing = PairingService()
+        let interaction = InteractionService(manager: pairing)
+        let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
         ServerConnectView()
             .environmentObject(pairing)
             .environmentObject(courseService)
+            .environmentObject(interaction)
     }
 }
 #endif

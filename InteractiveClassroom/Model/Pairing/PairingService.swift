@@ -1,61 +1,94 @@
 import Foundation
-import Combine
 import MultipeerConnectivity
+import SwiftData
 
 @MainActor
-final class PairingService: ObservableObject {
-    @Published private(set) var availablePeers: [PeerConnectionManager.Peer] = []
-    @Published private(set) var connectionStatus: String = "Not Connected"
-    @Published private(set) var teacherCode: String?
-    @Published private(set) var studentCode: String?
-    @Published private(set) var myRole: UserRole?
-    @Published private(set) var connectedServer: MCPeerID?
-    @Published var serverDisconnected: Bool = false
-
-    private let manager: PeerConnectionManager
-    private var cancellables: Set<AnyCancellable> = []
-
-    init(manager: PeerConnectionManager) {
-        self.manager = manager
-
-        manager.$availablePeers
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.availablePeers = $0 }
-            .store(in: &cancellables)
-        manager.$connectionStatus
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.connectionStatus = $0 }
-            .store(in: &cancellables)
-        manager.$teacherCode
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.teacherCode = $0 }
-            .store(in: &cancellables)
-        manager.$studentCode
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.studentCode = $0 }
-            .store(in: &cancellables)
-        manager.$myRole
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.myRole = $0 }
-            .store(in: &cancellables)
-        manager.$connectedServer
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.connectedServer = $0 }
-            .store(in: &cancellables)
-        manager.$serverDisconnected
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.serverDisconnected = $0 }
-            .store(in: &cancellables)
+final class PairingService: PeerConnectionManager {
+    override init(modelContext: ModelContext? = nil, currentCourse: Course? = nil, currentLesson: Lesson? = nil) {
+        super.init(modelContext: modelContext, currentCourse: currentCourse, currentLesson: currentLesson)
     }
 
     // MARK: - Pairing Operations
 
-    func openClassroom() { manager.openClassroom() }
-    func startBrowsing() { manager.startBrowsing() }
-    func stopBrowsing() { manager.stopBrowsing() }
-    func connect(to peer: PeerConnectionManager.Peer, passcode: String, nickname: String) {
-        manager.connect(to: peer, passcode: passcode, nickname: nickname)
+    func openClassroom() {
+        teacherCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        studentCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
+        advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
+        advertiser?.delegate = self
+        advertiser?.startAdvertisingPeer()
+        connectionStatus = "Awaiting connection..."
+        sessions.removeAll()
+        refreshConnectedClients()
     }
-    func disconnectFromServer() { manager.disconnectFromServer() }
-    func isConnected(to peer: PeerConnectionManager.Peer) -> Bool { manager.isConnected(to: peer) }
+
+    func startBrowsing() {
+        browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
+        browser?.delegate = self
+        browser?.startBrowsingForPeers()
+    }
+
+    func stopBrowsing() {
+        browser?.stopBrowsingForPeers()
+        browser = nil
+        availablePeers.removeAll()
+    }
+
+    func connect(to peer: Peer, passcode: String, nickname: String) {
+        connectionStatus = "Connecting to \(peer.peerID.displayName)..."
+        let payload = InvitationPayload(passcode: passcode, nickname: nickname)
+        let context = try? JSONEncoder().encode(payload)
+        browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
+    }
+
+    func disconnectFromServer() {
+        guard advertiser == nil else { return }
+        userInitiatedDisconnect = true
+        session.disconnect()
+        connectionStatus = "Not Connected"
+        myRole = nil
+        students.removeAll()
+        classStarted = false
+        currentCourse = nil
+        currentLesson = nil
+        setConnectedServer(nil)
+    }
+
+    override func disconnectPeer(named name: String) {
+        guard advertiser != nil else { return }
+        if let (peerID, sess) = sessions.first(where: { $0.key.displayName == name }) {
+            sess.disconnect()
+            sessions.removeValue(forKey: peerID)
+        }
+    }
+
+    func sendDisconnectCommand(for name: String) {
+        guard advertiser == nil, let server = connectedServer else { return }
+        let message = Message(type: "disconnect", target: name)
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: [server], with: .reliable)
+        }
+    }
+
+    func requestStudentList() {
+        guard advertiser == nil, let server = connectedServer else { return }
+        let message = Message(type: "requestStudents")
+        if let data = try? JSONEncoder().encode(message) {
+            try? session.send(data, toPeers: [server], with: .reliable)
+        }
+    }
+
+    func refreshConnectedClients() {
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
+        if let clients = try? context.fetch(descriptor) {
+            let activeNames = advertiser != nil ?
+                Set(sessions.keys.map { $0.displayName }) :
+                Set(session.connectedPeers.map { $0.displayName })
+            for client in clients where !activeNames.contains(client.deviceName) {
+                client.isConnected = false
+            }
+            try? context.save()
+        }
+    }
 }
+

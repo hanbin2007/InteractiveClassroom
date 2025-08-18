@@ -86,13 +86,14 @@ struct TeacherDashboardView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    manager.students = ["Alice", "Bob"]
-    let courseService = CourseSessionService(manager: manager)
-    let pairing = PairingService(manager: manager)
+    let pairing = PairingService()
+    pairing.students = ["Alice", "Bob"]
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return NavigationStack { TeacherDashboardView() }
         .environmentObject(courseService)
         .environmentObject(pairing)
+        .environmentObject(interaction)
 }
 
 #endif

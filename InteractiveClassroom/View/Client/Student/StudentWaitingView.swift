@@ -104,13 +104,14 @@ private struct LessonInfoView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    manager.currentCourse = Course(name: "Preview Course")
-    manager.currentLesson = Lesson(title: "Preview Lesson", number: 1)
-    let courseService = CourseSessionService(manager: manager)
-    let pairing = PairingService(manager: manager)
+    let pairing = PairingService()
+    pairing.currentCourse = Course(name: "Preview Course")
+    pairing.currentLesson = Lesson(title: "Preview Lesson", number: 1)
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return NavigationStack { StudentWaitingView() }
         .environmentObject(courseService)
         .environmentObject(pairing)
+        .environmentObject(interaction)
 }
 #endif

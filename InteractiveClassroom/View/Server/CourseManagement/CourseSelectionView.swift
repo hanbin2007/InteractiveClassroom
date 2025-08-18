@@ -56,12 +56,13 @@ struct CourseSelectionView: View {
     }
 }
 #Preview {
-    let manager = PreviewSampleData.connectionManager
-    let courseService = CourseSessionService(manager: manager)
-    let pairing = PairingService(manager: manager)
+    let pairing = PairingService()
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return CourseSelectionView()
         .environmentObject(courseService)
         .environmentObject(pairing)
+        .environmentObject(interaction)
         .modelContainer(PreviewSampleData.container)
 }
 #endif

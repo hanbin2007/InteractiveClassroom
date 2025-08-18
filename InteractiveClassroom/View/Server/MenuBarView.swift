@@ -4,7 +4,6 @@ import AppKit
 
 /// Content displayed in the menu bar extra for macOS builds.
 struct MenuBarView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
     @EnvironmentObject private var pairingService: PairingService
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
@@ -18,7 +17,6 @@ struct MenuBarView: View {
         NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
         let controller = NSHostingController(
             rootView: ScreenOverlayView()
-                .environmentObject(connectionManager)
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
@@ -49,22 +47,22 @@ struct MenuBarView: View {
 
     var body: some View {
         Group {
-            if let t = connectionManager.teacherCode,
-               let s = connectionManager.studentCode {
+            if let t = pairingService.teacherCode,
+               let s = pairingService.studentCode {
                 Text("Teacher Key: \(t)")
                 Text("Student Key: \(s)")
             }
-            Text(connectionManager.connectionStatus)
+            Text(pairingService.connectionStatus)
             Divider()
-            if connectionManager.teacherCode == nil {
+            if pairingService.teacherCode == nil {
                 Button("Open Classroom") {
                     openWindowIfNeeded(id: "courseSelection")
                 }
             } else {
                 Button("End Class") {
-                    connectionManager.endClass()
-                    connectionManager.currentCourse = nil
-                    connectionManager.currentLesson = nil
+                    interactionService.endClass()
+                    pairingService.currentCourse = nil
+                    pairingService.currentLesson = nil
                     closeOverlay()
                 }
             }
@@ -88,7 +86,7 @@ struct MenuBarView: View {
                 NSApp.terminate(nil)
             }
         }
-        .onChange(of: connectionManager.teacherCode) { code in
+        .onChange(of: pairingService.teacherCode) { code in
             if code != nil {
                 openOverlay()
             } else {
@@ -98,12 +96,10 @@ struct MenuBarView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    let pairing = PairingService(manager: manager)
-    let courseService = CourseSessionService(manager: manager)
-    let interaction = InteractionService(manager: manager)
+    let pairing = PairingService()
+    let interaction = InteractionService(manager: pairing)
+    let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
     return MenuBarView()
-        .environmentObject(manager)
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)

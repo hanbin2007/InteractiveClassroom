@@ -31,8 +31,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    let manager = PeerConnectionManager()
-    let pairing = PairingService(manager: manager)
+    let pairing = PairingService()
     return ContentView()
         .environmentObject(pairing)
 }
