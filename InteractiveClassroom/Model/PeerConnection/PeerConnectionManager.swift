@@ -117,16 +117,28 @@ class PeerConnectionManager: NSObject, ObservableObject {
         self.init(modelContext: nil)
     }
 
-    func sendMessageToServer(_ message: Message) {
-        guard let server = connectedServer else { return }
-        if let data = try? JSONEncoder().encode(message) {
+    nonisolated func sendMessageToServer(_ message: Message) {
+        Task.detached(priority: .background) { [weak self] in
+            guard let self else { return }
+            guard let data = try? JSONEncoder().encode(message) else { return }
+            let context = await MainActor.run { () -> (MCPeerID?, MCSession) in
+                (self.connectedServer, self.session)
+            }
+            guard let server = context.0 else { return }
+            let session = context.1
             try? session.send(data, toPeers: [server], with: .reliable)
         }
     }
 
-    func forwardToClients(_ message: Message, excluding origin: MCPeerID? = nil) {
-        guard advertiser != nil else { return }
-        if let data = try? JSONEncoder().encode(message) {
+    nonisolated func forwardToClients(_ message: Message, excluding origin: MCPeerID? = nil) {
+        Task.detached(priority: .background) { [weak self] in
+            guard let self else { return }
+            guard let data = try? JSONEncoder().encode(message) else { return }
+            let context = await MainActor.run { () -> (MCNearbyServiceAdvertiser?, [MCPeerID: MCSession]) in
+                (self.advertiser, self.sessions)
+            }
+            guard context.0 != nil else { return }
+            let sessions = context.1
             for (peerID, sess) in sessions where peerID != origin {
                 if !sess.connectedPeers.isEmpty {
                     try? sess.send(data, toPeers: sess.connectedPeers, with: .reliable)
