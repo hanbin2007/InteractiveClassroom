@@ -82,4 +82,4 @@ final class InteractionService: ObservableObject {
     }
 }
 
-extension InteractionService: InteractionHandling {}
+extension InteractionService: @preconcurrency InteractionHandling {}
