@@ -28,6 +28,7 @@ struct MenuBarView: View {
                 Button("End Class") {
                     overlayManager.closeOverlay()
                     courseSessionService.endClass()
+                    viewModel.reloadMenuBar()
                 }
             }
             Button("Clients") {
@@ -50,6 +51,7 @@ struct MenuBarView: View {
                 NSApp.terminate(nil)
             }
         }
+        .id(viewModel.reloadToken)
         .onChange(of: pairingService.teacherCode) { code in
             if code != nil {
                 overlayManager.openOverlay(
@@ -59,6 +61,7 @@ struct MenuBarView: View {
                 )
             } else {
                 overlayManager.closeOverlay()
+                viewModel.reloadMenuBar()
             }
         }
     }
