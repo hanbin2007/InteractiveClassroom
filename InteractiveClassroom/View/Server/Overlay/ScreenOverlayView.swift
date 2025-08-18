@@ -189,6 +189,7 @@ struct ScreenOverlayView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
+            .zIndex(1) // Ensure toolbar remains above overlay content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
