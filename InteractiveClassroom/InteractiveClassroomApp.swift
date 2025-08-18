@@ -48,40 +48,12 @@ struct InteractiveClassroomApp: App {
 
     var body: some Scene {
 #if os(macOS)
-        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-            MenuBarView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-        Settings {
-            SettingsView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "courseSelection") {
-            CourseSelectionView()
-                .environmentObject(courseSessionService)
-                .environmentObject(pairingService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "clients") {
-            ClientsListView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "courseManager") {
-            CourseManagerView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
+        MenuBarScene(
+            pairingService: pairingService,
+            courseSessionService: courseSessionService,
+            interactionService: interactionService,
+            container: container
+        )
 #else
         WindowGroup {
             ContentView()

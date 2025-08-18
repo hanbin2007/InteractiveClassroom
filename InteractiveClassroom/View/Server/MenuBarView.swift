@@ -8,42 +8,7 @@ struct MenuBarView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
     @Environment(\.openWindow) private var openWindow
-    @State private var overlayWindow: NSWindow?
-
-    /// Presents the full-screen overlay window.
-    private func openOverlay() {
-        closeOverlay()
-        // Auto-hide system chrome but keep the menu bar accessible when needed.
-        NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
-        let controller = NSHostingController(
-            rootView: ScreenOverlayView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        )
-        let window = NSWindow(contentViewController: controller)
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-        overlayWindow = window
-    }
-
-    /// Closes any existing overlay windows and restores normal presentation.
-    private func closeOverlay() {
-        overlayWindow?.close()
-        overlayWindow = nil
-        NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
-        NSApp.presentationOptions = []
-    }
-
-    /// Opens a window identified by `id` if one isn't already visible.
-    /// If the window exists, it is brought to the front instead of creating a duplicate.
-    private func openWindowIfNeeded(id: String) {
-        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            openWindow(id: id)
-        }
-    }
+    @StateObject private var viewModel = MenuBarViewModel()
 
     var body: some View {
         Group {
@@ -56,21 +21,21 @@ struct MenuBarView: View {
             Divider()
             if pairingService.teacherCode == nil {
                 Button("Open Classroom") {
-                    openWindowIfNeeded(id: "courseSelection")
+                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                 }
             } else {
                 Button("End Class") {
                     interactionService.endClass()
                     pairingService.currentCourse = nil
                     pairingService.currentLesson = nil
-                    closeOverlay()
+                    viewModel.closeOverlay()
                 }
             }
             Button("Clients") {
-                openWindowIfNeeded(id: "clients")
+                viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
             }
             Button("Courses") {
-                openWindowIfNeeded(id: "courseManager")
+                viewModel.openWindowIfNeeded(id: "courseManager", openWindow: openWindow)
             }
             if #available(macOS 13, *) {
                 SettingsLink {
@@ -88,9 +53,13 @@ struct MenuBarView: View {
         }
         .onChange(of: pairingService.teacherCode) { code in
             if code != nil {
-                openOverlay()
+                viewModel.openOverlay(
+                    pairingService: pairingService,
+                    courseSessionService: courseSessionService,
+                    interactionService: interactionService
+                )
             } else {
-                closeOverlay()
+                viewModel.closeOverlay()
             }
         }
     }
