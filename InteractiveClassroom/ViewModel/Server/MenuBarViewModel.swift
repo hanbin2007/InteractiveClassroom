@@ -6,6 +6,7 @@ import AppKit
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     private var overlayWindow: NSWindow?
+    private var originalPresentationOptions: NSApplication.PresentationOptions = []
 
     /// Presents the full-screen overlay window.
     func openOverlay(
@@ -14,7 +15,8 @@ final class MenuBarViewModel: ObservableObject {
         interactionService: InteractionService
     ) {
         closeOverlay()
-        NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
+        originalPresentationOptions = NSApp.presentationOptions
+        NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
         let controller = NSHostingController(
             rootView: ScreenOverlayView()
                 .environmentObject(pairingService)
@@ -32,7 +34,7 @@ final class MenuBarViewModel: ObservableObject {
         overlayWindow?.close()
         overlayWindow = nil
         NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
-        NSApp.presentationOptions = []
+        NSApp.presentationOptions = originalPresentationOptions
     }
 
     /// Opens a window identified by `id` if one isn't already visible.
