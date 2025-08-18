@@ -7,6 +7,9 @@
 
 import SwiftUI
 import SwiftData
+#if os(macOS)
+import AppKit
+#endif
 
 @main
 struct InteractiveClassroomApp: App {
@@ -53,19 +56,16 @@ struct InteractiveClassroomApp: App {
                 interactionService: interaction
             )
         )
+#if os(macOS)
+        DispatchQueue.main.async {
+            NSApp.sendAction(#selector(NSApplication.openWindow(_:)), to: nil, from: "courseSelection" as NSString)
+        }
+#endif
     }
 
     var body: some Scene {
         let _ = overlayManager
 #if os(macOS)
-        Settings {
-            SettingsView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-
         WindowGroup(id: "courseSelection") {
             CourseSelectionView()
                 .environmentObject(courseSessionService)
@@ -92,6 +92,14 @@ struct InteractiveClassroomApp: App {
         WindowGroup(id: "pairingCodes") {
             PairingCodesView()
                 .environmentObject(pairingService)
+        }
+        .modelContainer(container)
+
+        Settings {
+            SettingsView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
         }
         .modelContainer(container)
 #else

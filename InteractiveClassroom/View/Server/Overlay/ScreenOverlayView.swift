@@ -12,10 +12,11 @@ struct ScreenOverlayView: View {
 
     /// Opens or brings to front the window identified by `id`.
     private func openWindowIfNeeded(id: String) {
+        NSApp.activate(ignoringOtherApps: true)
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
             window.makeKeyAndOrderFront(nil)
         } else {
-            NSApp.sendAction(Selector(("openWindow:")), to: nil, from: id)
+            NSApp.sendAction(#selector(NSApplication.openWindow(_:)), to: nil, from: id as NSString)
         }
     }
 
