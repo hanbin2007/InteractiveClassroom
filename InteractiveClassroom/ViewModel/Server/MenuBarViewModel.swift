@@ -31,9 +31,10 @@ final class MenuBarViewModel: ObservableObject {
 
     /// Closes any existing overlay windows and restores normal presentation.
     func closeOverlay() {
-        overlayWindow?.close()
+        let overlayWindows = NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }
+        guard !overlayWindows.isEmpty || overlayWindow != nil else { return }
+        overlayWindows.forEach { $0.close() }
         overlayWindow = nil
-        NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }.forEach { $0.close() }
         NSApp.presentationOptions = originalPresentationOptions
     }
 

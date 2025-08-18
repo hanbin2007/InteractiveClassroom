@@ -25,10 +25,7 @@ struct MenuBarView: View {
                 }
             } else {
                 Button("End Class") {
-                    interactionService.endClass()
-                    pairingService.currentCourse = nil
-                    pairingService.currentLesson = nil
-                    viewModel.closeOverlay()
+                    courseSessionService.endClass()
                 }
             }
             Button("Clients") {
