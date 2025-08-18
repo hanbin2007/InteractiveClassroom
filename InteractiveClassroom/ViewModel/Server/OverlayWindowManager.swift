@@ -43,9 +43,9 @@ final class OverlayWindowManager: ObservableObject {
         NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
         let controller = NSHostingController(
             rootView: ScreenOverlayView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
+                .environmentObject(self.pairingService)
+                .environmentObject(self.courseSessionService)
+                .environmentObject(self.interactionService)
                 .environmentObject(self)
         )
         let window = NSWindow(contentViewController: controller)
@@ -107,12 +107,12 @@ final class OverlayWindowManager: ObservableObject {
         let controller = NSHostingController(
             rootView: CourseSelectionView(
                 viewModel: OpenClassroomViewModel(
-                    courseSessionService: courseSessionService,
-                    pairingService: pairingService
+                    courseSessionService: self.courseSessionService,
+                    pairingService: self.pairingService
                 )
             )
-            .environmentObject(courseSessionService)
-            .environmentObject(pairingService)
+            .environmentObject(self.courseSessionService)
+            .environmentObject(self.pairingService)
         )
         let window = NSWindow(contentViewController: controller)
         window.identifier = NSUserInterfaceItemIdentifier("courseSelection")
