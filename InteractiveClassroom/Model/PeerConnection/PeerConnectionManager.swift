@@ -32,6 +32,12 @@ class PeerConnectionManager: NSObject, ObservableObject {
     @Published var serverDisconnected: Bool = false
     @Published private(set) var connectedServer: MCPeerID?
 
+    /// Updates the tracked server connection.
+    /// - Parameter peerID: The peer ID to assign as the connected server, or `nil` to clear it.
+    func setConnectedServer(_ peerID: MCPeerID?) {
+        connectedServer = peerID
+    }
+
     weak var interactionHandler: InteractionHandling?
 
     @Published var currentCourse: Course? {

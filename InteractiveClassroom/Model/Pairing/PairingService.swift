@@ -50,7 +50,7 @@ final class PairingService: PeerConnectionManager {
         classStarted = false
         currentCourse = nil
         currentLesson = nil
-        connectedServer = nil
+        setConnectedServer(nil)
     }
 
     override func disconnectPeer(named name: String) {
