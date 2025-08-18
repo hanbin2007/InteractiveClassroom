@@ -7,9 +7,9 @@ struct MenuBarView: View {
     @EnvironmentObject private var pairingService: PairingService
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
+    @EnvironmentObject private var overlayManager: OverlayWindowManager
     @Environment(\.openWindow) private var openWindow
     @StateObject private var viewModel = MenuBarViewModel()
-    @StateObject private var overlayManager = OverlayWindowManager()
 
     var body: some View {
         Group {
@@ -52,27 +52,21 @@ struct MenuBarView: View {
             }
         }
         .id(viewModel.reloadToken)
-        .onChange(of: pairingService.teacherCode) { code in
-            if code != nil {
-                overlayManager.openOverlay(
-                    pairingService: pairingService,
-                    courseSessionService: courseSessionService,
-                    interactionService: interactionService
-                )
-            } else {
-                overlayManager.closeOverlay()
-                viewModel.reloadMenuBar()
-            }
-        }
     }
 }
 #Preview {
     let pairing = PairingService()
     let interaction = InteractionService(manager: pairing)
     let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
+    let overlayManager = OverlayWindowManager(
+        pairingService: pairing,
+        courseSessionService: courseService,
+        interactionService: interaction
+    )
     return MenuBarView()
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)
+        .environmentObject(overlayManager)
 }
 #endif

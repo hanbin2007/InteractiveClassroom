@@ -12,6 +12,9 @@ struct ScreenOverlayView: View {
     @EnvironmentObject private var interactionService: InteractionService
     @Environment(\.openWindow) private var openWindow
     @State private var isToolbarFolded = false
+    #if os(macOS)
+    @EnvironmentObject private var overlayManager: OverlayWindowManager
+    #endif
 
     #if os(macOS)
     /// Opens or brings to front the window identified by `id`.
@@ -30,6 +33,9 @@ struct ScreenOverlayView: View {
     #endif
 
     private func endCurrentClass() {
+        #if os(macOS)
+        overlayManager.closeOverlay()
+        #endif
         courseSessionService.endClass()
     }
 

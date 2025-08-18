@@ -8,6 +8,26 @@ struct MenuBarScene: Scene {
     @ObservedObject var courseSessionService: CourseSessionService
     @ObservedObject var interactionService: InteractionService
     let container: ModelContainer
+    @StateObject private var overlayManager: OverlayWindowManager
+
+    init(
+        pairingService: PairingService,
+        courseSessionService: CourseSessionService,
+        interactionService: InteractionService,
+        container: ModelContainer
+    ) {
+        self.pairingService = pairingService
+        self.courseSessionService = courseSessionService
+        self.interactionService = interactionService
+        self.container = container
+        _overlayManager = StateObject(
+            wrappedValue: OverlayWindowManager(
+                pairingService: pairingService,
+                courseSessionService: courseSessionService,
+                interactionService: interactionService
+            )
+        )
+    }
 
     var body: some Scene {
         MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
@@ -15,6 +35,7 @@ struct MenuBarScene: Scene {
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
+                .environmentObject(overlayManager)
         }
         .modelContainer(container)
         Settings {
