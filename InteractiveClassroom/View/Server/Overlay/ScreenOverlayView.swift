@@ -210,6 +210,10 @@ struct FullScreenOverlay<Content: View>: View {
                     .fill(background.opacity(0.4))
                     .background(.ultraThinMaterial)
                     .ignoresSafeArea()
+#if os(macOS)
+                    // Allow interactions to pass through the blurred background.
+                    .allowsHitTesting(false)
+#endif
                     .transition(.opacity)
             }
 
