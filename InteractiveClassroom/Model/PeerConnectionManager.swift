@@ -166,7 +166,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     /// Ends the classroom session and disconnects all clients.
     func endClass() {
-        interactionHandler?.endInteraction()
+        interactionHandler?.endInteraction(broadcast: true)
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
         if !sessions.isEmpty {
