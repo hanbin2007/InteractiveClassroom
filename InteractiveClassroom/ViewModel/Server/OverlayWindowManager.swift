@@ -25,7 +25,7 @@ final class OverlayWindowManager: ObservableObject {
         )
         let window = NSWindow(contentViewController: controller)
         configureOverlayWindow(window)
-        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
         overlayWindow = window
     }
 
