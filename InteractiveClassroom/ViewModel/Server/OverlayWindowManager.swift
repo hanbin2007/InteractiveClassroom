@@ -72,6 +72,7 @@ final class OverlayWindowManager: ObservableObject {
 
         overlayWindow = nil
         NSApp.presentationOptions = originalPresentationOptions
+        showCourseSelectionWindow()
         NSApp.activate(ignoringOtherApps: true)
         #if DEBUG
         // Assert that no overlay windows remain visible after teardown.
@@ -94,6 +95,23 @@ final class OverlayWindowManager: ObservableObject {
         // Avoid double free crashes by keeping the window alive until we
         // explicitly release our reference.
         window.isReleasedWhenClosed = false
+    }
+
+    /// Brings the course-selection window to the front, creating it if necessary.
+    private func showCourseSelectionWindow() {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "courseSelection" }) {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let controller = NSHostingController(
+            rootView: CourseSelectionView()
+                .environmentObject(courseSessionService)
+                .environmentObject(pairingService)
+        )
+        let window = NSWindow(contentViewController: controller)
+        window.identifier = NSUserInterfaceItemIdentifier("courseSelection")
+        window.makeKeyAndOrderFront(nil)
     }
 }
 #endif
