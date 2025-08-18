@@ -45,10 +45,13 @@ struct MenuBarScene: Scene {
                 .environmentObject(interactionService)
         }
         .modelContainer(container)
-        WindowGroup(id: "courseSelection") {
-            CourseSelectionView()
-                .environmentObject(courseSessionService)
-                .environmentObject(pairingService)
+        WindowGroup("Select Course and Lesson", id: "courseSelection") {
+            CourseSelectionView(
+                viewModel: OpenClassroomViewModel(
+                    courseSessionService: courseSessionService,
+                    pairingService: pairingService
+                )
+            )
         }
         .modelContainer(container)
         WindowGroup(id: "clients") {
