@@ -16,7 +16,7 @@ struct ScreenOverlayView: View {
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
             window.makeKeyAndOrderFront(nil)
         } else {
-            NSApp.sendAction(#selector(NSApplication.openWindow(_:)), to: nil, from: id as NSString)
+            NSApp.sendAction(Selector(("openWindow:")), to: nil, from: id as NSString)
         }
     }
 

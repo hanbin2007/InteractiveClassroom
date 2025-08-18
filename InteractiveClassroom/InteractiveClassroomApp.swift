@@ -58,7 +58,7 @@ struct InteractiveClassroomApp: App {
         )
 #if os(macOS)
         DispatchQueue.main.async {
-            NSApp.sendAction(#selector(NSApplication.openWindow(_:)), to: nil, from: "courseSelection" as NSString)
+            NSApp.sendAction(Selector(("openWindow:")), to: nil, from: "courseSelection" as NSString)
         }
 #endif
     }
