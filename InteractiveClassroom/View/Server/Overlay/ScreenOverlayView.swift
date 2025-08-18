@@ -35,11 +35,8 @@ struct ScreenOverlayView: View {
     private func endCurrentClass() {
         #if os(macOS)
         overlayManager.closeOverlay()
-        courseSessionService.endClass()
-        openWindowIfNeeded(id: "courseSelection")
-        #else
-        courseSessionService.endClass()
         #endif
+        courseSessionService.endClass()
     }
 
     var body: some View {
@@ -64,7 +61,6 @@ struct ScreenOverlayView: View {
                     }
                 }
                 .allowsHitTesting(true)
-                .allowsHitTesting(interactionService.isOverlayContentVisible)
             }
             VStack {
                 Spacer()
@@ -194,16 +190,16 @@ struct ScreenOverlayView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
-            .zIndex(1) // Ensure toolbar remains above overlay content
             .allowsHitTesting(true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            Color.clear
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        )
+        .background(Color.clear)
+        .ignoresSafeArea(.all)
+        #if os(macOS)
+        // Let clicks fall through the transparent regions of the overlay so
+        // menu bar items and other windows remain accessible.
         .allowsHitTesting(false)
+        #endif
     }
 }
 
@@ -217,23 +213,17 @@ struct FullScreenOverlay<Content: View>: View {
     var body: some View {
         ZStack {
             if isVisible {
-#if os(macOS)
-                PassthroughBlurView(tint: background)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-                    .transition(.opacity)
-#else
                 Rectangle()
                     .fill(background.opacity(0.4))
                     .background(.ultraThinMaterial)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
                     .transition(.opacity)
-#endif
             }
 
             if isVisible {
                 content()
+                    .allowsHitTesting(true)
                     .transition(
                         .scale(scale: 0.9, anchor: .center)
                             .combined(with: .opacity)
@@ -262,6 +252,7 @@ struct CornerOverlay<Content: View>: View {
         ZStack(alignment: alignment) {
             if isVisible {
                 content()
+                    .allowsHitTesting(true)
                     .padding()
                     .transition(
                         .scale(scale: 0.9, anchor: .center)

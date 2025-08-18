@@ -14,19 +14,20 @@ struct MenuBarView: View {
     var body: some View {
         Group {
             Text("Teacher Key: \(pairingService.teacherCode ?? "")")
-                .opacity(pairingService.teacherCode == nil ? 0 : 1)
+                .hidden(pairingService.teacherCode == nil)
             Text("Student Key: \(pairingService.studentCode ?? "")")
-                .opacity(pairingService.studentCode == nil ? 0 : 1)
+                .hidden(pairingService.studentCode == nil)
             Text(pairingService.connectionStatus)
             Divider()
-            Button(pairingService.teacherCode == nil ? "Open Classroom" : "End Class") {
+            Button(action: {
                 if pairingService.teacherCode == nil {
                     viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                 } else {
                     overlayManager.closeOverlay()
                     courseSessionService.endClass()
-                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                 }
+            }) {
+                Text(pairingService.teacherCode == nil ? "Open Classroom" : "End Class")
             }
             Button("Clients") {
                 viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
