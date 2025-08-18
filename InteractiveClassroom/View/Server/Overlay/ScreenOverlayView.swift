@@ -207,12 +207,15 @@ struct FullScreenOverlay<Content: View>: View {
     var body: some View {
         ZStack {
             if isVisible {
+#if os(macOS)
+                PassthroughBlurView(tint: background)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+#else
                 Rectangle()
                     .fill(background.opacity(0.4))
                     .background(.ultraThinMaterial)
                     .ignoresSafeArea()
-#if os(macOS)
-                    // Allow interactions to pass through the blurred background.
                     .allowsHitTesting(false)
 #endif
                     .transition(.opacity)
