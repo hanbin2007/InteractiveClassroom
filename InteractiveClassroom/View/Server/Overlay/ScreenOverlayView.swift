@@ -35,8 +35,11 @@ struct ScreenOverlayView: View {
     private func endCurrentClass() {
         #if os(macOS)
         overlayManager.closeOverlay()
-        #endif
         courseSessionService.endClass()
+        openWindowIfNeeded(id: "courseSelection")
+        #else
+        courseSessionService.endClass()
+        #endif
     }
 
     var body: some View {
@@ -60,6 +63,7 @@ struct ScreenOverlayView: View {
                         }
                     }
                 }
+                .allowsHitTesting(interactionService.isOverlayContentVisible)
             }
             VStack {
                 Spacer()
@@ -189,10 +193,14 @@ struct ScreenOverlayView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
+            .zIndex(1) // Ensure toolbar remains above overlay content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .ignoresSafeArea(.all)
+        .background(
+            Color.clear
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        )
     }
 }
 
@@ -206,11 +214,19 @@ struct FullScreenOverlay<Content: View>: View {
     var body: some View {
         ZStack {
             if isVisible {
+#if os(macOS)
+                PassthroughBlurView(tint: background)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+#else
                 Rectangle()
                     .fill(background.opacity(0.4))
                     .background(.ultraThinMaterial)
                     .ignoresSafeArea()
+                    .allowsHitTesting(false)
                     .transition(.opacity)
+#endif
             }
 
             if isVisible {

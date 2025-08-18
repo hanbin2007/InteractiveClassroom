@@ -29,6 +29,7 @@ struct MenuBarView: View {
                     overlayManager.closeOverlay()
                     courseSessionService.endClass()
                     viewModel.reloadMenuBar()
+                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                 }
             }
             Button("Clients") {
