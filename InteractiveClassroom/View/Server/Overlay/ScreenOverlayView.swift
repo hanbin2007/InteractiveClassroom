@@ -1,42 +1,65 @@
-#if os(macOS) || os(iOS)
-import SwiftUI
 #if os(macOS)
+import SwiftUI
 import AppKit
 import CoreGraphics
-#endif
 
 /// Full-screen overlay container responsible for presenting interactive content.
 struct ScreenOverlayView: View {
-    @EnvironmentObject private var pairingService: PairingService
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
-    @Environment(\.openWindow) private var openWindow
+    @EnvironmentObject private var pairingService: PairingService
     @State private var isToolbarFolded = false
-    #if os(macOS)
-    @EnvironmentObject private var overlayManager: OverlayWindowManager
-    #endif
 
-    #if os(macOS)
     /// Opens or brings to front the window identified by `id`.
     private func openWindowIfNeeded(id: String) {
+        NSApp.activate(ignoringOtherApps: true)
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
             window.makeKeyAndOrderFront(nil)
         } else {
-            openWindow(id: id)
+            NSApp.sendAction(Selector(("openWindow:")), to: nil, from: id as NSString)
+            if let newWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
+                newWindow.makeKeyAndOrderFront(nil)
+            }
         }
     }
-    #else
-    /// Opens a new window scene for the given identifier.
-    private func openWindowIfNeeded(id: String) {
-        openWindow(id: id)
-    }
-    #endif
 
     private func endCurrentClass() {
-        #if os(macOS)
-        overlayManager.closeOverlay()
-        #endif
         courseSessionService.endClass()
+    }
+
+    private func openClassroom() {
+        openWindowIfNeeded(id: "courseSelection")
+    }
+
+    @ViewBuilder
+    private var classControlButton: some View {
+        if pairingService.teacherCode == nil {
+            Button {
+                openClassroom()
+            } label: {
+                Image(systemName: "rectangle.badge.plus")
+                    .frame(width: 24, height: 24)
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .frame(width: 44, height: 44)
+            .accessibilityLabel("Open Classroom")
+        } else {
+            Button {
+                endCurrentClass()
+            } label: {
+                Image(systemName: "xmark.circle")
+                    .frame(width: 24, height: 24)
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .frame(width: 44, height: 44)
+            .accessibilityLabel("End Class")
+        }
     }
 
     var body: some View {
@@ -67,20 +90,20 @@ struct ScreenOverlayView: View {
                     Spacer()
                     HStack(spacing: 12) {
                         HStack(spacing: 12) {
-                            if pairingService.teacherCode != nil {
-                                Button {
-                                    endCurrentClass()
-                                } label: {
-                                    Image(systemName: "xmark.circle")
-                                        .frame(width: 24, height: 24)
-                                        .padding(10)
-                                        .background(.ultraThinMaterial)
-                                        .clipShape(Circle())
-                                        .accessibilityLabel("End Class")
-                                }
-                                .buttonStyle(.plain)
-                                .frame(width: 44, height: 44)
+                            classControlButton
+
+                            Button {
+                                openWindowIfNeeded(id: "pairingCodes")
+                            } label: {
+                                Image(systemName: "qrcode")
+                                    .frame(width: 24, height: 24)
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                                    .accessibilityLabel("Pairing Codes")
                             }
+                            .buttonStyle(.plain)
+                            .frame(width: 44, height: 44)
 
                             Button {
                                 openWindowIfNeeded(id: "clients")

@@ -1,7 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
-import Combine
+import Foundation
 
 /// Handles presentation of the full-screen overlay window.
 @MainActor
@@ -12,8 +12,6 @@ final class OverlayWindowManager: ObservableObject {
 
     private var overlayWindow: NSWindow?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
-    private var cancellables: Set<AnyCancellable> = []
-
     init(
         pairingService: PairingService,
         courseSessionService: CourseSessionService,
@@ -22,18 +20,9 @@ final class OverlayWindowManager: ObservableObject {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
-
-        pairingService.$teacherCode
-            .receive(on: RunLoop.main)
-            .sink { [weak self] code in
-                guard let self else { return }
-                if code != nil {
-                    self.openOverlay()
-                } else {
-                    self.closeOverlay()
-                }
-            }
-            .store(in: &cancellables)
+        DispatchQueue.main.async { [weak self] in
+            self?.openOverlay()
+        }
     }
 
     /// Presents the overlay configured for full-screen display.
@@ -46,7 +35,6 @@ final class OverlayWindowManager: ObservableObject {
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
-                .environmentObject(self)
         )
         let window = NSWindow(contentViewController: controller)
         configureOverlayWindow(window)
@@ -82,7 +70,7 @@ final class OverlayWindowManager: ObservableObject {
     /// Applies identifier and screen configuration to the overlay window.
     private func configureOverlayWindow(_ window: NSWindow) {
         window.identifier = NSUserInterfaceItemIdentifier("overlay")
-        window.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+        window.level = .normal
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         if let screenFrame = NSScreen.main?.frame {
             window.setFrame(screenFrame, display: true)
