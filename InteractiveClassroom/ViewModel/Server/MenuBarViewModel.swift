@@ -24,13 +24,14 @@ final class MenuBarViewModel: ObservableObject {
                 .environmentObject(interactionService)
         )
         let window = NSWindow(contentViewController: controller)
-        window.isReleasedWhenClosed = false
+        configureOverlayWindow(window)
         window.makeKeyAndOrderFront(nil)
         overlayWindow = window
     }
 
     /// Closes any existing overlay windows and restores normal presentation.
     func closeOverlay() {
+        overlayWindow?.close()
         let overlayWindows = NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }
         guard !overlayWindows.isEmpty || overlayWindow != nil else { return }
         overlayWindows.forEach { $0.close() }
@@ -46,6 +47,22 @@ final class MenuBarViewModel: ObservableObject {
         } else {
             openWindow(id: id)
         }
+    }
+
+    /// Applies identifier and screen configuration to the overlay window.
+    private func configureOverlayWindow(_ window: NSWindow) {
+        window.identifier = NSUserInterfaceItemIdentifier("overlay")
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        if let screenFrame = NSScreen.main?.frame {
+            window.setFrame(screenFrame, display: true)
+            window.contentView?.frame = screenFrame
+        }
+        window.styleMask = [.borderless]
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.isReleasedWhenClosed = false
+        window.orderFrontRegardless()
     }
 }
 #endif

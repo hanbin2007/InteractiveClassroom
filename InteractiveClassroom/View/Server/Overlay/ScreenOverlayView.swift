@@ -187,39 +187,9 @@ struct ScreenOverlayView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
         .ignoresSafeArea(.all)
-        #if os(macOS)
-        .background(WindowConfigurator())
-        #endif
     }
 }
 
-#if os(macOS)
-/// Helper view configuring the hosting window for a full-screen overlay.
-private struct WindowConfigurator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView { ConfigurableView() }
-    func updateNSView(_ nsView: NSView, context: Context) {}
-
-    private final class ConfigurableView: NSView {
-        override func viewDidMoveToWindow() {
-            super.viewDidMoveToWindow()
-            guard let window = window else { return }
-            window.identifier = NSUserInterfaceItemIdentifier("overlay")
-            // Place the overlay just below the system menu bar so status items remain
-            // interactive while still covering the rest of the screen.
-            window.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
-            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-            if let screenFrame = NSScreen.main?.frame {
-                window.setFrame(screenFrame, display: true)
-                window.contentView?.frame = screenFrame
-            }
-            window.styleMask = [.borderless]
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.orderFrontRegardless()
-        }
-    }
-}
-#endif
 
 /// Template providing a blurred color full-screen background.
 struct FullScreenOverlay<Content: View>: View {
