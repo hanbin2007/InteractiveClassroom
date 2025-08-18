@@ -8,11 +8,11 @@ final class CourseSessionService: ObservableObject {
     @Published private(set) var students: [String] = []
     @Published private(set) var classStarted: Bool = false
 
-    private let manager: PeerConnectionManager
+    private let manager: PairingService
     private let interactionService: InteractionService
     private var cancellables: Set<AnyCancellable> = []
 
-    init(manager: PeerConnectionManager, interactionService: InteractionService) {
+    init(manager: PairingService, interactionService: InteractionService) {
         self.manager = manager
         self.interactionService = interactionService
 
