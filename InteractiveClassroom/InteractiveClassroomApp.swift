@@ -88,6 +88,12 @@ struct InteractiveClassroomApp: App {
                 .environmentObject(interactionService)
         }
         .modelContainer(container)
+
+        WindowGroup(id: "pairingCodes") {
+            PairingCodesView()
+                .environmentObject(pairingService)
+        }
+        .modelContainer(container)
 #else
         WindowGroup {
             ContentView()

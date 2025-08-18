@@ -99,6 +99,19 @@ struct ScreenOverlayView: View {
                             classControlButton
 
                             Button {
+                                openWindowIfNeeded(id: "pairingCodes")
+                            } label: {
+                                Image(systemName: "qrcode")
+                                    .frame(width: 24, height: 24)
+                                    .padding(10)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                                    .accessibilityLabel("Pairing Codes")
+                            }
+                            .buttonStyle(.plain)
+                            .frame(width: 44, height: 44)
+
+                            Button {
                                 openWindowIfNeeded(id: "clients")
                             } label: {
                                 Image(systemName: "person.2")
