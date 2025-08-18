@@ -35,8 +35,11 @@ struct ScreenOverlayView: View {
     private func endCurrentClass() {
         #if os(macOS)
         overlayManager.closeOverlay()
-        #endif
         courseSessionService.endClass()
+        openWindowIfNeeded(id: "courseSelection")
+        #else
+        courseSessionService.endClass()
+        #endif
     }
 
     var body: some View {
