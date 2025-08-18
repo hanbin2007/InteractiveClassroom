@@ -11,6 +11,8 @@ final class InteractionService: ObservableObject {
 
     private let manager: PeerConnectionManager
     private var interactionTask: Task<Void, Never>?
+    private var stateBroadcastWorkItem: DispatchWorkItem?
+    private var pendingBroadcastPeers: Set<MCPeerID>?
 
     init(manager: PeerConnectionManager) {
         self.manager = manager
@@ -124,27 +126,46 @@ final class InteractionService: ObservableObject {
 
 // MARK: - InteractionHandling
 extension InteractionService: @preconcurrency InteractionHandling {
+    /// Broadcasts the current course and lesson state to connected peers or the server.
+    /// Rapid successive calls are coalesced into a single message using a simple debounce.
     func broadcastCurrentState(to peers: [MCPeerID]?) {
-        let coursePayload = manager.currentCourse.map {
-            PeerConnectionManager.CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt)
-        }
-        let lessonPayload = manager.currentLesson.map {
-            PeerConnectionManager.LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt)
-        }
-        let message = PeerConnectionManager.Message(type: "state", course: coursePayload, lesson: lessonPayload)
-        if manager.advertiser != nil {
-            if let specific = peers, let data = try? JSONEncoder().encode(message) {
-                for peer in specific {
-                    if let sess = manager.sessions[peer] {
-                        try? sess.send(data, toPeers: [peer], with: .reliable)
-                    }
-                }
+        if let peers = peers {
+            if pendingBroadcastPeers == nil {
+                pendingBroadcastPeers = Set(peers)
             } else {
-                manager.forwardToClients(message)
+                pendingBroadcastPeers?.formUnion(peers)
             }
         } else {
-            manager.sendMessageToServer(message)
+            pendingBroadcastPeers = nil
         }
+
+        stateBroadcastWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let coursePayload = self.manager.currentCourse.map {
+                PeerConnectionManager.CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt)
+            }
+            let lessonPayload = self.manager.currentLesson.map {
+                PeerConnectionManager.LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt)
+            }
+            let message = PeerConnectionManager.Message(type: "state", course: coursePayload, lesson: lessonPayload)
+            if self.manager.advertiser != nil {
+                if let specific = self.pendingBroadcastPeers, let data = try? JSONEncoder().encode(message) {
+                    for peer in specific {
+                        if let sess = self.manager.sessions[peer] {
+                            try? sess.send(data, toPeers: [peer], with: .reliable)
+                        }
+                    }
+                } else {
+                    self.manager.forwardToClients(message)
+                }
+            } else {
+                self.manager.sendMessageToServer(message)
+            }
+            self.pendingBroadcastPeers = nil
+        }
+        stateBroadcastWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
     func handleInteractionMessage(_ message: PeerConnectionManager.Message, from peerID: MCPeerID, session: MCSession) {
