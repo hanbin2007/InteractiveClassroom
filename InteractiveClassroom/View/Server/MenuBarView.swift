@@ -28,7 +28,9 @@ struct MenuBarView: View {
                 Button("End Class") {
                     overlayManager.closeOverlay()
                     courseSessionService.endClass()
-                    viewModel.reloadMenuBar()
+                    DispatchQueue.main.async {
+                        viewModel.reloadMenuBar()
+                    }
                 }
             }
             Button("Clients") {

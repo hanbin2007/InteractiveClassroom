@@ -11,6 +11,7 @@ final class OverlayWindowManager: ObservableObject {
     private let interactionService: InteractionService
 
     private var overlayWindow: NSWindow?
+    private var overlayHostingController: NSHostingController<ScreenOverlayView>?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
     private var cancellables: Set<AnyCancellable> = []
 
@@ -48,7 +49,20 @@ final class OverlayWindowManager: ObservableObject {
                 .environmentObject(interactionService)
                 .environmentObject(self)
         )
-        let window = NSWindow(contentViewController: controller)
+        overlayHostingController = controller
+        let window = NSWindow()
+        window.contentView = NSView()
+        if let contentView = window.contentView {
+            let hostingView = controller.view
+            hostingView.translatesAutoresizingMaskIntoConstraints = false
+            contentView.addSubview(hostingView)
+            NSLayoutConstraint.activate([
+                hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+                hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+            ])
+        }
         configureOverlayWindow(window)
         window.orderFrontRegardless()
         overlayWindow = window
@@ -71,6 +85,7 @@ final class OverlayWindowManager: ObservableObject {
             }
 
         overlayWindow = nil
+        overlayHostingController = nil
         NSApp.presentationOptions = originalPresentationOptions
         NSApp.activate(ignoringOtherApps: true)
         #if DEBUG
@@ -86,7 +101,6 @@ final class OverlayWindowManager: ObservableObject {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         if let screenFrame = NSScreen.main?.frame {
             window.setFrame(screenFrame, display: true)
-            window.contentView?.frame = screenFrame
         }
         window.styleMask = [.borderless]
         window.isOpaque = false
