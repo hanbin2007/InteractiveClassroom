@@ -39,19 +39,35 @@ final class OverlayWindowManager: ObservableObject {
     /// Presents the overlay configured for full-screen display.
     private func openOverlay() {
         closeOverlay()
-        originalPresentationOptions = NSApp.presentationOptions
-        NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
-        let controller = NSHostingController(
-            rootView: ScreenOverlayView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(self)
-        )
-        let window = NSWindow(contentViewController: controller)
-        configureOverlayWindow(window)
-        window.orderFrontRegardless()
-        overlayWindow = window
+
+        let presentOverlay = { [weak self] in
+            guard let self else { return }
+            self.originalPresentationOptions = NSApp.presentationOptions
+            // Delay changing presentation options so active menus can close without being reset mid-interaction.
+            NSApp.presentationOptions = self.originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
+
+            let controller = NSHostingController(
+                rootView: ScreenOverlayView()
+                    .environmentObject(self.pairingService)
+                    .environmentObject(self.courseSessionService)
+                    .environmentObject(self.interactionService)
+                    .environmentObject(self)
+            )
+            let window = NSWindow(contentViewController: controller)
+            self.configureOverlayWindow(window)
+            window.orderFrontRegardless()
+            self.overlayWindow = window
+        }
+
+        DispatchQueue.main.async {
+            if let event = NSApp.currentEvent,
+               [.leftMouseDown, .leftMouseUp, .keyDown].contains(event.type) {
+                // A menu interaction is likely in progress; retry after a short delay.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: presentOverlay)
+            } else {
+                presentOverlay()
+            }
+        }
     }
 
     /// Closes any visible overlay windows and restores the application's presentation options.
