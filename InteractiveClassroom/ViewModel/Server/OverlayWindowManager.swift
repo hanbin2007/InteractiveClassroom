@@ -93,10 +93,11 @@ final class OverlayWindowManager: ObservableObject {
         window.styleMask = [.borderless]
         window.isOpaque = false
         window.backgroundColor = .clear
-        // Allow mouse events to pass through to underlying windows such as the
-        // system menu bar. Interactive overlay elements should be hosted in
-        // separate child windows.
-        window.ignoresMouseEvents = true
+        // Keep the overlay window responsive so toolbar controls can receive
+        // pointer events. Hit testing is handled in the SwiftUI view hierarchy
+        // to allow clicks on the menu bar and other windows to pass through the
+        // transparent regions.
+        window.ignoresMouseEvents = false
         // Avoid double free crashes by keeping the window alive until we
         // explicitly release our reference.
         window.isReleasedWhenClosed = false

@@ -60,6 +60,7 @@ struct ScreenOverlayView: View {
                         }
                     }
                 }
+                .allowsHitTesting(true)
             }
             VStack {
                 Spacer()
@@ -189,10 +190,16 @@ struct ScreenOverlayView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea()
+            .allowsHitTesting(true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
         .ignoresSafeArea(.all)
+        #if os(macOS)
+        // Let clicks fall through the transparent regions of the overlay so
+        // menu bar items and other windows remain accessible.
+        .allowsHitTesting(false)
+        #endif
     }
 }
 
@@ -210,11 +217,13 @@ struct FullScreenOverlay<Content: View>: View {
                     .fill(background.opacity(0.4))
                     .background(.ultraThinMaterial)
                     .ignoresSafeArea()
+                    .allowsHitTesting(false)
                     .transition(.opacity)
             }
 
             if isVisible {
                 content()
+                    .allowsHitTesting(true)
                     .transition(
                         .scale(scale: 0.9, anchor: .center)
                             .combined(with: .opacity)
@@ -243,6 +252,7 @@ struct CornerOverlay<Content: View>: View {
         ZStack(alignment: alignment) {
             if isVisible {
                 content()
+                    .allowsHitTesting(true)
                     .padding()
                     .transition(
                         .scale(scale: 0.9, anchor: .center)
