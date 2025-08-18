@@ -5,31 +5,27 @@ import AppKit
 
 /// Initial window prompting user to select a course and lesson before starting service.
 struct CourseSelectionView: View {
-    @EnvironmentObject private var courseSessionService: CourseSessionService
-    @EnvironmentObject private var pairingService: PairingService
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Course.name, animation: .default) private var courses: [Course]
-    @State private var selectedCourse: Course?
-    @State private var selectedLesson: Lesson?
+    @StateObject private var viewModel: OpenClassroomViewModel
 
-    var lessons: [Lesson] {
-        selectedCourse?.lessons.sorted { $0.scheduledAt < $1.scheduledAt } ?? []
+    init(viewModel: @autoclosure @escaping () -> OpenClassroomViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel())
     }
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
-                Picker("Course", selection: $selectedCourse) {
+                Picker("Course", selection: $viewModel.selectedCourse) {
                     Text("None").tag(Optional<Course>.none)
                     ForEach(courses) { course in
                         Text(course.name).tag(Optional(course))
                     }
                 }
                 .pickerStyle(.menu)
-                Picker("Lesson", selection: $selectedLesson) {
+                Picker("Lesson", selection: $viewModel.selectedLesson) {
                     Text("None").tag(Optional<Lesson>.none)
-                    ForEach(lessons) { lesson in
+                    ForEach(viewModel.lessons) { lesson in
                         Text(lesson.title).tag(Optional(lesson))
                     }
                 }
@@ -37,13 +33,10 @@ struct CourseSelectionView: View {
                 HStack {
                     Spacer()
                     Button("Open Classroom") {
-                        guard let course = selectedCourse, let lesson = selectedLesson else { return }
-                        courseSessionService.selectCourse(course)
-                        courseSessionService.selectLesson(lesson)
-                        pairingService.openClassroom()
+                        viewModel.openClassroom()
                         dismiss()
                     }
-                    .disabled(selectedCourse == nil || selectedLesson == nil)
+                    .disabled(!viewModel.canOpen)
                 }
             }
             .padding()
@@ -59,10 +52,10 @@ struct CourseSelectionView: View {
     let pairing = PairingService()
     let interaction = InteractionService(manager: pairing)
     let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
-    return CourseSelectionView()
+    return CourseSelectionView(viewModel: OpenClassroomViewModel(courseSessionService: courseService, pairingService: pairing))
+        .modelContainer(PreviewSampleData.container)
         .environmentObject(courseService)
         .environmentObject(pairing)
         .environmentObject(interaction)
-        .modelContainer(PreviewSampleData.container)
 }
 #endif
