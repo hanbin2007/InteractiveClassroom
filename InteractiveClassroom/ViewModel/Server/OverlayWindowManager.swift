@@ -16,7 +16,7 @@ final class OverlayWindowManager: ObservableObject {
     ) {
         closeOverlay()
         originalPresentationOptions = NSApp.presentationOptions
-        NSApp.setPresentationOptions(originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar]))
+        NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
         let controller = NSHostingController(
             rootView: ScreenOverlayView()
                 .environmentObject(pairingService)
@@ -36,7 +36,7 @@ final class OverlayWindowManager: ObservableObject {
         let overlayWindows = NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }
         overlayWindows.forEach { $0.orderOut(nil); $0.close() }
         overlayWindow = nil
-        NSApp.setPresentationOptions(originalPresentationOptions)
+        NSApp.presentationOptions = originalPresentationOptions
         NSApp.activate(ignoringOtherApps: true)
     }
 
