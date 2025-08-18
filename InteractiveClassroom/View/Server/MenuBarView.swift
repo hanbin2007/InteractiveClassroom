@@ -9,6 +9,7 @@ struct MenuBarView: View {
     @EnvironmentObject private var interactionService: InteractionService
     @Environment(\.openWindow) private var openWindow
     @StateObject private var viewModel = MenuBarViewModel()
+    @StateObject private var overlayManager = OverlayWindowManager()
 
     var body: some View {
         Group {
@@ -25,7 +26,7 @@ struct MenuBarView: View {
                 }
             } else {
                 Button("End Class") {
-                    viewModel.closeOverlay()
+                    overlayManager.closeOverlay()
                     courseSessionService.endClass()
                 }
             }
@@ -51,13 +52,13 @@ struct MenuBarView: View {
         }
         .onChange(of: pairingService.teacherCode) { code in
             if code != nil {
-                viewModel.openOverlay(
+                overlayManager.openOverlay(
                     pairingService: pairingService,
                     courseSessionService: courseSessionService,
                     interactionService: interactionService
                 )
             } else {
-                viewModel.closeOverlay()
+                overlayManager.closeOverlay()
             }
         }
     }
