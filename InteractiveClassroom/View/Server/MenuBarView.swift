@@ -13,19 +13,22 @@ struct MenuBarView: View {
 
     var body: some View {
         Group {
-            Text("Teacher Key: \(pairingService.teacherCode ?? "")")
-                .opacity(pairingService.teacherCode == nil ? 0 : 1)
-            Text("Student Key: \(pairingService.studentCode ?? "")")
-                .opacity(pairingService.studentCode == nil ? 0 : 1)
+            if let t = pairingService.teacherCode,
+               let s = pairingService.studentCode {
+                Text("Teacher Key: \(t)")
+                Text("Student Key: \(s)")
+            }
             Text(pairingService.connectionStatus)
             Divider()
-            Button(pairingService.teacherCode == nil ? "Open Classroom" : "End Class") {
-                if pairingService.teacherCode == nil {
+            if pairingService.teacherCode == nil {
+                Button("Open Classroom") {
                     viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-                } else {
+                }
+            } else {
+                Button("End Class") {
                     overlayManager.closeOverlay()
                     courseSessionService.endClass()
-                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                    viewModel.reloadMenuBar()
                 }
             }
             Button("Clients") {
@@ -48,6 +51,7 @@ struct MenuBarView: View {
                 NSApp.terminate(nil)
             }
         }
+        .id(viewModel.reloadToken)
     }
 }
 #Preview {
