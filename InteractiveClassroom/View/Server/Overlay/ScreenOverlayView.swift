@@ -1,33 +1,23 @@
-#if os(macOS) || os(iOS)
-import SwiftUI
 #if os(macOS)
+import SwiftUI
 import AppKit
 import CoreGraphics
-#endif
 
 /// Full-screen overlay container responsible for presenting interactive content.
 struct ScreenOverlayView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
     @EnvironmentObject private var pairingService: PairingService
-    @Environment(\.openWindow) private var openWindow
     @State private var isToolbarFolded = false
 
-    #if os(macOS)
     /// Opens or brings to front the window identified by `id`.
     private func openWindowIfNeeded(id: String) {
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == id }) {
             window.makeKeyAndOrderFront(nil)
         } else {
-            openWindow(id: id)
+            NSApp.sendAction(Selector(("openWindow:")), to: nil, from: id)
         }
     }
-    #else
-    /// Opens a new window scene for the given identifier.
-    private func openWindowIfNeeded(id: String) {
-        openWindow(id: id)
-    }
-    #endif
 
     private func endCurrentClass() {
         courseSessionService.endClass()

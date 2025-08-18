@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
+import Foundation
 
 /// Handles presentation of the full-screen overlay window.
 @MainActor
@@ -19,7 +20,9 @@ final class OverlayWindowManager: ObservableObject {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
-        openOverlay()
+        DispatchQueue.main.async { [weak self] in
+            self?.openOverlay()
+        }
     }
 
     /// Presents the overlay configured for full-screen display.
