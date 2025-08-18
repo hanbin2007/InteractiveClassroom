@@ -3,7 +3,7 @@ import SwiftUI
 import AppKit
 
 /// NSVisualEffectView that ignores all mouse events, allowing clicks to pass through.
-private final class PassthroughVisualEffectView: NSVisualEffectView {
+final class PassthroughVisualEffectView: NSVisualEffectView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
