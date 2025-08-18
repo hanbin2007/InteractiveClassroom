@@ -54,22 +54,28 @@ final class OverlayWindowManager: ObservableObject {
         overlayWindow = window
     }
 
-    /// Closes all overlay windows and restores the application's presentation options.
+    /// Closes any visible overlay windows and restores the application's presentation options.
     func closeOverlay() {
-        // Capture any existing overlay windows before closing so references
-        // remain valid even if a window releases itself when closed.
-        let overlayWindows = NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }
-
-        overlayWindows.forEach { window in
+        // Close the tracked overlay window first.
+        if let window = overlayWindow {
             window.orderOut(nil)
             window.close()
         }
+
+        // Catch any additional overlay windows that might have been created elsewhere.
+        NSApp.windows
+            .filter { $0.identifier?.rawValue == "overlay" && $0.isVisible }
+            .forEach { window in
+                window.orderOut(nil)
+                window.close()
+            }
 
         overlayWindow = nil
         NSApp.presentationOptions = originalPresentationOptions
         NSApp.activate(ignoringOtherApps: true)
         #if DEBUG
-        assert(NSApp.windows.allSatisfy { $0.identifier?.rawValue != "overlay" }, "Overlay window should be closed")
+        // Assert that no overlay windows remain visible after teardown.
+        assert(NSApp.windows.allSatisfy { !($0.identifier?.rawValue == "overlay" && $0.isVisible) }, "Overlay window should be closed")
         #endif
     }
 
