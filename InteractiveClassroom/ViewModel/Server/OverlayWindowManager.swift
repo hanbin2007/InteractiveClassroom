@@ -41,7 +41,7 @@ final class OverlayWindowManager: ObservableObject {
     private func openOverlay() {
         closeOverlay()
         originalPresentationOptions = NSApp.presentationOptions
-        NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
+        NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock])
         let controller = NSHostingController(
             rootView: AnyView(
                 ScreenOverlayView()
@@ -53,18 +53,17 @@ final class OverlayWindowManager: ObservableObject {
         )
         overlayHostingController = controller
         let window = NSWindow()
-        window.contentView = NSView()
-        if let contentView = window.contentView {
-            let hostingView = controller.view
-            hostingView.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview(hostingView)
-            NSLayoutConstraint.activate([
-                hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
-                hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-                hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-                hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
-            ])
-        }
+        let contentView = MenuBarPassthroughView()
+        window.contentView = contentView
+        let hostingView = controller.view
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(hostingView)
+        NSLayoutConstraint.activate([
+            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
+        ])
         configureOverlayWindow(window)
         window.orderFrontRegardless()
         overlayWindow = window
@@ -99,7 +98,7 @@ final class OverlayWindowManager: ObservableObject {
     /// Applies identifier and screen configuration to the overlay window.
     private func configureOverlayWindow(_ window: NSWindow) {
         window.identifier = NSUserInterfaceItemIdentifier("overlay")
-        window.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+        window.level = .statusBar
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         if let screenFrame = NSScreen.main?.frame {
             window.setFrame(screenFrame, display: true)
