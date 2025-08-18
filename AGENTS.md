@@ -5,8 +5,15 @@
 //  Created by zhb on 2025/8/17.
 //
 
-# [FIRST RULE] !!! ALLWAYS KEEP IN MIND THAT DO NOT STUFF EVERYTHING IN ONE FILE, SPLIT FUNCTIONS AS MUCH AS POSSIBLE, ESPECIALLY WHEN NEW THINGS ARE ADDED!!!
+# [FIRST RULE] !!! ALLWAYS KEEP IN MIND THAT DO NOT STUFF EVERYTHING IN ONE FILE, SPLIT FUNCTIONS AS MUCH AS POSSIBLE, ESPECIALLY WHEN NEW THINGS ARE ADDED. ALWAYS FOLLOW MVVM's PRINCIPLE!!!
 # [SECOND RULE] WHEN YOU NEED TO WRITE A NEW FUNCTION, CONSIDER WRITE IT AS A API FIRST
+
+## CODING PRINCIPLE [IMPORTANT]
+    1.    Separation of concerns: Business logic (Model), presentation logic (ViewModel), and UI rendering (View) are strictly separated.
+    2.    Data binding / Observability: The View automatically reacts to changes in the ViewModel’s state, ensuring a responsive UI.
+    3.    Testability: ViewModels and Models can be tested independently without requiring the UI.
+    4.    Reusability and Maintainability: Views can be replaced or redesigned with minimal impact on Models and ViewModels.
+
 
 ## ABOUT THE PROJECT
 
