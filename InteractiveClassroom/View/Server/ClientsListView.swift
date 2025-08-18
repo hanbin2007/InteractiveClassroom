@@ -5,20 +5,20 @@ import AppKit
 
 /// Displays a table of connected clients and allows disconnection.
 struct ClientsListView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var pairingService: PairingService
     @Environment(\.modelContext) private var modelContext
     // Fetch clients ordered by most recent connection and animate updates for timely refreshes.
     @Query(sort: \ClientInfo.lastConnected, order: .reverse, animation: .default) private var allClients: [ClientInfo]
     /// Timer used to periodically refresh connection status.
     @State private var refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
     private var clients: [ClientInfo] {
-        allClients.filter { $0.course?.persistentModelID == connectionManager.currentCourse?.persistentModelID }
+        allClients.filter { $0.course?.persistentModelID == pairingService.currentCourse?.persistentModelID }
     }
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading) {
-                if connectionManager.currentCourse == nil {
+                if pairingService.currentCourse == nil {
                     Text("Please select a course")
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .padding()
@@ -51,7 +51,7 @@ struct ClientsListView: View {
                         TableColumn("") { client in
                             if client.isConnected {
                                 Button("Disconnect") {
-                                    connectionManager.disconnect(peerNamed: client.deviceName)
+                                    pairingService.disconnectPeer(named: client.deviceName)
                                     client.isConnected = false
                                     try? modelContext.save()
                                 }
@@ -67,10 +67,10 @@ struct ClientsListView: View {
         }
         // Refresh connected client state every five seconds.
         .onReceive(refreshTimer) { _ in
-            connectionManager.refreshConnectedClients()
+            pairingService.refreshConnectedClients()
         }
         .onAppear {
-            connectionManager.refreshConnectedClients()
+            pairingService.refreshConnectedClients()
             NSApp.keyWindow?.identifier = NSUserInterfaceItemIdentifier("clients")
         }
         .onDisappear {
@@ -80,7 +80,7 @@ struct ClientsListView: View {
 }
 #Preview {
     ClientsListView()
-        .environmentObject(PreviewSampleData.connectionManager)
+        .environmentObject(PreviewSampleData.pairingService)
         .modelContainer(PreviewSampleData.container)
 }
 #endif

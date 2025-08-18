@@ -10,7 +10,6 @@ import SwiftData
 
 @main
 struct InteractiveClassroomApp: App {
-    @StateObject private var connectionManager: PeerConnectionManager
     @StateObject private var pairingService: PairingService
     @StateObject private var courseSessionService: CourseSessionService
     @StateObject private var interactionService: InteractionService
@@ -41,7 +40,6 @@ struct InteractiveClassroomApp: App {
         self.container = container
 
         let pairing = PairingService(modelContext: container.mainContext)
-        _connectionManager = StateObject(wrappedValue: pairing)
         _pairingService = StateObject(wrappedValue: pairing)
         let interaction = InteractionService(manager: pairing)
         _interactionService = StateObject(wrappedValue: interaction)
@@ -52,7 +50,6 @@ struct InteractiveClassroomApp: App {
 #if os(macOS)
         MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
             MenuBarView()
-                .environmentObject(connectionManager)
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
@@ -60,7 +57,6 @@ struct InteractiveClassroomApp: App {
         .modelContainer(container)
         Settings {
             SettingsView()
-                .environmentObject(connectionManager)
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
@@ -74,7 +70,6 @@ struct InteractiveClassroomApp: App {
         .modelContainer(container)
         WindowGroup(id: "clients") {
             ClientsListView()
-                .environmentObject(connectionManager)
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
@@ -82,7 +77,6 @@ struct InteractiveClassroomApp: App {
         .modelContainer(container)
         WindowGroup(id: "courseManager") {
             CourseManagerView()
-                .environmentObject(connectionManager)
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)

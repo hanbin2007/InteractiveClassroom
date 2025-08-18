@@ -77,7 +77,7 @@ final class PairingService: PeerConnectionManager {
         }
     }
 
-    private func refreshConnectedClients() {
+    func refreshConnectedClients() {
         guard let context = modelContext else { return }
         let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
         if let clients = try? context.fetch(descriptor) {

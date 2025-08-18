@@ -4,7 +4,7 @@ import SwiftData
 
 /// Settings for overlay appearance and behavior.
 struct SettingsView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var pairingService: PairingService
     @Environment(\.modelContext) private var modelContext
     @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
 
@@ -23,13 +23,13 @@ struct SettingsView: View {
         .frame(minWidth: 400, minHeight: 300)
         // Ensure the connection manager uses the same model context as the settings view
         .onAppear {
-            connectionManager.modelContext = modelContext
+            pairingService.modelContext = modelContext
         }
     }
 }
 #Preview {
     SettingsView()
-        .environmentObject(PreviewSampleData.connectionManager)
+        .environmentObject(PreviewSampleData.pairingService)
         .modelContainer(PreviewSampleData.container)
 }
 #endif
