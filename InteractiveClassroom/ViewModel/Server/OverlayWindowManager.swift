@@ -11,7 +11,7 @@ final class OverlayWindowManager: ObservableObject {
     private let interactionService: InteractionService
 
     private var overlayWindow: NSWindow?
-    private var overlayHostingController: NSHostingController<ScreenOverlayView>?
+    private var overlayHostingController: NSHostingController<AnyView>?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
     private var cancellables: Set<AnyCancellable> = []
 
@@ -43,11 +43,13 @@ final class OverlayWindowManager: ObservableObject {
         originalPresentationOptions = NSApp.presentationOptions
         NSApp.presentationOptions = originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
         let controller = NSHostingController(
-            rootView: ScreenOverlayView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(self)
+            rootView: AnyView(
+                ScreenOverlayView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+                    .environmentObject(self)
+            )
         )
         overlayHostingController = controller
         let window = NSWindow()
