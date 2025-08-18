@@ -66,7 +66,19 @@ extension PeerConnectionManager {
         let coursePayload = currentCourse.map { CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt) }
         let lessonPayload = currentLesson.map { LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt) }
         let message = Message(type: "state", course: coursePayload, lesson: lessonPayload)
-        sendMessageToServer(message)
+        if advertiser != nil {
+            if let specific = peers, let data = try? JSONEncoder().encode(message) {
+                for peer in specific {
+                    if let sess = sessions[peer] {
+                        try? sess.send(data, toPeers: [peer], with: .reliable)
+                    }
+                }
+            } else {
+                forwardToClients(message)
+            }
+        } else {
+            sendMessageToServer(message)
+        }
     }
 
     func handleInteractionMessage(_ message: Message, from peerID: MCPeerID, session: MCSession) {

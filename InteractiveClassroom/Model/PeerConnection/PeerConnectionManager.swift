@@ -7,13 +7,13 @@ import UIKit
 #endif
 
 @MainActor
-final class PeerConnectionManager: NSObject, ObservableObject {
-    private let serviceType = "iclassrm"
-    private let myPeerID: MCPeerID
-    private var session: MCSession
-    private var sessions: [MCPeerID: MCSession] = [:]
-    private var advertiser: MCNearbyServiceAdvertiser?
-    private var browser: MCNearbyServiceBrowser?
+class PeerConnectionManager: NSObject, ObservableObject {
+    let serviceType = "iclassrm"
+    let myPeerID: MCPeerID
+    var session: MCSession
+    var sessions: [MCPeerID: MCSession] = [:]
+    var advertiser: MCNearbyServiceAdvertiser?
+    var browser: MCNearbyServiceBrowser?
 
     var modelContext: ModelContext?
 
@@ -44,7 +44,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
     var rolesByPeer: [MCPeerID: UserRole] = [:]
     var userInitiatedDisconnect = false
 
-    private struct InvitationPayload: Codable {
+    struct InvitationPayload: Codable {
         let passcode: String
         let nickname: String
     }
@@ -113,80 +113,16 @@ final class PeerConnectionManager: NSObject, ObservableObject {
 
     // MARK: - Pairing Operations
 
-    func openClassroom() {
-        teacherCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
-        studentCode = String(format: "%06d", Int.random(in: 0..<1_000_000))
-        advertiser = MCNearbyServiceAdvertiser(peer: myPeerID, discoveryInfo: nil, serviceType: serviceType)
-        advertiser?.delegate = self
-        advertiser?.startAdvertisingPeer()
-        connectionStatus = "Awaiting connection..."
-        sessions.removeAll()
-        refreshConnectedClients()
-    }
-
-    func startBrowsing() {
-        browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
-        browser?.delegate = self
-        browser?.startBrowsingForPeers()
-    }
-
-    func stopBrowsing() {
-        browser?.stopBrowsingForPeers()
-        browser = nil
-        availablePeers.removeAll()
-    }
-
-    func connect(to peer: Peer, passcode: String, nickname: String) {
-        connectionStatus = "Connecting to \(peer.peerID.displayName)..."
-        let payload = InvitationPayload(passcode: passcode, nickname: nickname)
-        let context = try? JSONEncoder().encode(payload)
-        browser?.invitePeer(peer.peerID, to: session, withContext: context, timeout: 30)
-    }
-
     private func resolvedCurrentCourse(in context: ModelContext) -> Course? {
         guard let course = currentCourse else { return nil }
         return context.model(for: course.persistentModelID) as? Course
     }
-
     func isConnected(to peer: Peer) -> Bool {
         connectedServer == peer.peerID
     }
 
-    func disconnectFromServer() {
-        guard advertiser == nil else { return }
-        userInitiatedDisconnect = true
-        session.disconnect()
-        connectionStatus = "Not Connected"
-        myRole = nil
-        students.removeAll()
-        classStarted = false
-        currentCourse = nil
-        currentLesson = nil
-        connectedServer = nil
-    }
-
-    func disconnect(peerNamed name: String) {
-        guard advertiser != nil else { return }
-        if let (peerID, sess) = sessions.first(where: { $0.key.displayName == name }) {
-            sess.disconnect()
-            sessions.removeValue(forKey: peerID)
-        }
-    }
-
-    func sendDisconnectCommand(for name: String) {
-        guard advertiser == nil, let server = connectedServer else { return }
-        let message = Message(type: "disconnect", target: name)
-        if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: [server], with: .reliable)
-        }
-    }
-
-    func requestStudentList() {
-        guard advertiser == nil, let server = connectedServer else { return }
-        let message = Message(type: "requestStudents")
-        if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: [server], with: .reliable)
-        }
+    func disconnectPeer(named name: String) {
+        // Subclasses can override to handle targeted disconnection
     }
 
     private func updateStudents() {
@@ -194,20 +130,6 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         students = currentStudents
         let message = Message(type: "students", students: currentStudents)
         sendMessageToServer(message)
-    }
-
-    func refreshConnectedClients() {
-        guard let context = modelContext else { return }
-        let descriptor = FetchDescriptor<ClientInfo>(predicate: #Predicate { $0.isConnected })
-        if let clients = try? context.fetch(descriptor) {
-            let activeNames = advertiser != nil ?
-                Set(sessions.keys.map { $0.displayName }) :
-                Set(session.connectedPeers.map { $0.displayName })
-            for client in clients where !activeNames.contains(client.deviceName) {
-                client.isConnected = false
-            }
-            try? context.save()
-        }
     }
 }
 
@@ -364,8 +286,8 @@ extension PeerConnectionManager: MCSessionDelegate {
             case "students":
                 self.students = message.students ?? []
             case "disconnect":
-                if let target = message.target, self.advertiser != nil {
-                    self.disconnect(peerNamed: target)
+                if let target = message.target {
+                    self.disconnectPeer(named: target)
                 }
             case "requestStudents":
                 if self.advertiser != nil {

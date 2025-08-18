@@ -98,12 +98,11 @@ struct MenuBarView: View {
     }
 }
 #Preview {
-    let manager = PeerConnectionManager()
-    let pairing = PairingService(manager: manager)
-    let courseService = CourseSessionService(manager: manager)
-    let interaction = InteractionService(manager: manager)
+    let pairing = PairingService()
+    let courseService = CourseSessionService(manager: pairing)
+    let interaction = InteractionService(manager: pairing)
     return MenuBarView()
-        .environmentObject(manager)
+        .environmentObject(pairing as PeerConnectionManager)
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)

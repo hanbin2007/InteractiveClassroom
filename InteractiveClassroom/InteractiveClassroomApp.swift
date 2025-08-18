@@ -40,11 +40,11 @@ struct InteractiveClassroomApp: App {
         }
         self.container = container
 
-        let manager = PeerConnectionManager(modelContext: container.mainContext)
-        _connectionManager = StateObject(wrappedValue: manager)
-        _pairingService = StateObject(wrappedValue: PairingService(manager: manager))
-        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: manager))
-        _interactionService = StateObject(wrappedValue: InteractionService(manager: manager))
+        let pairing = PairingService(modelContext: container.mainContext)
+        _connectionManager = StateObject(wrappedValue: pairing)
+        _pairingService = StateObject(wrappedValue: pairing)
+        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: pairing))
+        _interactionService = StateObject(wrappedValue: InteractionService(manager: pairing))
     }
 
     var body: some Scene {

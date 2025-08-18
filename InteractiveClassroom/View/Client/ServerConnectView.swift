@@ -171,9 +171,8 @@ private struct PasscodeEntrySheet: View {
 }
 #Preview {
     NavigationStack {
-        let manager = PeerConnectionManager()
-        let pairing = PairingService(manager: manager)
-        let courseService = CourseSessionService(manager: manager)
+        let pairing = PairingService()
+        let courseService = CourseSessionService(manager: pairing)
         ServerConnectView()
             .environmentObject(pairing)
             .environmentObject(courseService)

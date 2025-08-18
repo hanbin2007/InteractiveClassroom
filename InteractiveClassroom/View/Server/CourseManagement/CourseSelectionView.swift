@@ -56,9 +56,8 @@ struct CourseSelectionView: View {
     }
 }
 #Preview {
-    let manager = PreviewSampleData.connectionManager
-    let courseService = CourseSessionService(manager: manager)
-    let pairing = PairingService(manager: manager)
+    let pairing = PairingService()
+    let courseService = CourseSessionService(manager: pairing)
     return CourseSelectionView()
         .environmentObject(courseService)
         .environmentObject(pairing)

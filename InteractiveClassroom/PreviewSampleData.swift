@@ -31,7 +31,7 @@ enum PreviewSampleData {
 
     /// Connection manager configured with the preview container.
     static let connectionManager: PeerConnectionManager = {
-        let manager = PeerConnectionManager(modelContext: container.mainContext, currentCourse: sampleCourse, currentLesson: sampleLessons.first)
+        let manager = PairingService(modelContext: container.mainContext, currentCourse: sampleCourse, currentLesson: sampleLessons.first)
         manager.teacherCode = "123456"
         manager.studentCode = "654321"
         return manager

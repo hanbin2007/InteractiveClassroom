@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 import SwiftUI
 
 @MainActor
@@ -83,3 +82,4 @@ final class InteractionService: ObservableObject {
 }
 
 extension InteractionService: @preconcurrency InteractionHandling {}
+
