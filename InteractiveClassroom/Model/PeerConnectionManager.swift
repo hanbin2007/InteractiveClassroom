@@ -1,7 +1,7 @@
 import Foundation
 import MultipeerConnectivity
 import SwiftData
-import SwiftUI
+import Combine
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -44,18 +44,8 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         didSet { broadcastCurrentState() }
     }
 
-    /// Content currently presented on the screen overlay.
-    @Published var overlayContent: OverlayContent?
-    /// Indicates whether the overlay currently hosts any content.
-    var overlayHasContent: Bool { overlayContent != nil }
-    /// Controls visibility of the overlay's content while keeping the overlay itself visible.
-    @Published var isOverlayContentVisible: Bool = false
-    /// Currently running interaction, if any.
-    @Published private(set) var activeInteraction: Interaction?
-    /// Timer task for finite interactions.
-    private var interactionTask: Task<Void, Never>?
-    /// Service managing countdown interactions.
-    @Published var countdownService: CountdownService?
+    /// Delegate responsible for managing interactive overlays.
+    weak var interactionHandler: InteractionHandling?
 
     /// Mapping of connected peers to their assigned roles.
     private var rolesByPeer: [MCPeerID: UserRole] = [:]
@@ -118,6 +108,18 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         }
     }
 
+    // MARK: - Interaction Messaging
+
+    func broadcastStartInteraction(_ request: InteractionRequest) {
+        let message = Message(type: "startInteraction", interaction: request)
+        sendMessageToServer(message)
+    }
+
+    func broadcastStopInteraction() {
+        let message = Message(type: "stopInteraction", interaction: nil)
+        sendMessageToServer(message)
+    }
+
     /// Light-weight representation of a course for network transfer.
     private struct CoursePayload: Codable {
         let name: String
@@ -160,13 +162,11 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         connectionStatus = "Awaiting connection..."
         sessions.removeAll()
         refreshConnectedClients()
-        overlayContent = nil
-        isOverlayContentVisible = false
     }
 
     /// Ends the classroom session and disconnects all clients.
     func endClass() {
-        endInteraction()
+        interactionHandler?.endInteraction()
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
         if !sessions.isEmpty {
@@ -197,72 +197,6 @@ final class PeerConnectionManager: NSObject, ObservableObject {
         browser?.stopBrowsingForPeers()
        browser = nil
        availablePeers.removeAll()
-    }
-
-    // MARK: - Overlay Management
-
-    /// Presents new overlay content and makes it visible.
-    func presentOverlay(content: OverlayContent) {
-        overlayContent = content
-        withAnimation(.easeInOut(duration: 0.3)) {
-            isOverlayContentVisible = true
-        }
-    }
-
-    /// Starts a new interaction if none is active.
-    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true) {
-        guard activeInteraction == nil else { return }
-        let interaction = Interaction(request: request)
-        activeInteraction = interaction
-        if case .countdown = request.content,
-           let seconds = request.lifecycle.secondsValue {
-            let service = CountdownService(seconds: seconds)
-            countdownService = service
-            presentOverlay(content: request.makeOverlay(countdownService: service))
-            service.start { [weak self] in
-                self?.endInteraction()
-            }
-        } else {
-            presentOverlay(content: request.makeOverlay())
-            if case let .finite(seconds) = request.lifecycle {
-                interactionTask = Task { @MainActor [weak self] in
-                    try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
-                    self?.endInteraction()
-                }
-            }
-        }
-        if broadcast {
-            let message = Message(type: "startInteraction", interaction: request)
-            sendMessageToServer(message)
-        }
-    }
-
-    /// Ends the current interaction and removes its content from the overlay.
-    func endInteraction(broadcast: Bool = true) {
-        guard activeInteraction != nil else { return }
-        withAnimation(.easeInOut(duration: 0.3)) {
-            isOverlayContentVisible = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.overlayContent = nil
-        }
-        activeInteraction = nil
-        interactionTask?.cancel()
-        interactionTask = nil
-        countdownService?.stop()
-        countdownService = nil
-        if broadcast {
-            let message = Message(type: "stopInteraction", interaction: nil)
-            sendMessageToServer(message)
-        }
-    }
-
-    /// Toggles the visibility of the current overlay content without removing it.
-    func toggleOverlayContentVisibility() {
-        guard overlayContent != nil else { return }
-        withAnimation(.easeInOut(duration: 0.3)) {
-            isOverlayContentVisible.toggle()
-        }
     }
 
     func connect(to peer: Peer, passcode: String, nickname: String) {
@@ -344,7 +278,7 @@ final class PeerConnectionManager: NSObject, ObservableObject {
             lifecycle: .finite(seconds: seconds),
             content: .countdown
         )
-        startInteraction(request, broadcast: false)
+        interactionHandler?.startInteraction(request, broadcast: false)
         let message = Message(type: "startClass", interaction: request)
         sendMessageToServer(message)
         if advertiser != nil {
@@ -528,7 +462,7 @@ extension PeerConnectionManager: MCSessionDelegate {
                 self.students = message.students ?? []
             case "startClass":
                 if let req = message.interaction {
-                    self.startInteraction(req, broadcast: false)
+                    self.interactionHandler?.startInteraction(req, broadcast: false)
                 }
                 self.classStarted = true
                 if self.advertiser != nil {
@@ -547,15 +481,15 @@ extension PeerConnectionManager: MCSessionDelegate {
                 }
             case "startInteraction":
                 if let req = message.interaction {
-                    self.startInteraction(req, broadcast: false)
+                    self.interactionHandler?.startInteraction(req, broadcast: false)
                     self.forwardToClients(message, excluding: peerID)
                 }
             case "stopInteraction":
-                self.endInteraction(broadcast: false)
+                self.interactionHandler?.endInteraction(broadcast: false)
                 let forward = Message(type: "stopInteraction", interaction: nil)
                 self.forwardToClients(forward, excluding: peerID)
             case "endClass":
-                self.endInteraction(broadcast: false)
+                self.interactionHandler?.endInteraction(broadcast: false)
                 self.classStarted = false
                 self.serverDisconnected = true
                 self.userInitiatedDisconnect = true
