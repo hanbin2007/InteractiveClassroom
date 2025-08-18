@@ -42,13 +42,13 @@ class PeerConnectionManager: NSObject, ObservableObject {
 
     @Published var currentCourse: Course? {
         didSet {
-            guard oldValue !== currentCourse else { return }
+            guard oldValue?.persistentModelID != currentCourse?.persistentModelID else { return }
             interactionHandler?.broadcastCurrentState(to: nil)
         }
     }
     @Published var currentLesson: Lesson? {
         didSet {
-            guard oldValue !== currentLesson else { return }
+            guard oldValue?.persistentModelID != currentLesson?.persistentModelID else { return }
             interactionHandler?.broadcastCurrentState(to: nil)
         }
     }
