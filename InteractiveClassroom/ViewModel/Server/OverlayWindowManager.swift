@@ -56,10 +56,15 @@ final class OverlayWindowManager: ObservableObject {
 
     /// Closes all overlay windows and restores the application's presentation options.
     func closeOverlay() {
-        overlayWindow?.orderOut(nil)
-        overlayWindow?.close()
+        // Capture any existing overlay windows before closing so references
+        // remain valid even if a window releases itself when closed.
         let overlayWindows = NSApp.windows.filter { $0.identifier?.rawValue == "overlay" }
-        overlayWindows.forEach { $0.orderOut(nil); $0.close() }
+
+        overlayWindows.forEach { window in
+            window.orderOut(nil)
+            window.close()
+        }
+
         overlayWindow = nil
         NSApp.presentationOptions = originalPresentationOptions
         NSApp.activate(ignoringOtherApps: true)
@@ -80,7 +85,9 @@ final class OverlayWindowManager: ObservableObject {
         window.styleMask = [.borderless]
         window.isOpaque = false
         window.backgroundColor = .clear
-        window.isReleasedWhenClosed = true
+        // Avoid double free crashes by keeping the window alive until we
+        // explicitly release our reference.
+        window.isReleasedWhenClosed = false
     }
 }
 #endif
