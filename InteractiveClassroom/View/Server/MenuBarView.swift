@@ -25,6 +25,7 @@ struct MenuBarView: View {
                 }
             } else {
                 Button("End Class") {
+                    viewModel.closeOverlay()
                     courseSessionService.endClass()
                 }
             }
