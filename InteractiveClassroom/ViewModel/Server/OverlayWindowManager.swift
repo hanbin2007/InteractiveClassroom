@@ -1,7 +1,6 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
-import Combine
 
 /// Handles presentation of the full-screen overlay window.
 @MainActor
@@ -12,8 +11,6 @@ final class OverlayWindowManager: ObservableObject {
 
     private var overlayWindow: NSWindow?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
-    private var cancellables: Set<AnyCancellable> = []
-
     init(
         pairingService: PairingService,
         courseSessionService: CourseSessionService,
@@ -22,18 +19,7 @@ final class OverlayWindowManager: ObservableObject {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
-
-        pairingService.$teacherCode
-            .receive(on: RunLoop.main)
-            .sink { [weak self] code in
-                guard let self else { return }
-                if code != nil {
-                    self.openOverlay()
-                } else {
-                    self.closeOverlay()
-                }
-            }
-            .store(in: &cancellables)
+        openOverlay()
     }
 
     /// Presents the overlay configured for full-screen display.
@@ -46,7 +32,6 @@ final class OverlayWindowManager: ObservableObject {
                 .environmentObject(pairingService)
                 .environmentObject(courseSessionService)
                 .environmentObject(interactionService)
-                .environmentObject(self)
         )
         let window = NSWindow(contentViewController: controller)
         configureOverlayWindow(window)

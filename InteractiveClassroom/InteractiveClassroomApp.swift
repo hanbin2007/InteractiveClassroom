@@ -13,6 +13,7 @@ struct InteractiveClassroomApp: App {
     @StateObject private var pairingService: PairingService
     @StateObject private var courseSessionService: CourseSessionService
     @StateObject private var interactionService: InteractionService
+    @StateObject private var overlayManager: OverlayWindowManager
     private let container: ModelContainer
 
     init() {
@@ -43,17 +44,50 @@ struct InteractiveClassroomApp: App {
         _pairingService = StateObject(wrappedValue: pairing)
         let interaction = InteractionService(manager: pairing)
         _interactionService = StateObject(wrappedValue: interaction)
-        _courseSessionService = StateObject(wrappedValue: CourseSessionService(manager: pairing, interactionService: interaction))
+        let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
+        _courseSessionService = StateObject(wrappedValue: courseService)
+        _overlayManager = StateObject(
+            wrappedValue: OverlayWindowManager(
+                pairingService: pairing,
+                courseSessionService: courseService,
+                interactionService: interaction
+            )
+        )
     }
 
     var body: some Scene {
+        let _ = overlayManager
 #if os(macOS)
-        MenuBarScene(
-            pairingService: pairingService,
-            courseSessionService: courseSessionService,
-            interactionService: interactionService,
-            container: container
-        )
+        Settings {
+            SettingsView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "courseSelection") {
+            CourseSelectionView()
+                .environmentObject(courseSessionService)
+                .environmentObject(pairingService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "clients") {
+            ClientsListView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "courseManager") {
+            CourseManagerView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
 #else
         WindowGroup {
             ContentView()
