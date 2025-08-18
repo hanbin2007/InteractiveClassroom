@@ -7,7 +7,9 @@ import CoreGraphics
 
 /// Full-screen overlay container responsible for presenting interactive content.
 struct ScreenOverlayView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var pairingService: PairingService
+    @EnvironmentObject private var courseSessionService: CourseSessionService
+    @EnvironmentObject private var interactionService: InteractionService
     @Environment(\.openWindow) private var openWindow
     @State private var isToolbarFolded = false
 
@@ -28,27 +30,25 @@ struct ScreenOverlayView: View {
     #endif
 
     private func endCurrentClass() {
-        connectionManager.endClass()
-        connectionManager.currentCourse = nil
-        connectionManager.currentLesson = nil
+        courseSessionService.endClass()
     }
 
     var body: some View {
         ZStack {
-            if let content = connectionManager.overlayContent {
+            if let content = interactionService.overlayContent {
                 Group {
                     switch content.template {
                     case .fullScreen(let color):
                         FullScreenOverlay(
                             background: color,
-                            isVisible: connectionManager.isOverlayContentVisible
+                            isVisible: interactionService.isOverlayContentVisible
                         ) {
                             content.view
                         }
                     case .floatingCorner(let position):
                         CornerOverlay(
                             corner: position,
-                            isVisible: connectionManager.isOverlayContentVisible
+                            isVisible: interactionService.isOverlayContentVisible
                         ) {
                             content.view
                         }
@@ -61,7 +61,7 @@ struct ScreenOverlayView: View {
                     Spacer()
                     HStack(spacing: 12) {
                         HStack(spacing: 12) {
-                            if connectionManager.teacherCode != nil {
+                            if pairingService.teacherCode != nil {
                                 Button {
                                     endCurrentClass()
                                 } label: {
@@ -166,9 +166,9 @@ struct ScreenOverlayView: View {
                         .accessibilityLabel(isToolbarFolded ? "Expand Toolbar" : "Fold Toolbar")
 
                         Button {
-                            connectionManager.toggleOverlayContentVisibility()
+                            interactionService.toggleOverlayVisibility()
                         } label: {
-                            Image(systemName: connectionManager.isOverlayContentVisible ? "eye.slash" : "eye")
+                            Image(systemName: interactionService.isOverlayContentVisible ? "eye.slash" : "eye")
                                 .frame(width: 24, height: 24)
                                 .padding(10)
                                 .background(.ultraThinMaterial)

@@ -5,7 +5,8 @@ import AppKit
 
 /// Initial window prompting user to select a course and lesson before starting service.
 struct CourseSelectionView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var courseSessionService: CourseSessionService
+    @EnvironmentObject private var pairingService: PairingService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Course.name, animation: .default) private var courses: [Course]
@@ -37,9 +38,9 @@ struct CourseSelectionView: View {
                     Spacer()
                     Button("Open Classroom") {
                         guard let course = selectedCourse, let lesson = selectedLesson else { return }
-                        connectionManager.currentCourse = course
-                        connectionManager.currentLesson = lesson
-                        connectionManager.openClassroom()
+                        courseSessionService.selectCourse(course)
+                        courseSessionService.selectLesson(lesson)
+                        pairingService.openClassroom()
                         dismiss()
                     }
                     .disabled(selectedCourse == nil || selectedLesson == nil)
@@ -55,8 +56,12 @@ struct CourseSelectionView: View {
     }
 }
 #Preview {
-    CourseSelectionView()
-        .environmentObject(PreviewSampleData.connectionManager)
+    let manager = PreviewSampleData.connectionManager
+    let courseService = CourseSessionService(manager: manager)
+    let pairing = PairingService(manager: manager)
+    return CourseSelectionView()
+        .environmentObject(courseService)
+        .environmentObject(pairing)
         .modelContainer(PreviewSampleData.container)
 }
 #endif

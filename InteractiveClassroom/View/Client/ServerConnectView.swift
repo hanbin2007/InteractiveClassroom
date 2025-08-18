@@ -3,7 +3,7 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct ServerConnectView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var pairingService: PairingService
     @StateObject private var viewModel = ServerConnectViewModel()
     @State private var selectedPeer: PeerConnectionManager.Peer?
     @State private var navigateToTeacher = false
@@ -17,7 +17,7 @@ struct ServerConnectView: View {
                 HStack {
                     Text(peer.peerID.displayName)
                     Spacer()
-                    if connectionManager.isConnected(to: peer) {
+                    if pairingService.isConnected(to: peer) {
                         Image(systemName: "checkmark.circle")
                             .foregroundColor(.green)
                     }
@@ -27,9 +27,9 @@ struct ServerConnectView: View {
                     handlePeerTap(peer)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    if connectionManager.isConnected(to: peer) {
+                    if pairingService.isConnected(to: peer) {
                         Button(role: .destructive) {
-                            connectionManager.disconnectFromServer()
+                            pairingService.disconnectFromServer()
                             navigateToTeacher = false
                             navigateToStudent = false
                         } label: {
@@ -63,7 +63,7 @@ struct ServerConnectView: View {
             }
         }
         .onAppear {
-            viewModel.bind(to: connectionManager)
+            viewModel.bind(to: pairingService)
             viewModel.startBrowsing()
         }
         .onDisappear { viewModel.stopBrowsing() }
@@ -75,7 +75,7 @@ struct ServerConnectView: View {
         .alert("Disconnect from current server?", isPresented: $showDisconnectAlert) {
             Button("Cancel", role: .cancel) { pendingPeer = nil }
             Button("Disconnect", role: .destructive) {
-                connectionManager.disconnectFromServer()
+                pairingService.disconnectFromServer()
                 if let peer = pendingPeer {
                     // Delay presenting passcode sheet to allow disconnect to settle
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -87,7 +87,7 @@ struct ServerConnectView: View {
         } message: {
             Text("You are currently connected. Disconnect to join another server?")
         }
-        .onChange(of: connectionManager.myRole) { _, role in
+        .onChange(of: pairingService.myRole) { _, role in
             if let role = role {
                 navigateToTeacher = role == .teacher
                 navigateToStudent = role == .student
@@ -96,13 +96,13 @@ struct ServerConnectView: View {
                 navigateToStudent = false
             }
         }
-        .onChange(of: connectionManager.connectedServer) { _, server in
+        .onChange(of: pairingService.connectedServer) { _, server in
             if server == nil {
                 navigateToTeacher = false
                 navigateToStudent = false
             }
         }
-        .onChange(of: connectionManager.serverDisconnected) { _, disconnected in
+        .onChange(of: pairingService.serverDisconnected) { _, disconnected in
             if disconnected {
                 navigateToTeacher = false
                 navigateToStudent = false
@@ -112,12 +112,12 @@ struct ServerConnectView: View {
 
     /// Handles taps on a server row, respecting existing connections.
     private func handlePeerTap(_ peer: PeerConnectionManager.Peer) {
-        if connectionManager.isConnected(to: peer) {
-            if let role = connectionManager.myRole {
+        if pairingService.isConnected(to: peer) {
+            if let role = pairingService.myRole {
                 navigateToTeacher = role == .teacher
                 navigateToStudent = role == .student
             }
-        } else if connectionManager.connectedServer != nil {
+        } else if pairingService.connectedServer != nil {
             pendingPeer = peer
             showDisconnectAlert = true
         } else {
@@ -171,8 +171,12 @@ private struct PasscodeEntrySheet: View {
 }
 #Preview {
     NavigationStack {
+        let manager = PeerConnectionManager()
+        let pairing = PairingService(manager: manager)
+        let courseService = CourseSessionService(manager: manager)
         ServerConnectView()
-            .environmentObject(PeerConnectionManager())
+            .environmentObject(pairing)
+            .environmentObject(courseService)
     }
 }
 #endif

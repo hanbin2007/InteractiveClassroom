@@ -5,6 +5,9 @@ import AppKit
 /// Content displayed in the menu bar extra for macOS builds.
 struct MenuBarView: View {
     @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var pairingService: PairingService
+    @EnvironmentObject private var courseSessionService: CourseSessionService
+    @EnvironmentObject private var interactionService: InteractionService
     @Environment(\.openWindow) private var openWindow
     @State private var overlayWindow: NSWindow?
 
@@ -13,8 +16,13 @@ struct MenuBarView: View {
         closeOverlay()
         // Auto-hide system chrome but keep the menu bar accessible when needed.
         NSApp.presentationOptions = [.autoHideDock, .autoHideMenuBar]
-        let controller = NSHostingController(rootView: ScreenOverlayView()
-            .environmentObject(connectionManager))
+        let controller = NSHostingController(
+            rootView: ScreenOverlayView()
+                .environmentObject(connectionManager)
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        )
         let window = NSWindow(contentViewController: controller)
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
@@ -90,7 +98,14 @@ struct MenuBarView: View {
     }
 }
 #Preview {
-    MenuBarView()
-        .environmentObject(PeerConnectionManager())
+    let manager = PeerConnectionManager()
+    let pairing = PairingService(manager: manager)
+    let courseService = CourseSessionService(manager: manager)
+    let interaction = InteractionService(manager: manager)
+    return MenuBarView()
+        .environmentObject(manager)
+        .environmentObject(pairing)
+        .environmentObject(courseService)
+        .environmentObject(interaction)
 }
 #endif

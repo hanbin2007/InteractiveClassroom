@@ -8,27 +8,26 @@ final class StudentWaitingViewModel: ObservableObject {
     @Published var classStarted: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
-    private var isBound = false
+    private var service: CourseSessionService?
 
-    func bind(to connectionManager: PeerConnectionManager) {
-        guard !isBound else { return }
+    func bind(to service: CourseSessionService) {
+        guard self.service == nil else { return }
+        self.service = service
 
-        connectionManager.$currentCourse
+        service.$currentCourse
             .receive(on: RunLoop.main)
             .assign(to: \.currentCourse, on: self)
             .store(in: &cancellables)
 
-        connectionManager.$currentLesson
+        service.$currentLesson
             .receive(on: RunLoop.main)
             .assign(to: \.currentLesson, on: self)
             .store(in: &cancellables)
 
-        connectionManager.$classStarted
+        service.$classStarted
             .receive(on: RunLoop.main)
             .assign(to: \.classStarted, on: self)
             .store(in: &cancellables)
-
-        isBound = true
     }
 }
 

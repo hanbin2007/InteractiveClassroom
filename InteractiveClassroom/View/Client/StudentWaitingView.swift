@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Displays a waiting screen for students along with current course and lesson information.
 struct StudentWaitingView: View {
-    @EnvironmentObject private var connectionManager: PeerConnectionManager
+    @EnvironmentObject private var courseSessionService: CourseSessionService
+    @EnvironmentObject private var pairingService: PairingService
     @StateObject private var viewModel = StudentWaitingViewModel()
 
     var body: some View {
@@ -37,14 +38,14 @@ struct StudentWaitingView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    connectionManager.disconnectFromServer()
+                    pairingService.disconnectFromServer()
                 } label: {
                     Image(systemName: "personalhotspot.slash")
                 }
                 .accessibilityLabel("Disconnect")
             }
         }
-        .onAppear { viewModel.bind(to: connectionManager) }
+        .onAppear { viewModel.bind(to: courseSessionService) }
     }
 
     /// Shows whether the class has started yet.
@@ -103,12 +104,13 @@ private struct LessonInfoView: View {
     }
 }
 #Preview {
-    NavigationStack { StudentWaitingView() }
-        .environmentObject({
-            let manager = PeerConnectionManager()
-            manager.currentCourse = Course(name: "Preview Course")
-            manager.currentLesson = Lesson(title: "Preview Lesson", number: 1)
-            return manager
-        }())
+    let manager = PeerConnectionManager()
+    manager.currentCourse = Course(name: "Preview Course")
+    manager.currentLesson = Lesson(title: "Preview Lesson", number: 1)
+    let courseService = CourseSessionService(manager: manager)
+    let pairing = PairingService(manager: manager)
+    return NavigationStack { StudentWaitingView() }
+        .environmentObject(courseService)
+        .environmentObject(pairing)
 }
 #endif
