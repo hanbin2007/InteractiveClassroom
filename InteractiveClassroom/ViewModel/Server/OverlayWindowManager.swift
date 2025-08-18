@@ -105,13 +105,18 @@ final class OverlayWindowManager: ObservableObject {
         }
 
         let controller = NSHostingController(
-            rootView: CourseSelectionView()
-                .environmentObject(courseSessionService)
-                .environmentObject(pairingService)
+            rootView: CourseSelectionView(
+                viewModel: OpenClassroomViewModel(
+                    courseSessionService: courseSessionService,
+                    pairingService: pairingService
+                )
+            )
+            .environmentObject(courseSessionService)
+            .environmentObject(pairingService)
         )
         let window = NSWindow(contentViewController: controller)
         window.identifier = NSUserInterfaceItemIdentifier("courseSelection")
-        window.makeKeyAndOrderFront(nil)
+        window.makeKeyAndOrderFront(nil as Any?)
     }
 }
 #endif
