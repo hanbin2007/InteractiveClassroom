@@ -2,7 +2,7 @@ import Foundation
 import MultipeerConnectivity
 
 // MARK: - Broadcasting Helpers
-private extension InteractionService {
+extension InteractionService {
     /// Sends a start interaction message to the server.
     func broadcastStartInteraction(_ request: InteractionRequest, remainingSeconds: Int?) {
         let remaining = remainingSeconds ?? currentRemainingSeconds()

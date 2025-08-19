@@ -20,7 +20,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
         stateBroadcastSubject.send(())
     }
 
-    private func performStateBroadcast() {
+    func performStateBroadcast() {
         let coursePayload = manager.currentCourse.map {
             PeerConnectionManager.CoursePayload(name: $0.name, intro: $0.intro, scheduledAt: $0.scheduledAt)
         }
