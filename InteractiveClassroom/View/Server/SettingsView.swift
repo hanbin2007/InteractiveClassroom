@@ -7,6 +7,8 @@ struct SettingsView: View {
     @EnvironmentObject private var pairingService: PairingService
     @Environment(\.modelContext) private var modelContext
     @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
+    @AppStorage("interactionDebounceEnabled") private var interactionDebounceEnabled: Bool = true
+    @AppStorage("interactionDebounceInterval") private var interactionDebounceInterval: Double = 2.0
 
     var body: some View {
         Form {
@@ -16,6 +18,17 @@ struct SettingsView: View {
                     Slider(value: $overlayContentScale, in: 0.5...2.0, step: 0.1)
                     Text("\(overlayContentScale, specifier: "%.1f")x")
                         .frame(width: 40, alignment: .trailing)
+                }
+            }
+            Section("Interaction") {
+                Toggle("Enable Interaction Debounce", isOn: $interactionDebounceEnabled)
+                if interactionDebounceEnabled {
+                    HStack {
+                        Text("Cooldown (s)")
+                        Slider(value: $interactionDebounceInterval, in: 0...5, step: 0.5)
+                        Text("\(interactionDebounceInterval, specifier: "%.1f")s")
+                            .frame(width: 50, alignment: .trailing)
+                    }
                 }
             }
         }

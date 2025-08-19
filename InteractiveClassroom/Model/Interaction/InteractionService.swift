@@ -15,10 +15,21 @@ final class InteractionService: ObservableObject {
     var pendingBroadcastPeers: Set<MCPeerID>?
     let stateBroadcastSubject = PassthroughSubject<Void, Never>()
     private var cancellables: Set<AnyCancellable> = []
+    private var lastInteractionChange: Date?
+    private var debounceInterval: TimeInterval {
+        let enabled = UserDefaults.standard.bool(forKey: "interactionDebounceEnabled")
+        guard enabled else { return 0 }
+        return UserDefaults.standard.double(forKey: "interactionDebounceInterval")
+    }
 
     init(manager: PeerConnectionManager) {
         self.manager = manager
         self.manager.interactionHandler = self
+
+        UserDefaults.standard.register(defaults: [
+            "interactionDebounceEnabled": true,
+            "interactionDebounceInterval": 2.0
+        ])
 
         stateBroadcastSubject
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
@@ -45,8 +56,18 @@ final class InteractionService: ObservableObject {
         }
     }
 
+    private func canChangeInteraction() -> Bool {
+        let interval = debounceInterval
+        guard interval > 0, let last = lastInteractionChange else { return true }
+        return Date().timeIntervalSince(last) >= interval
+    }
+
     // MARK: - Interaction Controls
     func startInteraction(_ request: InteractionRequest, broadcast: Bool = true, remainingSeconds: Int? = nil) {
+        guard canChangeInteraction() else {
+            print("[InteractionService] Start ignored due to debounce interval.")
+            return
+        }
         if activeInteraction != nil {
             if broadcast {
                 broadcastStartInteraction(request, remainingSeconds: remainingSeconds)
@@ -56,6 +77,7 @@ final class InteractionService: ObservableObject {
         }
         let interaction = Interaction(request: request)
         activeInteraction = interaction
+        lastInteractionChange = Date()
 
         if let seconds = remainingSeconds ?? request.lifecycle.secondsValue {
             let service = CountdownService(seconds: seconds)
@@ -92,6 +114,11 @@ final class InteractionService: ObservableObject {
 
     func endInteraction(broadcast: Bool = true, broadcastState: Bool = false) {
         guard activeInteraction != nil else { return }
+        guard canChangeInteraction() else {
+            print("[InteractionService] End ignored due to debounce interval.")
+            return
+        }
+        lastInteractionChange = Date()
         withAnimation(.easeInOut(duration: 0.3)) {
             isOverlayContentVisible = false
         }
