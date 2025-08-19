@@ -31,11 +31,19 @@ class PeerConnectionManager: NSObject, ObservableObject {
     @Published var classStarted: Bool = false
     @Published var serverDisconnected: Bool = false
     @Published private(set) var connectedServer: MCPeerID?
+    /// Difference between server and local time in seconds (server - local).
+    @Published private(set) var timeOffset: TimeInterval = 0
 
     /// Updates the tracked server connection.
     /// - Parameter peerID: The peer ID to assign as the connected server, or `nil` to clear it.
     func setConnectedServer(_ peerID: MCPeerID?) {
         connectedServer = peerID
+    }
+
+    /// Adjusts local clock offset based on server time.
+    /// - Parameter serverTime: The current time reported by the server.
+    func updateTimeOffset(with serverTime: Date) {
+        timeOffset = serverTime.timeIntervalSinceNow
     }
 
     weak var interactionHandler: InteractionHandling?
@@ -83,6 +91,8 @@ class PeerConnectionManager: NSObject, ObservableObject {
         let interaction: InteractionRequest?
         /// Remaining seconds for a running interaction when applicable
         let remainingSeconds: Int?
+        /// Server timestamp included for time synchronization
+        let timestamp: Date?
 
         init(type: String,
              role: String? = nil,
@@ -91,7 +101,8 @@ class PeerConnectionManager: NSObject, ObservableObject {
              course: CoursePayload? = nil,
              lesson: LessonPayload? = nil,
              interaction: InteractionRequest? = nil,
-             remainingSeconds: Int? = nil) {
+             remainingSeconds: Int? = nil,
+             timestamp: Date? = nil) {
             self.type = type
             self.role = role
             self.students = students
@@ -100,6 +111,7 @@ class PeerConnectionManager: NSObject, ObservableObject {
             self.lesson = lesson
             self.interaction = interaction
             self.remainingSeconds = remainingSeconds
+            self.timestamp = timestamp
         }
     }
 
@@ -262,6 +274,12 @@ extension PeerConnectionManager: MCSessionDelegate {
                         existing.isConnected = true
                         existing.lastConnected = .now
                         try? context.save()
+                    }
+                }
+                if self.advertiser != nil {
+                    let sync = Message(type: "syncTime", timestamp: Date())
+                    if let data = try? JSONEncoder().encode(sync) {
+                        try? session.send(data, toPeers: [peerID], with: .reliable)
                     }
                 }
             case .connecting:
