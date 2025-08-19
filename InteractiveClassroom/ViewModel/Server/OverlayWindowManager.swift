@@ -27,10 +27,12 @@ final class OverlayWindowManager: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] code in
                 guard let self else { return }
-                if code != nil {
-                    self.openOverlay()
-                } else {
-                    self.closeOverlay()
+                Task { @MainActor in
+                    if code != nil {
+                        self.openOverlay()
+                    } else {
+                        self.closeOverlay()
+                    }
                 }
             }
             .store(in: &cancellables)

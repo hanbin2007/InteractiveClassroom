@@ -22,10 +22,12 @@ final class MenuBarViewModel: ObservableObject {
         menuBarController: MenuBarExtraController,
         openWindow: OpenWindowAction
     ) {
-        overlayManager.closeOverlay()
-        courseSessionService.endClass()
-        Task { await menuBarController.rebuild() }
-        openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+        Task { @MainActor in
+            overlayManager.closeOverlay()
+            courseSessionService.endClass()
+            await menuBarController.rebuild()
+            openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+        }
     }
 }
 #endif
