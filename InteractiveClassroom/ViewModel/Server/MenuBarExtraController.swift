@@ -8,10 +8,16 @@ final class MenuBarExtraController: ObservableObject {
     @Published var isVisible: Bool = true
 
     /// Removes and recreates the MenuBarExtra to clear its state.
+    ///
+    /// State mutations are dispatched asynchronously to avoid publishing
+    /// changes during an ongoing view update, which can lead to undefined
+    /// behavior in SwiftUI.
     func rebuild() {
-        isVisible = false
         DispatchQueue.main.async { [weak self] in
-            self?.isVisible = true
+            self?.isVisible = false
+            DispatchQueue.main.async { [weak self] in
+                self?.isVisible = true
+            }
         }
     }
 }

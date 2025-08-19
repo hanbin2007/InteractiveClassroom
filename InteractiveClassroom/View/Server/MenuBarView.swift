@@ -25,10 +25,12 @@ struct MenuBarView: View {
             }
             .disabled(pairingService.teacherCode != nil)
             Button("End Class") {
-                overlayManager.closeOverlay()
-                courseSessionService.endClass()
-                menuBarController.rebuild()
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                viewModel.endClass(
+                    overlayManager: overlayManager,
+                    courseSessionService: courseSessionService,
+                    menuBarController: menuBarController,
+                    openWindow: openWindow
+                )
             }
             .disabled(pairingService.teacherCode == nil)
             Button("Clients") {
