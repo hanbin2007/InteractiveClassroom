@@ -38,7 +38,6 @@ final class MultipleChoiceSetupViewModel: ObservableObject {
     }
 
     func start(interactionService: InteractionService) {
-        interactionService.requestInteractionStatus()
         let question = MultipleChoiceQuestion(
             options: options.map { .init(id: $0.id.uuidString, text: $0.text) },
             correctOptionIDs: correctOptionIDs.map { $0.uuidString },
