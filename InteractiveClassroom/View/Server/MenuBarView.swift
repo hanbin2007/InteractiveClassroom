@@ -8,6 +8,7 @@ struct MenuBarView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
     @EnvironmentObject private var overlayManager: OverlayWindowManager
+    @EnvironmentObject private var menuBarController: MenuBarExtraController
     @Environment(\.openWindow) private var openWindow
     @StateObject private var viewModel = MenuBarViewModel()
 
@@ -24,9 +25,14 @@ struct MenuBarView: View {
             }
             .disabled(pairingService.teacherCode != nil)
             Button("End Class") {
-                overlayManager.closeOverlay()
-                courseSessionService.endClass()
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                DispatchQueue.main.async {
+                    viewModel.endClass(
+                        overlayManager: overlayManager,
+                        courseSessionService: courseSessionService,
+                        menuBarController: menuBarController,
+                        openWindow: openWindow
+                    )
+                }
             }
             .disabled(pairingService.teacherCode == nil)
             Button("Clients") {
@@ -60,10 +66,12 @@ struct MenuBarView: View {
         courseSessionService: courseService,
         interactionService: interaction
     )
+    let menuBarController = MenuBarExtraController()
     return MenuBarView()
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)
         .environmentObject(overlayManager)
+        .environmentObject(menuBarController)
 }
 #endif
