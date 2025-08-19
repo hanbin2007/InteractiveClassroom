@@ -14,6 +14,7 @@ struct ScreenOverlayView: View {
     @State private var isToolbarFolded = false
     #if os(macOS)
     @EnvironmentObject private var overlayManager: OverlayWindowManager
+    @EnvironmentObject private var menuBarManager: MenuBarExtraManager
     #endif
 
     #if os(macOS)
@@ -36,6 +37,7 @@ struct ScreenOverlayView: View {
         #if os(macOS)
         overlayManager.closeOverlay()
         courseSessionService.endClass()
+        menuBarManager.rebuildMenuBarExtra()
         openWindowIfNeeded(id: "courseSelection")
         #else
         courseSessionService.endClass()
