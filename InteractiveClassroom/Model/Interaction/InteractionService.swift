@@ -10,10 +10,10 @@ final class InteractionService: ObservableObject {
     @Published private(set) var activeInteraction: Interaction?
     @Published var countdownService: CountdownService?
 
-    private let manager: PeerConnectionManager
+    let manager: PeerConnectionManager
     private var interactionTask: Task<Void, Never>?
-    private var pendingBroadcastPeers: Set<MCPeerID>?
-    private let stateBroadcastSubject = PassthroughSubject<Void, Never>()
+    var pendingBroadcastPeers: Set<MCPeerID>?
+    let stateBroadcastSubject = PassthroughSubject<Void, Never>()
     private var cancellables: Set<AnyCancellable> = []
 
     init(manager: PeerConnectionManager) {
@@ -120,7 +120,7 @@ final class InteractionService: ObservableObject {
     }
 
     /// Calculates remaining seconds for the current interaction if finite.
-    private func currentRemainingSeconds() -> Int? {
+    func currentRemainingSeconds() -> Int? {
         guard let interaction = activeInteraction,
               case let .finite(seconds) = interaction.request.lifecycle else { return nil }
         let elapsed = Int(Date().timeIntervalSince(interaction.startedAt))
