@@ -4,17 +4,21 @@ import AppKit
 
 /// Manages application windows and focus on macOS.
 struct ApplicationWindowManager {
-    /// Closes all application windows except the overlay and brings the app to the front.
+    /// Hide app windows (non-overlay) and bring overlay to front without stealing focus.
     static func closeAllWindowsAndFocus() {
-        // Close all non-overlay windows.
+        // ① 隐藏（不要 close）
         for window in NSApp.windows where window.identifier?.rawValue != "overlay" {
-            window.close()
+            window.orderOut(nil)
         }
-        // Ensure the overlay remains key and the app is active.
+        // ② 只前置，不做 key；并确保 overlay 不接收输入
         if let overlay = NSApp.windows.first(where: { $0.identifier?.rawValue == "overlay" }) {
-            overlay.makeKeyAndOrderFront(nil)
+            overlay.makeFirstResponder(nil)        // 不占键盘焦点
+            overlay.orderFrontRegardless()         // 不用 makeKeyAndOrderFront
         }
-        NSApp.activate(ignoringOtherApps: true)
+        // ③ 如需前置 App，可在菜单关闭后前置，避免与菜单时序相撞
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 }
 #else
