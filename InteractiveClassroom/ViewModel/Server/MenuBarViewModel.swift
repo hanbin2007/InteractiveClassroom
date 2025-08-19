@@ -24,7 +24,7 @@ final class MenuBarViewModel: ObservableObject {
     ) {
         overlayManager.closeOverlay()
         courseSessionService.endClass()
-        menuBarController.rebuild()
+        Task { await menuBarController.rebuild() }
         openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
     }
 }

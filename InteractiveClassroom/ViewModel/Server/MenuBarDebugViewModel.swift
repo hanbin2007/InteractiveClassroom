@@ -5,7 +5,7 @@ import Foundation
 @MainActor
 final class MenuBarDebugViewModel: ObservableObject {
     func rebuildMenuBar(using controller: MenuBarExtraController) {
-        controller.rebuild()
+        Task { await controller.rebuild() }
     }
 }
 #endif
