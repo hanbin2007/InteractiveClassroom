@@ -4,6 +4,7 @@ import SwiftUI
 struct TeacherDashboardView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var pairingService: PairingService
+    @EnvironmentObject private var interactionService: InteractionService
     @StateObject private var viewModel = TeacherDashboardViewModel()
     @State private var selectedTab = 0
     @State private var showStartPopover = false
@@ -17,6 +18,9 @@ struct TeacherDashboardView: View {
         TabItem(icon: "list.bullet.rectangle", title: "Quiz")
     ]
 
+    private let statusTab = TabItem(icon: "waveform.path.ecg", title: "Status")
+    private var statusTabIndex: Int { tabs.count }
+
     var body: some View {
         VStack(spacing: 0) {
             TabView(selection: $selectedTab) {
@@ -26,10 +30,11 @@ struct TeacherDashboardView: View {
                 placeholder("Reports").tag(3)
                 placeholder("Help").tag(4)
                 MultipleChoiceSetupView().tag(5)
+                InteractionStatusView().tag(statusTabIndex)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
-            CustomTabView(tabs: tabs, selection: $selectedTab)
+            CustomTabView(tabs: tabs, statusTab: statusTab, selection: $selectedTab)
         }
         .navigationTitle("Teacher")
         .toolbar {
@@ -57,6 +62,11 @@ struct TeacherDashboardView: View {
             }
         }
         .onAppear { viewModel.bind(to: courseSessionService) }
+        .onReceive(interactionService.$activeInteraction) { interaction in
+            if interaction != nil {
+                selectedTab = statusTabIndex
+            }
+        }
     }
 
     private var studentsView: some View {
