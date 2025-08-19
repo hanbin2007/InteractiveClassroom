@@ -1,7 +1,9 @@
 #if os(macOS)
 import Foundation
+import Combine
 
 /// View model powering the multiple-choice overlay.
+@MainActor
 final class MultipleChoiceOverlayViewModel: ObservableObject {
     let question: MultipleChoiceQuestion
     /// Human-readable statistics for each option (e.g., "A: 50%").

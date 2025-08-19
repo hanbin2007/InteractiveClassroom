@@ -1,7 +1,9 @@
 #if os(iOS)
 import Foundation
+import Combine
 
 /// View model managing the creation of a multiple-choice interaction.
+@MainActor
 final class MultipleChoiceSetupViewModel: ObservableObject {
     /// Editable option used in the setup form.
     struct EditableOption: Identifiable {
