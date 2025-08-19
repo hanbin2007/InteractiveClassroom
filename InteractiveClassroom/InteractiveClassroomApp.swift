@@ -13,6 +13,7 @@ struct InteractiveClassroomApp: App {
     @StateObject private var pairingService: PairingService
     @StateObject private var courseSessionService: CourseSessionService
     @StateObject private var interactionService: InteractionService
+    @StateObject private var menuBarController = MenuBarExtraController()
     private let container: ModelContainer
 
     init() {
@@ -52,6 +53,7 @@ struct InteractiveClassroomApp: App {
             pairingService: pairingService,
             courseSessionService: courseSessionService,
             interactionService: interactionService,
+            menuBarController: menuBarController,
             container: container
         )
 #else
