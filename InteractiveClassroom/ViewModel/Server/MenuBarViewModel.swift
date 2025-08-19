@@ -10,7 +10,9 @@ final class MenuBarViewModel: ObservableObject {
     /// windows or changing application state.
     func runAfterMenuDismissal(_ action: @escaping () -> Void) {
         DispatchQueue.main.async {
-            action()
+            DispatchQueue.main.async {
+                action()
+            }
         }
     }
 
