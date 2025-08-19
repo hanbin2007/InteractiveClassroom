@@ -46,7 +46,7 @@ final class InteractionService: ObservableObject {
     }
 
     // MARK: - Interaction Controls
-    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true) {
+    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true, remainingSeconds: Int? = nil) {
         if activeInteraction != nil {
             if broadcast {
                 let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request)
@@ -58,7 +58,7 @@ final class InteractionService: ObservableObject {
         let interaction = Interaction(request: request)
         activeInteraction = interaction
 
-        if let seconds = request.lifecycle.secondsValue {
+        if let seconds = remainingSeconds ?? request.lifecycle.secondsValue {
             let service = CountdownService(seconds: seconds)
             countdownService = service
             presentOverlay(request.makeOverlay(countdownService: service))
@@ -70,9 +70,16 @@ final class InteractionService: ObservableObject {
         }
 
         if broadcast {
-            let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request)
+            let remaining = remainingSeconds ?? currentRemainingSeconds()
+            let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request, remainingSeconds: remaining)
             manager.sendMessageToServer(message)
         }
+        broadcastCurrentState(to: nil)
+    }
+
+    /// Protocol requirement convenience wrapper.
+    func startInteraction(_ request: InteractionRequest, broadcast: Bool) {
+        startInteraction(request, broadcast: broadcast, remainingSeconds: nil)
     }
 
     /// Forcefully requests the server to terminate any active interaction and start the provided one.
@@ -99,6 +106,22 @@ final class InteractionService: ObservableObject {
             let message = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
             manager.sendMessageToServer(message)
         }
+        broadcastCurrentState(to: nil)
+    }
+
+    /// Requests the current interaction status from the server.
+    func requestInteractionStatus() {
+        let message = PeerConnectionManager.Message(type: "requestInteractionStatus")
+        manager.sendMessageToServer(message)
+        print("[InteractionService] Requested interaction status from server.")
+    }
+
+    /// Calculates remaining seconds for the current interaction if finite.
+    private func currentRemainingSeconds() -> Int? {
+        guard let interaction = activeInteraction,
+              case let .finite(seconds) = interaction.request.lifecycle else { return nil }
+        let elapsed = Int(Date().timeIntervalSince(interaction.startedAt))
+        return max(0, seconds - elapsed)
     }
 
     // MARK: - Class Lifecycle
@@ -165,7 +188,13 @@ extension InteractionService: @preconcurrency InteractionHandling {
         let lessonPayload = manager.currentLesson.map {
             PeerConnectionManager.LessonPayload(title: $0.title, intro: $0.intro, scheduledAt: $0.scheduledAt)
         }
-        let message = PeerConnectionManager.Message(type: "state", course: coursePayload, lesson: lessonPayload)
+        let message = PeerConnectionManager.Message(
+            type: "state",
+            course: coursePayload,
+            lesson: lessonPayload,
+            interaction: activeInteraction?.request,
+            remainingSeconds: currentRemainingSeconds()
+        )
         if manager.advertiser != nil {
             if let specific = pendingBroadcastPeers, let data = try? JSONEncoder().encode(message) {
                 for peer in specific {
@@ -183,7 +212,11 @@ extension InteractionService: @preconcurrency InteractionHandling {
     }
 
     private func notifyInteractionInProgress(to peerID: MCPeerID, session: MCSession, request: InteractionRequest?) {
-        let message = PeerConnectionManager.Message(type: "interactionInProgress", interaction: request)
+        let message = PeerConnectionManager.Message(
+            type: "interactionInProgress",
+            interaction: request,
+            remainingSeconds: currentRemainingSeconds()
+        )
         if let data = try? JSONEncoder().encode(message) {
             try? session.send(data, toPeers: [peerID], with: .reliable)
         }
@@ -207,7 +240,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
                 if activeInteraction != nil {
                     notifyInteractionInProgress(to: peerID, session: session, request: activeInteraction?.request)
                 } else {
-                    startInteraction(req, broadcast: false)
+                    startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
                     manager.forwardToClients(message, excluding: peerID)
                 }
             }
@@ -217,8 +250,8 @@ extension InteractionService: @preconcurrency InteractionHandling {
                 endInteraction(broadcast: false)
                 let stopMessage = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
                 manager.forwardToClients(stopMessage)
-                startInteraction(req, broadcast: false)
-                let startMessage = PeerConnectionManager.Message(type: "startInteraction", interaction: req)
+                startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
+                let startMessage = PeerConnectionManager.Message(type: "startInteraction", interaction: req, remainingSeconds: message.remainingSeconds)
                 manager.forwardToClients(startMessage)
             }
         case "stopInteraction":
@@ -232,6 +265,29 @@ extension InteractionService: @preconcurrency InteractionHandling {
             manager.userInitiatedDisconnect = true
             session.disconnect()
             manager.myRole = nil
+        case "requestInteractionStatus":
+            if manager.advertiser != nil {
+                let response = PeerConnectionManager.Message(
+                    type: "interactionStatus",
+                    interaction: activeInteraction?.request,
+                    remainingSeconds: currentRemainingSeconds()
+                )
+                if let data = try? JSONEncoder().encode(response) {
+                    try? session.send(data, toPeers: [peerID], with: .reliable)
+                }
+                print("[InteractionService] Sent interaction status to \(peerID.displayName).")
+            }
+        case "interactionStatus":
+            if let req = message.interaction {
+                startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
+            } else {
+                endInteraction(broadcast: false)
+            }
+        case "interactionInProgress":
+            if let req = message.interaction {
+                print("[InteractionService] Interaction already in progress.")
+                startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
+            }
         case "state":
             if let course = message.course {
                 manager.currentCourse = Course(name: course.name, intro: course.intro, scheduledAt: course.scheduledAt)
@@ -242,6 +298,11 @@ extension InteractionService: @preconcurrency InteractionHandling {
                 manager.currentLesson = Lesson(title: lesson.title, number: 0, scheduledAt: lesson.scheduledAt, intro: lesson.intro)
             } else {
                 manager.currentLesson = nil
+            }
+            if let req = message.interaction {
+                startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
+            } else if activeInteraction != nil {
+                endInteraction(broadcast: false)
             }
         default:
             break
