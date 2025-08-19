@@ -70,6 +70,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
             }
         case "startClass":
             if let req = message.interaction {
+                guard activeInteraction?.request != req else { return }
                 startInteraction(req, broadcast: false)
             }
             manager.classStarted = true
@@ -122,12 +123,14 @@ extension InteractionService: @preconcurrency InteractionHandling {
             }
         case "interactionStatus":
             if let req = message.interaction {
+                guard activeInteraction?.request != req else { return }
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
             } else {
                 endInteraction(broadcast: false, broadcastState: false)
             }
         case "interactionInProgress":
             if let req = message.interaction {
+                guard activeInteraction?.request != req else { return }
                 print("[InteractionService] Interaction already in progress.")
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
             }
@@ -143,6 +146,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
                 manager.currentLesson = nil
             }
             if let req = message.interaction {
+                guard activeInteraction?.request != req else { return }
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
             } else if activeInteraction != nil {
                 endInteraction(broadcast: false, broadcastState: false)

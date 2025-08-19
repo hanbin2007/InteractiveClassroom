@@ -39,7 +39,7 @@ enum InteractionLifecycle: Codable, Equatable {
 }
 
 /// Request payload used to initiate an interaction from the teacher client.
-struct InteractionRequest: Codable {
+struct InteractionRequest: Codable, Equatable {
     /// Simplified template placeholder for future expansion.
     enum Template: String, Codable {
         case fullScreen
