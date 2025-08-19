@@ -8,6 +8,7 @@ struct MenuBarView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
     @EnvironmentObject private var overlayManager: OverlayWindowManager
+    @EnvironmentObject private var menuBarManager: MenuBarExtraManager
     @Environment(\.openWindow) private var openWindow
     @StateObject private var viewModel = MenuBarViewModel()
 
@@ -32,6 +33,7 @@ struct MenuBarView: View {
                     Task { @MainActor in
                         overlayManager.closeOverlay()
                         courseSessionService.endClass()
+                        menuBarManager.rebuildMenuBarExtra()
                         viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                     }
                 }
@@ -71,15 +73,18 @@ struct MenuBarView: View {
     let pairing = PairingService()
     let interaction = InteractionService(manager: pairing)
     let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
+    let menuBarManager = MenuBarExtraManager()
     let overlayManager = OverlayWindowManager(
         pairingService: pairing,
         courseSessionService: courseService,
-        interactionService: interaction
+        interactionService: interaction,
+        menuBarManager: menuBarManager
     )
     return MenuBarView()
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)
         .environmentObject(overlayManager)
+        .environmentObject(menuBarManager)
 }
 #endif
