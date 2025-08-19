@@ -34,6 +34,15 @@ final class OverlayWindowManager: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        interactionService.$activeInteraction
+            .compactMap { $0 }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                ApplicationWindowManager.closeAllWindowsAndFocus()
+                self?.openOverlay()
+            }
+            .store(in: &cancellables)
     }
 
     /// Presents the overlay configured for full-screen display.
