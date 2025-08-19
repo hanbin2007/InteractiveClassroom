@@ -19,16 +19,17 @@ struct MenuBarView: View {
                 .disabled(pairingService.studentCode == nil)
             Text(pairingService.connectionStatus)
             Divider()
-            Button("Open Classroom") {
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+            Button(
+                pairingService.teacherCode == nil ? "Open Classroom" : "End Class"
+            ) {
+                if pairingService.teacherCode == nil {
+                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                } else {
+                    overlayManager.closeOverlay()
+                    courseSessionService.endClass()
+                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                }
             }
-            .disabled(pairingService.teacherCode != nil)
-            Button("End Class") {
-                overlayManager.closeOverlay()
-                courseSessionService.endClass()
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-            }
-            .disabled(pairingService.teacherCode == nil)
             Button("Clients") {
                 viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
             }
