@@ -7,15 +7,31 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "63D5B756-1368-428E-BE98-940176BBFF2E"
+            uuid = "D385FE71-0204-49FE-8B9F-38AD8C572D34"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "InteractiveClassroom/Model/Interaction/InteractionService.swift"
+            filePath = "InteractiveClassroom/ViewModel/Server/OverlayWindowManager.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "175"
-            endingLineNumber = "175"
+            startingLineNumber = "41"
+            endingLineNumber = "41"
+            landmarkName = "openOverlay()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "27A75DE5-BBE4-4558-B2F8-8B9A039FB7D4"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "InteractiveClassroom/Model/Interaction/InteractionHandling.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "72"
+            endingLineNumber = "72"
             landmarkName = "handleInteractionMessage(_:from:session:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -23,15 +39,15 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "054019CC-043F-4A74-824D-A71C89B93DC8"
+            uuid = "094053DA-DD99-45AE-A6B6-F64E800A135E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "InteractiveClassroom/Model/Interaction/InteractionService.swift"
+            filePath = "InteractiveClassroom/Model/Interaction/InteractionHandling.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "181"
-            endingLineNumber = "181"
+            startingLineNumber = "78"
+            endingLineNumber = "78"
             landmarkName = "handleInteractionMessage(_:from:session:)"
             landmarkType = "7">
          </BreakpointContent>

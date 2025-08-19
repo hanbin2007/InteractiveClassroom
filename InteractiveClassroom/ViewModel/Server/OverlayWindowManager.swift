@@ -10,7 +10,7 @@ final class OverlayWindowManager: ObservableObject {
     private let courseSessionService: CourseSessionService
     private let interactionService: InteractionService
 
-    private var overlayWindow: NSWindow?
+    private var overlayWindow: NSPanel?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
     private var cancellables: Set<AnyCancellable> = []
 
@@ -42,9 +42,6 @@ final class OverlayWindowManager: ObservableObject {
 
         let presentOverlay = { [weak self] in
             guard let self else { return }
-            self.originalPresentationOptions = NSApp.presentationOptions
-            // Delay changing presentation options so active menus can close without being reset mid-interaction.
-            NSApp.presentationOptions = self.originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
 
             let controller = NSHostingController(
                 rootView: ScreenOverlayView()
@@ -53,16 +50,26 @@ final class OverlayWindowManager: ObservableObject {
                     .environmentObject(self.interactionService)
                     .environmentObject(self)
             )
-            let window = NSWindow(contentViewController: controller)
-            self.configureOverlayWindow(window)
-            window.orderFrontRegardless()
-            self.overlayWindow = window
+
+            // 使用 NSPanel，避免需要激活应用
+            let panel = NSPanel(
+                contentRect: NSScreen.main?.frame ?? .zero,
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false
+            )
+            panel.contentViewController = controller
+            self.configureOverlayWindow(panel)
+
+            // 不要 makeKey，不要 activate
+            panel.orderFrontRegardless()
+            self.overlayWindow = panel
         }
 
         DispatchQueue.main.async {
             if let event = NSApp.currentEvent,
                [.leftMouseDown, .leftMouseUp, .keyDown].contains(event.type) {
-                // A menu interaction is likely in progress; retry after a short delay.
+                // 菜单交互期间，稍后再尝试
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: presentOverlay)
             } else {
                 presentOverlay()
@@ -72,13 +79,11 @@ final class OverlayWindowManager: ObservableObject {
 
     /// Closes any visible overlay windows and restores the application's presentation options.
     func closeOverlay() {
-        // Close the tracked overlay window first.
         if let window = overlayWindow {
             window.orderOut(nil)
             window.close()
         }
 
-        // Catch any additional overlay windows that might have been created elsewhere.
         NSApp.windows
             .filter { $0.identifier?.rawValue == "overlay" && $0.isVisible }
             .forEach { window in
@@ -88,28 +93,28 @@ final class OverlayWindowManager: ObservableObject {
 
         overlayWindow = nil
         NSApp.presentationOptions = originalPresentationOptions
-        NSApp.activate(ignoringOtherApps: true)
+
         #if DEBUG
-        // Assert that no overlay windows remain visible after teardown.
-        assert(NSApp.windows.allSatisfy { !($0.identifier?.rawValue == "overlay" && $0.isVisible) }, "Overlay window should be closed")
+        assert(NSApp.windows.allSatisfy { !($0.identifier?.rawValue == "overlay" && $0.isVisible) },
+               "Overlay window should be closed")
         #endif
     }
 
     /// Applies identifier and screen configuration to the overlay window.
     private func configureOverlayWindow(_ window: NSWindow) {
         window.identifier = NSUserInterfaceItemIdentifier("overlay")
-        // Ensure the overlay appears above the menu bar and full-screen windows.
         window.level = .screenSaver
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        window.collectionBehavior = [.canJoinAllSpaces]
+
         if let screenFrame = NSScreen.main?.frame {
             window.setFrame(screenFrame, display: true)
             window.contentView?.frame = screenFrame
         }
-        window.styleMask = [.borderless]
+
         window.isOpaque = false
         window.backgroundColor = .clear
-        // Avoid double free crashes by keeping the window alive until we
-        // explicitly release our reference.
+        window.hasShadow = false
+        window.hidesOnDeactivate = false
         window.isReleasedWhenClosed = false
     }
 }
