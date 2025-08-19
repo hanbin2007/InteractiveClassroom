@@ -73,8 +73,12 @@ final class InteractionService: ObservableObject {
             let remaining = remainingSeconds ?? currentRemainingSeconds()
             let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request, remainingSeconds: remaining)
             manager.sendMessageToServer(message)
+            broadcastCurrentState(to: nil)
+        } else if manager.advertiser != nil {
+            // When acting as the server, share the updated state with connected clients.
+            // Clients receiving this state will not rebroadcast, preventing start/end loops.
+            broadcastCurrentState(to: nil)
         }
-        broadcastCurrentState(to: nil)
     }
 
     /// Protocol requirement convenience wrapper.
