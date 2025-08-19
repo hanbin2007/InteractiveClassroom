@@ -49,8 +49,7 @@ final class InteractionService: ObservableObject {
     func startInteraction(_ request: InteractionRequest, broadcast: Bool = true, remainingSeconds: Int? = nil) {
         if activeInteraction != nil {
             if broadcast {
-                let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request)
-                manager.sendMessageToServer(message)
+                broadcastStartInteraction(request, remainingSeconds: remainingSeconds)
             }
             print("[InteractionService] Attempted to start a new interaction while another is active.")
             return
@@ -70,9 +69,7 @@ final class InteractionService: ObservableObject {
         }
 
         if broadcast {
-            let remaining = remainingSeconds ?? currentRemainingSeconds()
-            let message = PeerConnectionManager.Message(type: "startInteraction", interaction: request, remainingSeconds: remaining)
-            manager.sendMessageToServer(message)
+            broadcastStartInteraction(request, remainingSeconds: remainingSeconds)
             broadcastCurrentState(to: nil)
         } else if manager.advertiser != nil {
             // When acting as the server, share the updated state with connected clients.
@@ -107,9 +104,7 @@ final class InteractionService: ObservableObject {
         countdownService?.stop()
         countdownService = nil
         if broadcast {
-            let message = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
-            manager.sendMessageToServer(message)
-            print("[InteractionService] Sent stop interaction message to server.")
+            broadcastStopInteraction()
         }
         if broadcastState {
             broadcastCurrentState(to: nil)
@@ -169,6 +164,27 @@ final class InteractionService: ObservableObject {
         manager.studentCode = nil
         manager.rolesByPeer.removeAll()
         manager.classStarted = false
+    }
+}
+
+// MARK: - Broadcasting
+private extension InteractionService {
+    /// Sends a start interaction message to the server.
+    func broadcastStartInteraction(_ request: InteractionRequest, remainingSeconds: Int?) {
+        let remaining = remainingSeconds ?? currentRemainingSeconds()
+        let message = PeerConnectionManager.Message(
+            type: "startInteraction",
+            interaction: request,
+            remainingSeconds: remaining
+        )
+        manager.sendMessageToServer(message)
+    }
+
+    /// Sends a stop interaction message to the server.
+    func broadcastStopInteraction() {
+        let message = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
+        manager.sendMessageToServer(message)
+        print("[InteractionService] Sent stop interaction message to server.")
     }
 }
 
