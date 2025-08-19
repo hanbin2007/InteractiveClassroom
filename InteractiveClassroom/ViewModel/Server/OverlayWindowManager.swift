@@ -98,7 +98,8 @@ final class OverlayWindowManager: ObservableObject {
     /// Applies identifier and screen configuration to the overlay window.
     private func configureOverlayWindow(_ window: NSWindow) {
         window.identifier = NSUserInterfaceItemIdentifier("overlay")
-        window.level = NSWindow.Level(rawValue: NSWindow.Level.mainMenu.rawValue - 1)
+        // Ensure the overlay appears above the menu bar and full-screen windows.
+        window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         if let screenFrame = NSScreen.main?.frame {
             window.setFrame(screenFrame, display: true)
