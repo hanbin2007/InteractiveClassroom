@@ -89,7 +89,7 @@ final class InteractionService: ObservableObject {
         print("[InteractionService] Sent force start interaction request to server.")
     }
 
-    func endInteraction(broadcast: Bool = true) {
+    func endInteraction(broadcast: Bool = true, broadcastState: Bool = false) {
         guard activeInteraction != nil else { return }
         withAnimation(.easeInOut(duration: 0.3)) {
             isOverlayContentVisible = false
@@ -105,8 +105,12 @@ final class InteractionService: ObservableObject {
         if broadcast {
             let message = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
             manager.sendMessageToServer(message)
+            print("[InteractionService] Sent stop interaction message to server.")
         }
-        broadcastCurrentState(to: nil)
+        if broadcastState {
+            broadcastCurrentState(to: nil)
+            print("[InteractionService] Broadcasted interaction state after ending.")
+        }
     }
 
     /// Requests the current interaction status from the server.
@@ -247,7 +251,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
         case "forceStartInteraction":
             if let req = message.interaction {
                 print("[InteractionService] Force starting new interaction from \(peerID.displayName).")
-                endInteraction(broadcast: false)
+                endInteraction(broadcast: false, broadcastState: false)
                 let stopMessage = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
                 manager.forwardToClients(stopMessage)
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
@@ -255,11 +259,11 @@ extension InteractionService: @preconcurrency InteractionHandling {
                 manager.forwardToClients(startMessage)
             }
         case "stopInteraction":
-            endInteraction(broadcast: false)
+            endInteraction(broadcast: false, broadcastState: false)
             let forward = PeerConnectionManager.Message(type: "stopInteraction", interaction: nil)
             manager.forwardToClients(forward, excluding: peerID)
         case "endClass":
-            endInteraction(broadcast: false)
+            endInteraction(broadcast: false, broadcastState: false)
             manager.classStarted = false
             manager.serverDisconnected = true
             manager.userInitiatedDisconnect = true
@@ -281,7 +285,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
             if let req = message.interaction {
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
             } else {
-                endInteraction(broadcast: false)
+                endInteraction(broadcast: false, broadcastState: false)
             }
         case "interactionInProgress":
             if let req = message.interaction {
@@ -302,7 +306,7 @@ extension InteractionService: @preconcurrency InteractionHandling {
             if let req = message.interaction {
                 startInteraction(req, broadcast: false, remainingSeconds: message.remainingSeconds)
             } else if activeInteraction != nil {
-                endInteraction(broadcast: false)
+                endInteraction(broadcast: false, broadcastState: false)
             }
         default:
             break
