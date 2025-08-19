@@ -8,6 +8,7 @@ struct MenuBarView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var interactionService: InteractionService
     @EnvironmentObject private var overlayManager: OverlayWindowManager
+    @EnvironmentObject private var menuBarCoordinator: MenuBarCoordinator
     @Environment(\.openWindow) private var openWindow
     @StateObject private var viewModel = MenuBarViewModel()
 
@@ -32,6 +33,12 @@ struct MenuBarView: View {
                     Task { @MainActor in
                         overlayManager.closeOverlay()
                         courseSessionService.endClass()
+                        // 再次确保覆盖窗口已完全关闭
+                        overlayManager.closeOverlay()
+                        // 关闭窗口后再重建菜单栏
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            menuBarCoordinator.rebuildMenuBar()
+                        }
                         viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
                     }
                 }
@@ -71,15 +78,18 @@ struct MenuBarView: View {
     let pairing = PairingService()
     let interaction = InteractionService(manager: pairing)
     let courseService = CourseSessionService(manager: pairing, interactionService: interaction)
+    let coordinator = MenuBarCoordinator()
     let overlayManager = OverlayWindowManager(
         pairingService: pairing,
         courseSessionService: courseService,
-        interactionService: interaction
+        interactionService: interaction,
+        menuBarCoordinator: coordinator
     )
     return MenuBarView()
         .environmentObject(pairing)
         .environmentObject(courseService)
         .environmentObject(interaction)
         .environmentObject(overlayManager)
+        .environmentObject(coordinator)
 }
 #endif

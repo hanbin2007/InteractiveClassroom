@@ -9,6 +9,7 @@ final class OverlayWindowManager: ObservableObject {
     private let pairingService: PairingService
     private let courseSessionService: CourseSessionService
     private let interactionService: InteractionService
+    private let menuBarCoordinator: MenuBarCoordinator
 
     private var overlayWindow: NSWindow?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
@@ -20,11 +21,13 @@ final class OverlayWindowManager: ObservableObject {
     init(
         pairingService: PairingService,
         courseSessionService: CourseSessionService,
-        interactionService: InteractionService
+        interactionService: InteractionService,
+        menuBarCoordinator: MenuBarCoordinator
     ) {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
+        self.menuBarCoordinator = menuBarCoordinator
 
         pairingService.$teacherCode
             .receive(on: RunLoop.main)
@@ -64,6 +67,7 @@ final class OverlayWindowManager: ObservableObject {
                     .environmentObject(self.courseSessionService)
                     .environmentObject(self.interactionService)
                     .environmentObject(self)
+                    .environmentObject(self.menuBarCoordinator)
             )
             let window = NSWindow(contentViewController: controller)
             self.configureOverlayWindow(window)
