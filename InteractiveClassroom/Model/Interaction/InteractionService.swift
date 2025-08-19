@@ -130,7 +130,8 @@ final class InteractionService: ObservableObject {
 
     // MARK: - Class Lifecycle
     func startClass(at startDate: Date) {
-        let seconds = max(0, Int(startDate.timeIntervalSinceNow))
+        let serverDate = startDate.addingTimeInterval(manager.timeOffset)
+        let seconds = max(0, Int(serverDate.timeIntervalSinceNow))
         let request = InteractionRequest(
             template: .fullScreen,
             lifecycle: .finite(seconds: seconds),
@@ -229,6 +230,10 @@ extension InteractionService: @preconcurrency InteractionHandling {
 
     func handleInteractionMessage(_ message: PeerConnectionManager.Message, from peerID: MCPeerID, session: MCSession) {
         switch message.type {
+        case "syncTime":
+            if let ts = message.timestamp {
+                manager.updateTimeOffset(with: ts)
+            }
         case "startClass":
             if let req = message.interaction {
                 startInteraction(req, broadcast: false)
