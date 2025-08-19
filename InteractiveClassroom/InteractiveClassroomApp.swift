@@ -13,6 +13,9 @@ struct InteractiveClassroomApp: App {
     @StateObject private var pairingService: PairingService
     @StateObject private var courseSessionService: CourseSessionService
     @StateObject private var interactionService: InteractionService
+    #if os(macOS)
+    @StateObject private var menuBarManager = MenuBarManager()
+    #endif
     private let container: ModelContainer
 
     init() {
@@ -52,6 +55,7 @@ struct InteractiveClassroomApp: App {
             pairingService: pairingService,
             courseSessionService: courseSessionService,
             interactionService: interactionService,
+            menuBarManager: menuBarManager,
             container: container
         )
 #else

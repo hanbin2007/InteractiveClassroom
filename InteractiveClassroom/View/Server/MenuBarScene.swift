@@ -7,6 +7,7 @@ struct MenuBarScene: Scene {
     @ObservedObject var pairingService: PairingService
     @ObservedObject var courseSessionService: CourseSessionService
     @ObservedObject var interactionService: InteractionService
+    @ObservedObject var menuBarManager: MenuBarManager
     let container: ModelContainer
     @StateObject private var overlayManager: OverlayWindowManager
 
@@ -14,11 +15,13 @@ struct MenuBarScene: Scene {
         pairingService: PairingService,
         courseSessionService: CourseSessionService,
         interactionService: InteractionService,
+        menuBarManager: MenuBarManager,
         container: ModelContainer
     ) {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
+        self.menuBarManager = menuBarManager
         self.container = container
         _overlayManager = StateObject(
             wrappedValue: OverlayWindowManager(
@@ -29,15 +32,20 @@ struct MenuBarScene: Scene {
         )
     }
 
+    @SceneBuilder
     var body: some Scene {
-        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-            MenuBarView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(overlayManager)
+        if let id = menuBarManager.menuBarID {
+            MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
+                MenuBarView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+                    .environmentObject(overlayManager)
+                    .environmentObject(menuBarManager)
+            }
+            .id(id)
+            .modelContainer(container)
         }
-        .modelContainer(container)
         Settings {
             SettingsView()
                 .environmentObject(pairingService)
@@ -65,6 +73,11 @@ struct MenuBarScene: Scene {
                 .environmentObject(interactionService)
         }
         .modelContainer(container)
+        #if DEBUG
+        WindowGroup(id: "menuBarDebug") {
+            MenuBarDebugView(menuBarManager: menuBarManager)
+        }
+        #endif
     }
 }
 #endif
