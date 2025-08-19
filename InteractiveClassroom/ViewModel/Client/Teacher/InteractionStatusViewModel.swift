@@ -6,6 +6,7 @@ import Combine
 final class InteractionStatusViewModel: ObservableObject {
     @Published var countdownService: CountdownService?
     @Published var activeInteraction: Interaction?
+    @Published var canAdvanceStage: Bool = false
 
     private var service: InteractionService?
     private var cancellables = Set<AnyCancellable>()
@@ -21,12 +22,24 @@ final class InteractionStatusViewModel: ObservableObject {
 
         service.$activeInteraction
             .receive(on: RunLoop.main)
-            .assign(to: \.activeInteraction, on: self)
+            .sink { [weak self] interaction in
+                self?.activeInteraction = interaction
+                if let interaction,
+                   case .multipleChoice = interaction.request.content {
+                    self?.canAdvanceStage = !interaction.isLastStage
+                } else {
+                    self?.canAdvanceStage = false
+                }
+            }
             .store(in: &cancellables)
     }
 
     func stopCurrentInteraction() {
         service?.endInteraction()
+    }
+
+    func advanceStage() {
+        service?.nextStage()
     }
 }
 #endif
