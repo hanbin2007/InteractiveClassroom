@@ -53,9 +53,10 @@ struct InteractionRequest: Codable {
     enum Content: Codable, Equatable {
         case text(String)
         case countdown
+        case multipleChoice(MultipleChoiceQuestion)
 
-        private enum CodingKeys: String, CodingKey { case type, text }
-        private enum Kind: String, Codable { case text, countdown }
+        private enum CodingKeys: String, CodingKey { case type, text, question }
+        private enum Kind: String, Codable { case text, countdown, multipleChoice }
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -66,6 +67,9 @@ struct InteractionRequest: Codable {
                 self = .text(value)
             case .countdown:
                 self = .countdown
+            case .multipleChoice:
+                let question = try container.decode(MultipleChoiceQuestion.self, forKey: .question)
+                self = .multipleChoice(question)
             }
         }
 
@@ -77,6 +81,9 @@ struct InteractionRequest: Codable {
                 try container.encode(value, forKey: .text)
             case .countdown:
                 try container.encode(Kind.countdown, forKey: .type)
+            case .multipleChoice(let question):
+                try container.encode(Kind.multipleChoice, forKey: .type)
+                try container.encode(question, forKey: .question)
             }
         }
     }
@@ -108,6 +115,23 @@ struct InteractionRequest: Codable {
                 } else {
                     CountdownOverlayView(service: CountdownService(seconds: lifecycle.secondsValue ?? 0))
                 }
+            case .multipleChoice(let question):
+                #if os(macOS)
+                if let service = countdownService {
+                    MultipleChoiceOverlayView(
+                        viewModel: MultipleChoiceOverlayViewModel(question: question),
+                        service: service
+                    )
+                } else {
+                    let service = CountdownService(seconds: lifecycle.secondsValue ?? 0)
+                    MultipleChoiceOverlayView(
+                        viewModel: MultipleChoiceOverlayViewModel(question: question),
+                        service: service
+                    )
+                }
+                #else
+                EmptyView()
+                #endif
             }
         }
     }

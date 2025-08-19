@@ -13,7 +13,8 @@ struct TeacherDashboardView: View {
         TabItem(icon: "book.closed.fill", title: "Lessons"),
         TabItem(icon: "gearshape.fill", title: "Settings"),
         TabItem(icon: "chart.bar.xaxis", title: "Reports"),
-        TabItem(icon: "questionmark.circle", title: "Help")
+        TabItem(icon: "questionmark.circle", title: "Help"),
+        TabItem(icon: "list.bullet.rectangle", title: "Quiz")
     ]
 
     var body: some View {
@@ -24,6 +25,7 @@ struct TeacherDashboardView: View {
                 placeholder("Settings").tag(2)
                 placeholder("Reports").tag(3)
                 placeholder("Help").tag(4)
+                MultipleChoiceSetupView().tag(5)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
