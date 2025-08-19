@@ -7,6 +7,7 @@ struct MenuBarScene: Scene {
     @ObservedObject var pairingService: PairingService
     @ObservedObject var courseSessionService: CourseSessionService
     @ObservedObject var interactionService: InteractionService
+    @ObservedObject var menuBarController: MenuBarExtraController
     let container: ModelContainer
     @StateObject private var overlayManager: OverlayWindowManager
 
@@ -14,11 +15,13 @@ struct MenuBarScene: Scene {
         pairingService: PairingService,
         courseSessionService: CourseSessionService,
         interactionService: InteractionService,
+        menuBarController: MenuBarExtraController,
         container: ModelContainer
     ) {
         self.pairingService = pairingService
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
+        self.menuBarController = menuBarController
         self.container = container
         _overlayManager = StateObject(
             wrappedValue: OverlayWindowManager(
@@ -30,41 +33,46 @@ struct MenuBarScene: Scene {
     }
 
     var body: some Scene {
-        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-            MenuBarView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(overlayManager)
+        Group {
+            if menuBarController.isVisible {
+                MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
+                    MenuBarView()
+                        .environmentObject(pairingService)
+                        .environmentObject(courseSessionService)
+                        .environmentObject(interactionService)
+                        .environmentObject(menuBarController)
+                        .environmentObject(overlayManager)
+                }
+                .modelContainer(container)
+            }
+            Settings {
+                SettingsView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+            }
+            .modelContainer(container)
+            WindowGroup(id: "courseSelection") {
+                CourseSelectionView()
+                    .environmentObject(courseSessionService)
+                    .environmentObject(pairingService)
+            }
+            .modelContainer(container)
+            WindowGroup(id: "clients") {
+                ClientsListView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+            }
+            .modelContainer(container)
+            WindowGroup(id: "courseManager") {
+                CourseManagerView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+            }
+            .modelContainer(container)
         }
-        .modelContainer(container)
-        Settings {
-            SettingsView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "courseSelection") {
-            CourseSelectionView()
-                .environmentObject(courseSessionService)
-                .environmentObject(pairingService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "clients") {
-            ClientsListView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
-        WindowGroup(id: "courseManager") {
-            CourseManagerView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-        }
-        .modelContainer(container)
     }
 }
 #endif
