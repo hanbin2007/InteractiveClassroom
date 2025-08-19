@@ -81,6 +81,8 @@ class PeerConnectionManager: NSObject, ObservableObject {
         let course: CoursePayload?
         let lesson: LessonPayload?
         let interaction: InteractionRequest?
+        /// Remaining seconds for a running interaction when applicable
+        let remainingSeconds: Int?
 
         init(type: String,
              role: String? = nil,
@@ -88,7 +90,8 @@ class PeerConnectionManager: NSObject, ObservableObject {
              target: String? = nil,
              course: CoursePayload? = nil,
              lesson: LessonPayload? = nil,
-             interaction: InteractionRequest? = nil) {
+             interaction: InteractionRequest? = nil,
+             remainingSeconds: Int? = nil) {
             self.type = type
             self.role = role
             self.students = students
@@ -96,6 +99,7 @@ class PeerConnectionManager: NSObject, ObservableObject {
             self.course = course
             self.lesson = lesson
             self.interaction = interaction
+            self.remainingSeconds = remainingSeconds
         }
     }
 

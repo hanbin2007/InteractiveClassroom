@@ -5,6 +5,7 @@ import SwiftUI
 struct StudentWaitingView: View {
     @EnvironmentObject private var courseSessionService: CourseSessionService
     @EnvironmentObject private var pairingService: PairingService
+    @EnvironmentObject private var interactionService: InteractionService
     @StateObject private var viewModel = StudentWaitingViewModel()
 
     var body: some View {
@@ -45,7 +46,10 @@ struct StudentWaitingView: View {
                 .accessibilityLabel("Disconnect")
             }
         }
-        .onAppear { viewModel.bind(to: courseSessionService) }
+        .onAppear {
+            viewModel.bind(to: courseSessionService)
+            interactionService.requestInteractionStatus()
+        }
     }
 
     /// Shows whether the class has started yet.
