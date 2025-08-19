@@ -26,11 +26,13 @@ final class OverlayWindowManager: ObservableObject {
         pairingService.$teacherCode
             .receive(on: RunLoop.main)
             .sink { [weak self] code in
-                guard let self else { return }
-                if code != nil {
-                    self.openOverlay()
-                } else {
-                    self.closeOverlay()
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if code != nil {
+                        self.openOverlay()
+                    } else {
+                        self.closeOverlay()
+                    }
                 }
             }
             .store(in: &cancellables)
