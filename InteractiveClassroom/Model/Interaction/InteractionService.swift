@@ -176,7 +176,8 @@ extension InteractionService: @preconcurrency InteractionHandling {
             }
             manager.classStarted = true
             if manager.advertiser != nil {
-                ApplicationWindowManager.closeAllWindowsAndFocus()
+                // Close all windows here will cause menubar icon unclickable issue!
+//                ApplicationWindowManager.closeAllWindowsAndFocus()
                 manager.forwardToClients(message, excluding: peerID)
             }
         case "startInteraction":
