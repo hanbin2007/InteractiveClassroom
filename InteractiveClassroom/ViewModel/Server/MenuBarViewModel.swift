@@ -23,5 +23,26 @@ final class MenuBarViewModel: ObservableObject {
             openWindow(id: id)
         }
     }
+
+    /// Handles the primary classroom action based on pairing state.
+    /// - Parameters:
+    ///   - pairingService: Current pairing service to inspect for active session.
+    ///   - overlayManager: Overlay manager used when ending a class.
+    ///   - courseSessionService: Session service controlling class lifecycle.
+    ///   - openWindow: Action to present the course selection window.
+    func handleClassAction(
+        pairingService: PairingService,
+        overlayManager: OverlayWindowManager,
+        courseSessionService: CourseSessionService,
+        openWindow: OpenWindowAction
+    ) {
+        if pairingService.teacherCode == nil {
+            openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+        } else {
+            overlayManager.closeOverlay()
+            courseSessionService.endClass()
+            openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+        }
+    }
 }
 #endif

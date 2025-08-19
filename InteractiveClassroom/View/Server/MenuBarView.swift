@@ -23,13 +23,12 @@ struct MenuBarView: View {
                 pairingService.teacherCode == nil ? "Open Classroom" : "End Class"
             ) {
                 viewModel.runAfterMenuDismissal {
-                    if pairingService.teacherCode == nil {
-                        viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-                    } else {
-                        overlayManager.closeOverlay()
-                        courseSessionService.endClass()
-                        viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-                    }
+                    viewModel.handleClassAction(
+                        pairingService: pairingService,
+                        overlayManager: overlayManager,
+                        courseSessionService: courseSessionService,
+                        openWindow: openWindow
+                    )
                 }
             }
             Button("Clients") {
