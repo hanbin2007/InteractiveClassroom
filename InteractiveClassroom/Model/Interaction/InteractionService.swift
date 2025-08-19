@@ -51,8 +51,7 @@ final class InteractionService: ObservableObject {
         let interaction = Interaction(request: request)
         activeInteraction = interaction
 
-        if case .countdown = request.content,
-           let seconds = request.lifecycle.secondsValue {
+        if let seconds = request.lifecycle.secondsValue {
             let service = CountdownService(seconds: seconds)
             countdownService = service
             presentOverlay(request.makeOverlay(countdownService: service))
@@ -61,12 +60,6 @@ final class InteractionService: ObservableObject {
             }
         } else {
             presentOverlay(request.makeOverlay())
-            if case let .finite(seconds) = request.lifecycle {
-                interactionTask = Task { @MainActor [weak self] in
-                    try? await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
-                    self?.endInteraction()
-                }
-            }
         }
 
         if broadcast {
