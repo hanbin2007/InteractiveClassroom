@@ -33,46 +33,50 @@ struct MenuBarScene: Scene {
     }
 
     var body: some Scene {
-        Group {
-            if menuBarController.isVisible {
-                MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-                    MenuBarView()
-                        .environmentObject(pairingService)
-                        .environmentObject(courseSessionService)
-                        .environmentObject(interactionService)
-                        .environmentObject(menuBarController)
-                        .environmentObject(overlayManager)
-                }
-                .modelContainer(container)
-            }
-            Settings {
-                SettingsView()
-                    .environmentObject(pairingService)
-                    .environmentObject(courseSessionService)
-                    .environmentObject(interactionService)
-            }
-            .modelContainer(container)
-            WindowGroup(id: "courseSelection") {
-                CourseSelectionView()
-                    .environmentObject(courseSessionService)
-                    .environmentObject(pairingService)
-            }
-            .modelContainer(container)
-            WindowGroup(id: "clients") {
-                ClientsListView()
-                    .environmentObject(pairingService)
-                    .environmentObject(courseSessionService)
-                    .environmentObject(interactionService)
-            }
-            .modelContainer(container)
-            WindowGroup(id: "courseManager") {
-                CourseManagerView()
-                    .environmentObject(pairingService)
-                    .environmentObject(courseSessionService)
-                    .environmentObject(interactionService)
-            }
-            .modelContainer(container)
+        MenuBarExtra(
+            "InteractiveClassroom",
+            systemImage: "graduationcap",
+            isInserted: $menuBarController.isVisible
+        ) {
+            MenuBarView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+                .environmentObject(menuBarController)
+                .environmentObject(overlayManager)
         }
+        .modelContainer(container)
+
+        Settings {
+            SettingsView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "courseSelection") {
+            CourseSelectionView()
+                .environmentObject(courseSessionService)
+                .environmentObject(pairingService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "clients") {
+            ClientsListView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
+
+        WindowGroup(id: "courseManager") {
+            CourseManagerView()
+                .environmentObject(pairingService)
+                .environmentObject(courseSessionService)
+                .environmentObject(interactionService)
+        }
+        .modelContainer(container)
     }
 }
 #endif

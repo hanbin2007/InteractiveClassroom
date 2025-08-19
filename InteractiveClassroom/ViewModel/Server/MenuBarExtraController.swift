@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 final class MenuBarExtraController: ObservableObject {
     /// Indicates whether the MenuBarExtra should be displayed.
-    @Published private(set) var isVisible: Bool = true
+    @Published var isVisible: Bool = true
 
     /// Removes and recreates the MenuBarExtra to clear its state.
     func rebuild() {

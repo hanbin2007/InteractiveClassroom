@@ -49,17 +49,13 @@ struct InteractiveClassroomApp: App {
 
     var body: some Scene {
 #if os(macOS)
-        Group {
-            if menuBarController.isVisible {
-                MenuBarScene(
-                    pairingService: pairingService,
-                    courseSessionService: courseSessionService,
-                    interactionService: interactionService,
-                    menuBarController: menuBarController,
-                    container: container
-                )
-            }
-        }
+        MenuBarScene(
+            pairingService: pairingService,
+            courseSessionService: courseSessionService,
+            interactionService: interactionService,
+            menuBarController: menuBarController,
+            container: container
+        )
 #else
         WindowGroup {
             ContentView()

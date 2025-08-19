@@ -27,7 +27,6 @@ struct MenuBarView: View {
             Button("End Class") {
                 overlayManager.closeOverlay()
                 courseSessionService.endClass()
-                overlayManager.closeOverlay()
                 menuBarController.rebuild()
                 viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
             }
