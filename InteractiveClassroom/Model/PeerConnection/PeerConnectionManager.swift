@@ -43,13 +43,17 @@ class PeerConnectionManager: NSObject, ObservableObject {
     @Published var currentCourse: Course? {
         didSet {
             guard oldValue?.persistentModelID != currentCourse?.persistentModelID else { return }
-            interactionHandler?.broadcastCurrentState(to: nil)
+            Task { @MainActor in
+                self.interactionHandler?.broadcastCurrentState(to: nil)
+            }
         }
     }
     @Published var currentLesson: Lesson? {
         didSet {
             guard oldValue?.persistentModelID != currentLesson?.persistentModelID else { return }
-            interactionHandler?.broadcastCurrentState(to: nil)
+            Task { @MainActor in
+                self.interactionHandler?.broadcastCurrentState(to: nil)
+            }
         }
     }
 
