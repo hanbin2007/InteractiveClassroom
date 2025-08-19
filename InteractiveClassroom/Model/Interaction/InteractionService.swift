@@ -63,35 +63,39 @@ final class InteractionService: ObservableObject {
     }
 
     // MARK: - Interaction Controls
-    func startInteraction(_ request: InteractionRequest, broadcast: Bool = true, remainingSeconds: Int? = nil) {
+    func startInteraction(_ request: InteractionRequest,
+                          broadcast: Bool = true,
+                          remainingSeconds: Int? = nil,
+                          stageIndex: Int = 0) {
         guard canChangeInteraction() else {
             print("[InteractionService] Start ignored due to debounce interval.")
             return
         }
         if activeInteraction != nil {
             if broadcast {
-                broadcastStartInteraction(request, remainingSeconds: remainingSeconds)
+                broadcastStartInteraction(request, remainingSeconds: remainingSeconds, stageIndex: stageIndex)
             }
             print("[InteractionService] Attempted to start a new interaction while another is active.")
             return
         }
-        let interaction = Interaction(request: request)
+        let interaction = Interaction(request: request, stageIndex: stageIndex)
         activeInteraction = interaction
         lastInteractionChange = Date()
 
-        if let seconds = remainingSeconds ?? request.lifecycle.secondsValue {
+        if interaction.currentStageIndex == 0,
+           let seconds = remainingSeconds ?? request.lifecycle.secondsValue {
             let service = CountdownService(seconds: seconds)
             countdownService = service
-            presentOverlay(request.makeOverlay(countdownService: service))
+            presentOverlay(request.makeOverlay(content: interaction.currentStage.content, countdownService: service))
             service.start { [weak self] in
                 self?.endInteraction()
             }
         } else {
-            presentOverlay(request.makeOverlay())
+            presentOverlay(request.makeOverlay(content: interaction.currentStage.content))
         }
 
         if broadcast {
-            broadcastStartInteraction(request, remainingSeconds: remainingSeconds)
+            broadcastStartInteraction(request, remainingSeconds: remainingSeconds, stageIndex: stageIndex)
             broadcastCurrentState(to: nil)
         } else if manager.advertiser != nil {
             // When acting as the server, share the updated state with connected clients.
@@ -102,14 +106,32 @@ final class InteractionService: ObservableObject {
 
     /// Protocol requirement convenience wrapper.
     func startInteraction(_ request: InteractionRequest, broadcast: Bool) {
-        startInteraction(request, broadcast: broadcast, remainingSeconds: nil)
+        startInteraction(request, broadcast: broadcast, remainingSeconds: nil, stageIndex: 0)
     }
 
     /// Forcefully requests the server to terminate any active interaction and start the provided one.
     func forceStartInteraction(_ request: InteractionRequest) {
-        let message = PeerConnectionManager.Message(type: "forceStartInteraction", interaction: request)
+        let message = PeerConnectionManager.Message(type: "forceStartInteraction", interaction: request, stageIndex: 0)
         manager.sendMessageToServer(message)
         print("[InteractionService] Sent force start interaction request to server.")
+    }
+
+    /// Advances the active interaction to its next stage.
+    func nextStage(broadcast: Bool = true) {
+        guard var interaction = activeInteraction,
+              case .multipleChoice = interaction.request.content,
+              !interaction.isLastStage else { return }
+        interaction.advanceStage()
+        activeInteraction = interaction
+        countdownService?.stop()
+        countdownService = nil
+        presentOverlay(interaction.request.makeOverlay(content: interaction.currentStage.content))
+        if broadcast {
+            broadcastNextStage(interaction.currentStageIndex)
+            broadcastCurrentState(to: nil)
+        } else if manager.advertiser != nil {
+            broadcastCurrentState(to: nil)
+        }
     }
 
     func endInteraction(broadcast: Bool = true, broadcastState: Bool = false) {
@@ -149,6 +171,7 @@ final class InteractionService: ObservableObject {
     /// Calculates remaining seconds for the current interaction if finite.
     func currentRemainingSeconds() -> Int? {
         guard let interaction = activeInteraction,
+              interaction.currentStageIndex == 0,
               case let .finite(seconds) = interaction.request.lifecycle else { return nil }
         let elapsed = Int(Date().timeIntervalSince(interaction.startedAt))
         return max(0, seconds - elapsed)
@@ -164,7 +187,7 @@ final class InteractionService: ObservableObject {
             content: .countdown
         )
         startInteraction(request, broadcast: false)
-        let message = PeerConnectionManager.Message(type: "startClass", interaction: request)
+        let message = PeerConnectionManager.Message(type: "startClass", interaction: request, stageIndex: 0)
         manager.sendMessageToServer(message)
         if manager.advertiser != nil {
             manager.classStarted = true

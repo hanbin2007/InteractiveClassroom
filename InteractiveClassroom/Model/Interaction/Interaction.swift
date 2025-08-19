@@ -89,12 +89,14 @@ struct InteractionRequest: Codable, Equatable {
     }
 
     var content: Content
+    /// Additional stages following the main stage.
+    var stages: [InteractionStage]? = nil
 
     /// Builds an overlay container based on the request.
     /// - Parameter countdownService: Optional service used for countdown interactions
     ///   to maintain timer state even when the overlay view is removed.
     @MainActor
-    func makeOverlay(countdownService: CountdownService? = nil) -> OverlayContent {
+    func makeOverlay(content override: Content? = nil, countdownService: CountdownService? = nil) -> OverlayContent {
         let overlayTemplate: OverlayTemplate
         switch template {
         case .fullScreen:
@@ -102,8 +104,9 @@ struct InteractionRequest: Codable, Equatable {
         case .floatingCorner:
             overlayTemplate = .floatingCorner(position: .bottomRight)
         }
+        let displayContent = override ?? content
         return OverlayContent(template: overlayTemplate) {
-            switch content {
+            switch displayContent {
             case .text(let text):
                 Text(text)
                     .multilineTextAlignment(.center)
@@ -137,8 +140,32 @@ struct InteractionRequest: Codable, Equatable {
     }
 }
 
-/// Represents a running interaction with its start time.
+/// Represents a running interaction with its stages and current progress.
 struct Interaction {
     let request: InteractionRequest
+    /// Ordered stages for this interaction.
+    let stages: [InteractionStage]
     let startedAt: Date = Date()
+    fileprivate(set) var currentStageIndex: Int
+
+    init(request: InteractionRequest, stageIndex: Int = 0) {
+        self.request = request
+        var allStages = [InteractionStage(id: 0, content: request.content)]
+        if let extras = request.stages {
+            allStages.append(contentsOf: extras)
+        }
+        self.stages = allStages.sorted { $0.id < $1.id }
+        self.currentStageIndex = min(stageIndex, self.stages.count - 1)
+    }
+
+    /// The stage currently being presented.
+    var currentStage: InteractionStage { stages[currentStageIndex] }
+    /// Whether the interaction is displaying its final stage.
+    var isLastStage: Bool { currentStageIndex >= stages.count - 1 }
+
+    /// Advances to the next stage if available.
+    mutating func advanceStage() {
+        guard !isLastStage else { return }
+        currentStageIndex += 1
+    }
 }

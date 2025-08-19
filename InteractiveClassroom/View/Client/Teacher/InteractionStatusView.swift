@@ -12,10 +12,20 @@ struct InteractionStatusView: View {
             if let service = viewModel.countdownService,
                viewModel.activeInteraction != nil {
                 TeacherCountdownView(service: service)
-                Button("Stop Interaction") {
-                    viewModel.stopCurrentInteraction()
+            }
+            if viewModel.activeInteraction != nil {
+                HStack(spacing: baseSpacing) {
+                    if viewModel.canAdvanceStage {
+                        Button("Next Stage") {
+                            viewModel.advanceStage()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    Button("Stop Interaction") {
+                        viewModel.stopCurrentInteraction()
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
             } else {
                 Text("No active interaction")
                     .foregroundStyle(.secondary)

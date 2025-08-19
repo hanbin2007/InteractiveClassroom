@@ -43,10 +43,12 @@ final class MultipleChoiceSetupViewModel: ObservableObject {
             correctOptionIDs: correctOptionIDs.map { $0.uuidString },
             allowsMultipleSelection: allowsMultipleSelection
         )
+        let summary = InteractionStage(id: 1, content: .text("Summary"))
         let request = InteractionRequest(
             template: .floatingCorner,
             lifecycle: .finite(seconds: duration),
-            content: .multipleChoice(question)
+            content: .multipleChoice(question),
+            stages: [summary]
         )
         interactionService.startInteraction(request)
     }

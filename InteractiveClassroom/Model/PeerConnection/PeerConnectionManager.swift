@@ -91,6 +91,8 @@ class PeerConnectionManager: NSObject, ObservableObject {
         let interaction: InteractionRequest?
         /// Remaining seconds for a running interaction when applicable
         let remainingSeconds: Int?
+        /// Current stage index for multi-stage interactions
+        let stageIndex: Int?
         /// Server timestamp included for time synchronization
         let timestamp: Date?
 
@@ -102,6 +104,7 @@ class PeerConnectionManager: NSObject, ObservableObject {
              lesson: LessonPayload? = nil,
              interaction: InteractionRequest? = nil,
              remainingSeconds: Int? = nil,
+             stageIndex: Int? = nil,
              timestamp: Date? = nil) {
             self.type = type
             self.role = role
@@ -111,6 +114,7 @@ class PeerConnectionManager: NSObject, ObservableObject {
             self.lesson = lesson
             self.interaction = interaction
             self.remainingSeconds = remainingSeconds
+            self.stageIndex = stageIndex
             self.timestamp = timestamp
         }
     }
