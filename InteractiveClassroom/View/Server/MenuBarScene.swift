@@ -31,18 +31,20 @@ struct MenuBarScene: Scene {
         )
     }
 
+    @SceneBuilder
     var body: some Scene {
-        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-            MenuBarView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(overlayManager)
-                .environmentObject(menuBarCoordinator)
+        if menuBarCoordinator.isPresented {
+            MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
+                MenuBarView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+                    .environmentObject(overlayManager)
+                    .environmentObject(menuBarCoordinator)
+            }
+            .menuBarExtraStyle(.menu)
+            .modelContainer(container)
         }
-        .id(menuBarCoordinator.refreshID)
-        .menuBarExtraStyle(.menu)
-        .modelContainer(container)
         Settings {
             SettingsView()
                 .environmentObject(pairingService)
