@@ -1,5 +1,5 @@
 #if os(macOS)
-import SwiftUI
+@preconcurrency import SwiftUI
 import AppKit
 import Combine
 
@@ -13,6 +13,9 @@ final class OverlayWindowManager: ObservableObject {
     private var overlayWindow: NSWindow?
     private var originalPresentationOptions: NSApplication.PresentationOptions = []
     private var cancellables: Set<AnyCancellable> = []
+    private var pendingRestoreWorkItem: DispatchWorkItem?
+    /// One-shot cancellable used by performAfterMenuClosed to avoid token capture warnings.
+    private var menuEndTrackingOnce: AnyCancellable?
 
     init(
         pairingService: PairingService,
@@ -38,13 +41,22 @@ final class OverlayWindowManager: ObservableObject {
 
     /// Presents the overlay configured for full-screen display.
     private func openOverlay() {
-        closeOverlay()
+        // 不恢复 presentationOptions，避免与下面的设置竞态
+        closeOverlay(restorePresentation: false)
 
-        let presentOverlay = { [weak self] in
+        performAfterMenuClosed { [weak self] in
             guard let self else { return }
+
+            // 彻底取消任何还在排队的恢复任务
+            self.pendingRestoreWorkItem?.cancel()
+            self.pendingRestoreWorkItem = nil
+
+            // 现在安全地切换到 Presentation Mode
             self.originalPresentationOptions = NSApp.presentationOptions
-            // Delay changing presentation options so active menus can close without being reset mid-interaction.
-            NSApp.presentationOptions = self.originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
+            let target = self.originalPresentationOptions.union([.autoHideDock, .autoHideMenuBar])
+            if NSApp.presentationOptions != target {
+                NSApp.presentationOptions = target
+            }
 
             let controller = NSHostingController(
                 rootView: ScreenOverlayView()
@@ -58,39 +70,35 @@ final class OverlayWindowManager: ObservableObject {
             window.orderFrontRegardless()
             self.overlayWindow = window
         }
-
-        DispatchQueue.main.async {
-            if let event = NSApp.currentEvent,
-               [.leftMouseDown, .leftMouseUp, .keyDown].contains(event.type) {
-                // A menu interaction is likely in progress; retry after a short delay.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: presentOverlay)
-            } else {
-                presentOverlay()
-            }
-        }
     }
 
     /// Closes any visible overlay windows and restores the application's presentation options.
-    func closeOverlay() {
-        // Close the tracked overlay window first.
+    func closeOverlay(restorePresentation: Bool = true) {
+        // 关掉现有 overlay 窗口
         if let window = overlayWindow {
             window.orderOut(nil)
             window.close()
         }
-
-        // Catch any additional overlay windows that might have been created elsewhere.
         NSApp.windows
             .filter { $0.identifier?.rawValue == "overlay" && $0.isVisible }
-            .forEach { window in
-                window.orderOut(nil)
-                window.close()
-            }
-
+            .forEach { $0.orderOut(nil); $0.close() }
         overlayWindow = nil
-        NSApp.presentationOptions = originalPresentationOptions
+
+        // 取消任何已排队的恢复任务（避免与即将 open 的设置打架）
+        pendingRestoreWorkItem?.cancel()
+        pendingRestoreWorkItem = nil
+
+        if restorePresentation {
+            // 稍后再恢复，避开可能仍在结束的菜单跟踪
+            let work = DispatchWorkItem { [originalPresentationOptions] in
+                NSApp.presentationOptions = originalPresentationOptions
+            }
+            pendingRestoreWorkItem = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: work)
+        }
+
         NSApp.activate(ignoringOtherApps: true)
         #if DEBUG
-        // Assert that no overlay windows remain visible after teardown.
         assert(NSApp.windows.allSatisfy { !($0.identifier?.rawValue == "overlay" && $0.isVisible) }, "Overlay window should be closed")
         #endif
     }
@@ -110,6 +118,31 @@ final class OverlayWindowManager: ObservableObject {
         // Avoid double free crashes by keeping the window alive until we
         // explicitly release our reference.
         window.isReleasedWhenClosed = false
+    }
+    
+    /// Executes work after any active NSMenu tracking has ended, then waits one frame.
+    /// Executes work after any active NSMenu tracking has ended, then waits one frame.
+    /// Executes work after any active NSMenu tracking has ended, then waits one frame.
+    private func performAfterMenuClosed(_ work: @escaping () -> Void) {
+        let nc = NotificationCenter.default
+        // One-shot using Combine; avoids token capture in @Sendable closures.
+        menuEndTrackingOnce = nc.publisher(for: NSMenu.didEndTrackingNotification)
+            .first()
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.menuEndTrackingOnce = nil
+                // Give AppKit a beat to rebuild the status bar.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+            }
+        // Fallback: if no menu is tracking, run on the next turn and cancel the subscriber to avoid duplicates.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            if let c = self.menuEndTrackingOnce {
+                c.cancel()
+                self.menuEndTrackingOnce = nil
+                DispatchQueue.main.async(execute: work)
+            }
+        }
     }
 }
 #endif

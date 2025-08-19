@@ -19,21 +19,37 @@ struct MenuBarView: View {
                 .disabled(pairingService.studentCode == nil)
             Text(pairingService.connectionStatus)
             Divider()
+            // Open Classroom
             Button("Open Classroom") {
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-            }
-            .disabled(pairingService.teacherCode != nil)
+                Task { @MainActor in
+                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                }
+            }.disabled(pairingService.teacherCode != nil)
+            
             Button("End Class") {
-                overlayManager.closeOverlay()
-                courseSessionService.endClass()
-                viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                // 等菜单关闭一个节拍，避免在 tracking 期做大动作
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    Task { @MainActor in
+                        overlayManager.closeOverlay()
+                        courseSessionService.endClass()
+                        viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+                    }
+                }
             }
             .disabled(pairingService.teacherCode == nil)
+
+            // Clients
             Button("Clients") {
-                viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
+                Task { @MainActor in
+                    viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
+                }
             }
+
+            // Courses
             Button("Courses") {
-                viewModel.openWindowIfNeeded(id: "courseManager", openWindow: openWindow)
+                Task { @MainActor in
+                    viewModel.openWindowIfNeeded(id: "courseManager", openWindow: openWindow)
+                }
             }
             if #available(macOS 13, *) {
                 SettingsLink {

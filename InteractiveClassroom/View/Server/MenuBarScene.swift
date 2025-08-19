@@ -37,6 +37,7 @@ struct MenuBarScene: Scene {
                 .environmentObject(interactionService)
                 .environmentObject(overlayManager)
         }
+        .menuBarExtraStyle(.menu)
         .modelContainer(container)
         Settings {
             SettingsView()
