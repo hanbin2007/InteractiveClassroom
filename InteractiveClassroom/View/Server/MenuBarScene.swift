@@ -9,6 +9,7 @@ struct MenuBarScene: Scene {
     @ObservedObject var interactionService: InteractionService
     let container: ModelContainer
     @StateObject private var overlayManager: OverlayWindowManager
+    @StateObject private var menuBarCoordinator: MenuBarCoordinator
 
     init(
         pairingService: PairingService,
@@ -20,25 +21,33 @@ struct MenuBarScene: Scene {
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
         self.container = container
+
+        let coordinator = MenuBarCoordinator()
+        _menuBarCoordinator = StateObject(wrappedValue: coordinator)
         _overlayManager = StateObject(
             wrappedValue: OverlayWindowManager(
                 pairingService: pairingService,
                 courseSessionService: courseSessionService,
-                interactionService: interactionService
+                interactionService: interactionService,
+                menuBarCoordinator: coordinator
             )
         )
     }
 
+    @SceneBuilder
     var body: some Scene {
-        MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
-            MenuBarView()
-                .environmentObject(pairingService)
-                .environmentObject(courseSessionService)
-                .environmentObject(interactionService)
-                .environmentObject(overlayManager)
+        if menuBarCoordinator.isPresented {
+            MenuBarExtra("InteractiveClassroom", systemImage: "graduationcap") {
+                MenuBarView()
+                    .environmentObject(pairingService)
+                    .environmentObject(courseSessionService)
+                    .environmentObject(interactionService)
+                    .environmentObject(overlayManager)
+                    .environmentObject(menuBarCoordinator)
+            }
+            .menuBarExtraStyle(.menu)
+            .modelContainer(container)
         }
-        .menuBarExtraStyle(.menu)
-        .modelContainer(container)
         Settings {
             SettingsView()
                 .environmentObject(pairingService)
