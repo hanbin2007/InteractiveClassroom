@@ -11,7 +11,7 @@ struct MultipleChoiceSetupView: View {
             if let service = interactionService.countdownService,
                interactionService.activeInteraction != nil {
                 VStack(spacing: 24) {
-                    CountdownOverlayView(service: service)
+                    TeacherCountdownView(service: service)
                     Button("Stop Interaction") {
                         interactionService.endInteraction()
                     }

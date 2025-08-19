@@ -5,6 +5,8 @@ import SwiftUI
 struct CountdownDigitsView: View {
     /// Total remaining seconds to display.
     let remainingSeconds: Int
+    /// Text color for the digits. Defaults to white for overlay usage.
+    var color: Color = .white
     @AppStorage("overlayContentScale") private var overlayContentScale: Double = 1.0
     @ScaledMetric private var baseFontSize: CGFloat = 120
 
@@ -17,7 +19,7 @@ struct CountdownDigitsView: View {
     var body: some View {
         let text = Text(formattedTime)
             .font(.system(size: baseFontSize * overlayContentScale, weight: .bold, design: .rounded))
-            .foregroundColor(.white)
+            .foregroundColor(color)
             .monospacedDigit()
 
         if #available(iOS 17, macOS 14, *) {
