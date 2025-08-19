@@ -9,7 +9,7 @@ struct MenuBarScene: Scene {
     @ObservedObject var interactionService: InteractionService
     let container: ModelContainer
     @StateObject private var overlayManager: OverlayWindowManager
-    @StateObject private var menuBarCoordinator = MenuBarCoordinator()
+    @StateObject private var menuBarCoordinator: MenuBarCoordinator
 
     init(
         pairingService: PairingService,
@@ -21,12 +21,15 @@ struct MenuBarScene: Scene {
         self.courseSessionService = courseSessionService
         self.interactionService = interactionService
         self.container = container
+
+        let coordinator = MenuBarCoordinator()
+        _menuBarCoordinator = StateObject(wrappedValue: coordinator)
         _overlayManager = StateObject(
             wrappedValue: OverlayWindowManager(
                 pairingService: pairingService,
                 courseSessionService: courseSessionService,
                 interactionService: interactionService,
-                menuBarCoordinator: menuBarCoordinator
+                menuBarCoordinator: coordinator
             )
         )
     }

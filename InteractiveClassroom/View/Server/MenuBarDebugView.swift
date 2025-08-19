@@ -1,4 +1,4 @@
-#if os(macOS)
+#if os(macOS) && DEBUG
 import SwiftUI
 
 /// Debug view providing manual controls for menu bar rebuilding.

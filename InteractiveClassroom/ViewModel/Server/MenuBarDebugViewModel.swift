@@ -1,4 +1,4 @@
-#if os(macOS)
+#if os(macOS) && DEBUG
 import SwiftUI
 
 /// View model powering the debug interface for menu bar operations.
