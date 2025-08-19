@@ -14,5 +14,23 @@ final class MenuBarViewModel: ObservableObject {
             openWindow(id: id)
         }
     }
+
+    /// Ends the current class, tears down any overlay windows, and rebuilds the menu bar.
+    func endClass(
+        overlayManager: OverlayWindowManager,
+        courseSessionService: CourseSessionService,
+        menuBarController: MenuBarExtraController,
+        openWindow: OpenWindowAction
+    ) {
+        Task { @MainActor [weak self] in
+            overlayManager.closeOverlay()
+            courseSessionService.endClass()
+            // Ensure teardown completes before rebuilding the menu bar
+            await Task.yield()
+            menuBarController.rebuild()
+            await Task.yield()
+            self?.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+        }
+    }
 }
 #endif
