@@ -13,26 +13,33 @@ struct MenuBarView: View {
 
     var body: some View {
         Group {
-            Text("Teacher Key: \(pairingService.teacherCode ?? "")")
-                .opacity(pairingService.teacherCode == nil ? 0 : 1)
-            Text("Student Key: \(pairingService.studentCode ?? "")")
-                .opacity(pairingService.studentCode == nil ? 0 : 1)
+            Text("Teacher Key: \(pairingService.teacherCode ?? "—")")
+                .disabled(pairingService.teacherCode == nil)
+            Text("Student Key: \(pairingService.studentCode ?? "—")")
+                .disabled(pairingService.studentCode == nil)
             Text(pairingService.connectionStatus)
             Divider()
-            Button(pairingService.teacherCode == nil ? "Open Classroom" : "End Class") {
-                if pairingService.teacherCode == nil {
-                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
-                } else {
-                    overlayManager.closeOverlay()
-                    courseSessionService.endClass()
-                    viewModel.openWindowIfNeeded(id: "courseSelection", openWindow: openWindow)
+            Button(
+                pairingService.teacherCode == nil ? "Open Classroom" : "End Class"
+            ) {
+                viewModel.runAfterMenuDismissal {
+                    viewModel.handleClassAction(
+                        pairingService: pairingService,
+                        overlayManager: overlayManager,
+                        courseSessionService: courseSessionService,
+                        openWindow: openWindow
+                    )
                 }
             }
             Button("Clients") {
-                viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
+                viewModel.runAfterMenuDismissal {
+                    viewModel.openWindowIfNeeded(id: "clients", openWindow: openWindow)
+                }
             }
             Button("Courses") {
-                viewModel.openWindowIfNeeded(id: "courseManager", openWindow: openWindow)
+                viewModel.runAfterMenuDismissal {
+                    viewModel.openWindowIfNeeded(id: "courseManager", openWindow: openWindow)
+                }
             }
             if #available(macOS 13, *) {
                 SettingsLink {
@@ -40,12 +47,16 @@ struct MenuBarView: View {
                 }
             } else {
                 Button("Settings") {
-                    NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                    viewModel.runAfterMenuDismissal {
+                        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                    }
                 }
             }
             Divider()
             Button("Quit") {
-                NSApp.terminate(nil)
+                viewModel.runAfterMenuDismissal {
+                    NSApp.terminate(nil)
+                }
             }
         }
     }
