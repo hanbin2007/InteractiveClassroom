@@ -138,35 +138,82 @@ private struct PasscodeEntrySheet: View {
     @FocusState private var passcodeFocused: Bool
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Enter 6-digit key for \(peer.peerID.displayName)")
-            TextField("123456", text: $passcode)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .multilineTextAlignment(.center)
-                .keyboardType(.numberPad)
-                .focused($passcodeFocused)
-            TextField("Nickname", text: $nickname)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .textInputAutocapitalization(.never)
-            Button("Connect") {
-                connectAction(passcode, nickname)
-                passcode = ""
-                nickname = ""
-                onDismiss()
+        NavigationStack {
+                Form {
+                    // 顶部说明
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "lock.circle")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(peer.peerID.displayName)
+                                    .font(.headline)
+                                Text("Enter the 6-digit key to join")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .listRowBackground(Color.clear)
+                    }
+
+                    // 验证码
+                    Section("Access Code") {
+                        TextField("6-digit code", text: $passcode)
+                            .keyboardType(.numberPad)
+                            .textContentType(.oneTimeCode)
+                            .font(.system(size: 28, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .multilineTextAlignment(.center)
+                            .focused($passcodeFocused)
+                            .onChange(of: passcode) { _, newValue in
+                                let digitsOnly = newValue.filter { $0.isNumber }
+                                passcode = String(digitsOnly.prefix(6))
+                            }
+                    }
+
+                    // 昵称
+                    Section("Nickname") {
+                        TextField("How should we call you?", text: $nickname)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                    }
+                }
+                .formStyle(.grouped)
+                .navigationTitle("Connect")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", role: .cancel) {
+                            onDismiss()
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Connect") {
+                            connectAction(
+                                passcode,
+                                nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+                            )
+                            passcode = ""
+                            nickname = ""
+                            onDismiss()
+                        }
+                        .disabled(
+                            passcode.count != 6 ||
+                            nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        )
+                    }
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { passcodeFocused = false }
+                    }
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onAppear {
+                    DispatchQueue.main.async { passcodeFocused = true }
+                }
             }
-            .disabled(passcode.isEmpty || nickname.isEmpty)
-            Button("Cancel", role: .cancel) {
-                onDismiss()
-            }
-        }
-        .padding()
-        .presentationDetents([.medium])
-        .onAppear {
-            // Focus the passcode field after sheet presentation to reduce input lag
-            DispatchQueue.main.async {
-                passcodeFocused = true
-            }
-        }
+            .presentationDetents([.medium])
     }
 }
 #Preview {
